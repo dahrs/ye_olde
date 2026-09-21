@@ -1,0 +1,36 @@
+name: Validate contributions
+
+on:
+  pull_request:
+    paths:
+      - "contributions/**/*.json"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate changed contribution files
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          changed=$(git diff --name-only origin/${{ github.base_ref }} -- 'contributions/**/*.json')
+          if [ -z "$changed" ]; then
+            echo "No contribution JSON files changed."
+            exit 0
+          fi
+          echo "$changed" | xargs -I{} python -c "
+          import json, sys
+          from jsonschema import validate
+          schema = json.load(open('src/ye_olde/schema/contribution.schema.json'))
+          entry = json.load(open('{}'))
+          validate(instance=entry, schema=schema)
+          print('OK: {}')
+          "

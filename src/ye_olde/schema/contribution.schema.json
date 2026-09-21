@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dahrs/ye_olde/src/ye_olde/schema/contribution.schema.json",
+  "title": "Community contribution",
+  "description": "Spec section 3b (docs/diachronic-translation-pipeline-plan.md) — what gets submitted and reviewed before being indexed (section 3a).",
+  "type": "object",
+  "required": ["doc_type", "origin", "target", "metadata"],
+  "properties": {
+    "doc_type": {
+      "type": "string",
+      "enum": ["dictionary_entry", "grammar_note", "attestation"]
+    },
+    "origin": {
+      "type": "object",
+      "required": ["lang_code"],
+      "properties": {
+        "lang_code": { "type": "string" },
+        "text": { "type": "string" },
+        "tokens": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "surface": { "type": ["string", "null"] },
+              "alt": {
+                "type": "array",
+                "items": { "type": "string" },
+                "default": []
+              },
+              "class": {
+                "type": ["string", "null"],
+                "enum": ["name", "common", "anachronism", null]
+              },
+              "gap": { "type": "boolean", "default": false }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        { "required": ["tokens"] },
+        { "required": ["text"] }
+      ]
+    },
+    "target": {
+      "type": ["object", "null"],
+      "properties": {
+        "lang_code": { "type": "string" },
+        "text": { "type": "string" }
+      },
+      "required": ["lang_code", "text"],
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["date", "source", "contributor", "license", "validation"],
+      "properties": {
+        "date": {
+          "type": "object",
+          "required": ["year"],
+          "properties": {
+            "year": { "type": "integer" },
+            "precision": {
+              "type": "string",
+              "enum": ["exact", "circa", "range"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "location": { "type": ["string", "null"] },
+        "source": { "type": "string" },
+        "author": { "type": ["string", "null"] },
+        "contributor": { "type": "string" },
+        "license": { "type": "string" },
+        "validation": {
+          "type": "object",
+          "required": ["status"],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["pending", "proofread", "validated", "rejected"]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": { "doc_type": { "const": "grammar_note" } }
+  },
+  "then": {
+    "properties": {
+      "origin": { "required": ["lang_code", "text"] },
+      "target": { "type": "null" }
+    }
+  }
+}
