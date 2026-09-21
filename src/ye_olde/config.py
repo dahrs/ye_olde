@@ -14,7 +14,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     # Embedding backend — self-hosted via sentence-transformers (see spec §4, §8).
-    embedding_model: str = ""
+    # multilingual-e5-large: best-quality e5 variant our target hardware (Pi 5,
+    # 16GB RAM, CPU-only) can run — RAM isn't the constraint for a single
+    # forward-pass encoder, so no need to drop to the base/small variants.
+    embedding_model: str = "intfloat/multilingual-e5-large"
 
     # Generation LLM — via litellm, so this can be an API model string
     # (e.g. "anthropic/claude-...") or a local/OpenAI-compatible endpoint
