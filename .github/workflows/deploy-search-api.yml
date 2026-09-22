@@ -1,0 +1,27 @@
+name: Deploy Search API to Hugging Face Space
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "search_api/**"
+      - ".github/workflows/deploy-search-api.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install huggingface_hub
+
+      - name: Push search_api/ to the Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_REPO_ID: ${{ vars.HF_SPACE_REPO_ID }}
+        run: python scripts/deploy_search_api.py

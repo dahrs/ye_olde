@@ -26,8 +26,10 @@ class Settings(BaseSettings):
     litellm_api_key: str = ""
     litellm_api_base: str = ""
 
-    # Vector store backend (see spec §4).
-    vector_store: str = ""
+    # Search API base URL (spec §10) — the pipeline is an HTTP client of it,
+    # never holds the corpus/index locally. No default: fail loudly rather
+    # than silently retrieving nothing if this isn't set.
+    search_api_url: str = ""
 
 
 def get_settings() -> Settings:
