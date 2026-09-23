@@ -33,6 +33,16 @@ jobs:
           source: search_api
           env_vars: |
             HF_DATASET_REPO_ID=${{ vars.HF_DATASET_REPO_ID }}
+          # HF_TOKEN comes from Secret Manager (secret "hf-token"), not a GitHub
+          # secret — needed even though the dataset repo is public: Hugging
+          # Face rate-limits fully anonymous API reads (discovered live, see
+          # docs §10). --allow-unauthenticated re-asserts public invocation on
+          # every deploy, since a from-scratch service otherwise defaults to
+          # private and this isn't part of the revision spec gcloud preserves
+          # automatically for an existing one.
+          secrets: |
+            HF_TOKEN=hf-token:latest
+          flags: --allow-unauthenticated
 
       - name: Show deployed URL
         run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
