@@ -21,6 +21,12 @@ generation = [
 contrib = [
     "jsonschema>=4",
 ]
+ingest = [
+    "litellm>=1",
+    "pypdf>=4",
+    "sentence-transformers>=3",
+    "numpy>=1.26",
+]
 dev = [
     "pytest>=8",
 ]

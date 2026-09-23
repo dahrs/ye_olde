@@ -23,11 +23,11 @@ src/ye_olde/
 ├── ingest/         # corpus ingestion into the queryable index (§3a, §5, §6)
 └── schema/         # JSON Schema for community contributions (§3b)
 
-search_api/         # standalone service (spec §10) — deployed to a Hugging Face Space,
+search_api/         # standalone service (spec §10) — deployed to Google Cloud Run,
                      # separately from the pipeline above; see search_api/README.md
 contributions/      # community-submitted JSON entries (§3b), validated by CI on PR
 data/               # gitignored corpora/index artifacts (raw/processed/index)
-scripts/            # CLI entrypoints (ingestion runner, translate demo, search_api deploy)
+scripts/            # CLI entrypoints (ingestion runner, translate demo)
 tests/              # unit/ and integration/
 ```
 
@@ -48,7 +48,8 @@ cp .env.example .env   # fill in HF_DATASET_REPO_ID once a dataset repo exists
 uvicorn app.main:app --reload --port 8000
 ```
 
-Deploys automatically to a Hugging Face Space on push to `main` — see
-`.github/workflows/deploy-search-api.yml` and `scripts/deploy_search_api.py`. One-time setup
-(HF account resources + GitHub secrets) isn't automatable from here; see the steps given
-alongside this scaffold.
+Deploys automatically to Google Cloud Run on push to `main` — see
+`.github/workflows/deploy-search-api.yml`. Data (Parquet/FAISS shards) stays on the free
+Hugging Face Dataset repo regardless; only compute runs on Cloud Run. One-time setup (GCP
+project/billing/Workload Identity Federation + GitHub secrets) isn't automatable from here —
+see the steps given alongside this scaffold.

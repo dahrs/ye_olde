@@ -7,8 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 
-# Hugging Face Spaces (Docker SDK) route traffic to this port by convention;
-# also declared in README.md's `app_port` front matter.
-EXPOSE 7860
+# Cloud Run injects $PORT (default 8080) and requires the container to
+# listen on it — replaces the fixed 7860 from the original (abandoned, see
+# docs §10) Hugging Face Space plan.
+ENV PORT=8080
+EXPOSE 8080
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]

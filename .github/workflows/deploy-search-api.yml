@@ -1,4 +1,4 @@
-name: Deploy Search API to Hugging Face Space
+name: Deploy Search API to Cloud Run
 
 on:
   push:
@@ -8,20 +8,31 @@ on:
       - ".github/workflows/deploy-search-api.yml"
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+  id-token: write   # required for Workload Identity Federation — no long-lived key stored
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - id: auth
+        uses: google-github-actions/auth@v2
         with:
-          python-version: "3.11"
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
-      - run: pip install huggingface_hub
+      - id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ye-olde-search-api
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          region: ${{ vars.GCP_REGION }}
+          source: search_api
+          env_vars: |
+            HF_DATASET_REPO_ID=${{ vars.HF_DATASET_REPO_ID }}
 
-      - name: Push search_api/ to the Hugging Face Space
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE_REPO_ID: ${{ vars.HF_SPACE_REPO_ID }}
-        run: python scripts/deploy_search_api.py
+      - name: Show deployed URL
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"

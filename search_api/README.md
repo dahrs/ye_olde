@@ -1,24 +1,14 @@
----
-title: Ye Olde Search API
-emoji: 📜
-colorFrom: yellow
-colorTo: red
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
-
 # ye_olde Search API
 
 Serves the diachronic index described in `docs/diachronic-translation-pipeline-plan.md` §10 of
 the main repo (github.com/dahrs/ye_olde). Reads Parquet shards from a Hugging Face Dataset repo
-(HF_DATASET_REPO_ID) and exposes them over HTTP so the translation pipeline never needs the
+(`HF_DATASET_REPO_ID`) and exposes them over HTTP so the translation pipeline never needs the
 corpus or index locally — this is the only thing that talks to the data.
 
-Deployed by `.github/workflows/deploy-search-api.yml` on every push to `main` that touches this
-directory. Not a UI — this Space exists only to run the Docker container behind the endpoints
-below.
+Deployed to Google Cloud Run by `.github/workflows/deploy-search-api.yml` on every push to
+`main` that touches this directory (data storage stays on the free Hugging Face Dataset repo;
+only compute moved — Hugging Face's free CPU tier for Docker/Gradio Spaces was discontinued
+mid-2026, see spec §10).
 
 ## Endpoints
 
@@ -31,5 +21,14 @@ below.
   follow-up once §6's alignment pipeline has produced real embeddings.
 
 Both return an empty `results: []` rather than erroring when no data exists yet for the
-requested `iso_code`/year range — this Space is meant to run correctly before any corpus has
+requested `iso_code`/year range — this service is meant to run correctly before any corpus has
 been gathered (spec §11).
+
+## Local development
+
+```
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # fill in HF_DATASET_REPO_ID
+uvicorn app.main:app --reload --port 8000
+```

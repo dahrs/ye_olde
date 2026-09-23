@@ -1869,6 +1869,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pypdf"
+version = "6.19.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/ac/63d71aaedb59acbcdef491e6ca6469165e3771c9c74358204818fd9bc5a6/pypdf-6.19.0.tar.gz", hash = "sha256:bbc43aca292369ccc6cbc8a921991ecf2538a3587ab5a116eff06c321d647155", size = 7033266, upload-time = "2026-09-16T09:32:05.946Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3c/2c/c43c03eaf630435f023f1dc61ec4a4a78951ad5530a62c71cc89bde307b7/pypdf-6.19.0-py3-none-any.whl", hash = "sha256:7e5d6e730e7dae87d560a2cee218b852f6498c8be61966f3cd02ead971e48d14", size = 395480, upload-time = "2026-09-16T09:32:04.087Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2946,6 +2955,13 @@ dev = [
 generation = [
     { name = "litellm" },
 ]
+ingest = [
+    { name = "litellm" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pypdf" },
+    { name = "sentence-transformers" },
+]
 retrieval = [
     { name = "sentence-transformers" },
 ]
@@ -2954,13 +2970,17 @@ retrieval = [
 requires-dist = [
     { name = "jsonschema", marker = "extra == 'contrib'", specifier = ">=4" },
     { name = "litellm", marker = "extra == 'generation'", specifier = ">=1" },
+    { name = "litellm", marker = "extra == 'ingest'", specifier = ">=1" },
+    { name = "numpy", marker = "extra == 'ingest'", specifier = ">=1.26" },
     { name = "pydantic", specifier = ">=2" },
     { name = "pydantic-settings", specifier = ">=2" },
+    { name = "pypdf", marker = "extra == 'ingest'", specifier = ">=4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "python-dotenv", specifier = ">=1" },
+    { name = "sentence-transformers", marker = "extra == 'ingest'", specifier = ">=3" },
     { name = "sentence-transformers", marker = "extra == 'retrieval'", specifier = ">=3" },
 ]
-provides-extras = ["retrieval", "generation", "contrib", "dev"]
+provides-extras = ["retrieval", "generation", "contrib", "ingest", "dev"]
 
 [[package]]
 name = "zipp"
