@@ -1,0 +1,21 @@
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+exclude = ["^\\.venv/"]
+
+# search_api runs in its own environment (requirements.txt, not the root
+# project's uv-managed venv — see app/config.py's docstring for why it's a
+# separate deployable), so its mypy config is scoped here rather than in the
+# root pyproject.toml, and is run with this directory as the working
+# directory (see README.md "Local development").
+[[tool.mypy.overrides]]
+module = ["pyarrow.*"]
+ignore_missing_imports = true
+
+# huggingface_hub ships types but doesn't declare `utils`' re-exports (e.g.
+# EntryNotFoundError, RepositoryNotFoundError) in an `__all__`, which
+# strict mode's implicit-reexport check otherwise flags as a false positive.
+[[tool.mypy.overrides]]
+module = ["huggingface_hub.utils"]
+implicit_reexport = true

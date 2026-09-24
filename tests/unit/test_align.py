@@ -1,8 +1,6 @@
-"""Unit tests for the algorithmic half of the §6 alignment pipeline
-(ye_olde.ingest.*). LLM calls are mocked — these tests cover filename
-parsing, boilerplate stripping, chunking, tokenization, span resolution,
-proportional blocking, dedup, and the jsonl writer, none of which should
-need a live model to be correct.
+"""Unit tests for align.py: tokenization, span resolution, proportional
+blocking, dedup, checkpointing/resume, and the jsonl writer. LLM calls are
+mocked throughout — none of this should need a live model to be correct.
 """
 
 from __future__ import annotations
@@ -13,74 +11,25 @@ from pathlib import Path
 import pytest
 
 from ye_olde.ingest import align
-from ye_olde.ingest.corpus_files import discover_corpus_files, parse_corpus_filename
-from ye_olde.ingest.extract import strip_boilerplate
-
-
-def test_parse_corpus_filename():
-    cf = parse_corpus_filename(
-        Path("enm-1400-Sir_Gawayne_and_the_Green_Knight-Richard_Morris-Project_Gutenberg.txt")
-    )
-    assert cf.lang_code == "enm"
-    assert cf.year == 1400
-    assert cf.title == "Sir_Gawayne_and_the_Green_Knight"
-    assert cf.author == "Richard Morris"
-    assert cf.source == "Project Gutenberg"
-    assert cf.work_label == "Sir Gawayne and the Green Knight"
-
-
-def test_parse_corpus_filename_rejects_too_few_fields():
-    with pytest.raises(ValueError):
-        parse_corpus_filename(Path("eng-1999-onlythree.txt"))
-
-
-def test_discover_corpus_files_requires_at_least_two(tmp_path):
-    (tmp_path / "eng-1999-Work-Author-Source.txt").write_text("hello")
-    with pytest.raises(ValueError):
-        discover_corpus_files(tmp_path)
-
-
-def test_discover_corpus_files_sorts_by_year(tmp_path):
-    (tmp_path / "eng-1999-Work-Author-Source.txt").write_text("modern")
-    (tmp_path / "enm-1400-Work-Author-Source.txt").write_text("older")
-    files = discover_corpus_files(tmp_path)
-    assert [cf.year for cf in files] == [1400, 1999]
-
-
-def test_strip_boilerplate_cuts_gutenberg_banner():
-    text = (
-        "License preamble...\n"
-        "*** START OF THE PROJECT GUTENBERG EBOOK FOO ***\n"
-        "Actual content here.\n"
-        "*** END OF THE PROJECT GUTENBERG EBOOK FOO ***\n"
-        "Donation appeal..."
-    )
-    assert strip_boilerplate(text) == "Actual content here."
-
-
-def test_strip_boilerplate_passthrough_without_banner():
-    text = "No banner here, just content."
-    assert strip_boilerplate(text) == text
-
-
-def test_chunk_text_respects_max_chars():
-    from ye_olde.ingest.clean import chunk_text
-
-    paragraphs = [f"Paragraph {i} " + "word " * 20 for i in range(10)]
-    text = "\n\n".join(paragraphs)
-    chunks = chunk_text(text, max_chars=300)
-    assert all(len(c) <= 300 or "\n\n" not in c for c in chunks)
-    assert "".join(chunks).count("Paragraph") == 10
+from ye_olde.ingest.corpus_files import CorpusFile
 
 
 def test_tokenize_splits_words_and_punctuation():
     assert align.tokenize("Liyt be maad, and liyt was maad.") == [
-        "Liyt", "be", "maad", ",", "and", "liyt", "was", "maad", ".",
+        "Liyt",
+        "be",
+        "maad",
+        ",",
+        "and",
+        "liyt",
+        "was",
+        "maad",
+        ".",
     ]
 
 
 def test_find_span_token_indices_case_insensitive():
-    tokens = align.tokenize("Then God said , \" Let there be light \"")
+    tokens = align.tokenize('Then God said , " Let there be light "')
     idx = align.find_span_token_indices(tokens, "let there be LIGHT")
     assert idx == [tokens.index("Let"), tokens.index("there"), tokens.index("be"), tokens.index("light")]
 
@@ -109,8 +58,6 @@ def test_make_blocks_empty_input():
 
 
 def test_align_block_resolves_links(monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
 
@@ -141,8 +88,6 @@ def test_align_block_resolves_links(monkeypatch):
 
 
 def test_align_corpus_pair_dedupes_overlapping_blocks(monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
 
@@ -169,8 +114,6 @@ def test_align_corpus_pair_dedupes_overlapping_blocks(monkeypatch):
 
 
 def test_align_corpus_pair_resumes_after_simulated_crash(tmp_path, monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1400, "Work", "Author", "Src")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
 
@@ -215,8 +158,6 @@ def test_align_corpus_pair_resumes_after_simulated_crash(tmp_path, monkeypatch):
 
 
 def test_align_corpus_pair_no_checkpoint_starts_fresh(tmp_path, monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1400, "Work", "Author", "Src")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
     units_a, units_b = [f"a{i}" for i in range(50)], [f"b{i}" for i in range(50)]
@@ -323,11 +264,7 @@ def test_extract_links_batch_resolves_spans(monkeypatch):
             "alignment_links": [],
         }
     ]
-    monkeypatch.setattr(
-        align, "call_llm_json", lambda *a, **k: [[{"source_span": "Liyt", "target_span": "light"}]]
-    )
-
-    from ye_olde.ingest.corpus_files import CorpusFile
+    monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [[{"source_span": "Liyt", "target_span": "light"}]])
 
     cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
@@ -340,8 +277,6 @@ def test_extract_links_batch_resolves_spans(monkeypatch):
 
 
 def test_align_pairs_hybrid_combines_embedding_anchors_and_llm_gaps(monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1400, "Work", "Author", "Src")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
 
@@ -382,9 +317,7 @@ def test_align_corpus_folder_writes_one_jsonl_file_per_pair(tmp_path, monkeypatc
     monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
     monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [])
 
-    written = align.align_corpus_folder(
-        raw_dir, output_dir=tmp_path / "processed", mode="llm", use_cache=False
-    )
+    written = align.align_corpus_folder(raw_dir, output_dir=tmp_path / "processed", mode="llm", use_cache=False)
 
     assert [p.suffix for p in written] == [".jsonl"]
 
@@ -423,8 +356,6 @@ def test_verify_pairs_against_source_is_case_and_whitespace_insensitive():
 
 
 def test_review_pairs_with_llm_leaves_correct_pairs_unchanged(monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
     pair = {
@@ -449,8 +380,6 @@ def test_review_pairs_with_llm_leaves_correct_pairs_unchanged(monkeypatch):
 
 
 def test_review_pairs_with_llm_applies_a_genuine_correction(monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
     pair = {
@@ -486,8 +415,6 @@ def test_review_pairs_with_llm_applies_a_genuine_correction(monkeypatch):
 
 
 def test_align_corpus_pair_runs_review_pass_only_for_local_models(monkeypatch):
-    from ye_olde.ingest.corpus_files import CorpusFile
-
     cf_a = CorpusFile(Path("a.txt"), "enm", 1400, "Work", "Author", "Src")
     cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
     units_a = ["hello world"]
@@ -499,7 +426,15 @@ def test_align_corpus_pair_runs_review_pass_only_for_local_models(monkeypatch):
         if system == align._PAIR_REVIEW_SYSTEM_PROMPT:
             review_calls.append(prompt)
             return [{"source_text": "hello world", "target_text": "bonjour monde", "citation": None}]
-        return [{"source_text": "hello world", "target_text": "bonjour monde", "citation": None, "confidence": 0.9, "links": []}]
+        return [
+            {
+                "source_text": "hello world",
+                "target_text": "bonjour monde",
+                "citation": None,
+                "confidence": 0.9,
+                "links": [],
+            }
+        ]
 
     monkeypatch.setattr(align, "call_llm_json", fake_call_llm_json)
 

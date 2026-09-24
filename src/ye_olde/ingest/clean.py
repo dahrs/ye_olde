@@ -17,6 +17,7 @@ import json
 import sys
 from pathlib import Path
 
+from ..prompt import load_prompt
 from .checkpoint import Checkpoint
 from .corpus_files import CorpusFile
 from .llm_client import call_llm_json, is_local_model
@@ -27,37 +28,7 @@ from .llm_client import call_llm_json, is_local_model
 # — harmless here since each chunk is judged unit-by-unit, not as a whole.
 _DEFAULT_MAX_CHARS = 6000
 
-_SYSTEM_PROMPT = """\
-You are preparing historical literary texts for a diachronic translation \
-corpus. You will be given one chunk of raw, OCR/transcribed text from a \
-single edition of a single work. Your job is close reading and filtering, \
-never translation, modernization, or rewriting.
-
-Discard (do not include in your output):
-- Publisher/distributor boilerplate (licenses, donation appeals, catalog info).
-- Editorial front matter: prefaces, introductions, dedications, tables of contents.
-- Editorial back matter: notes, glossary, index, appendices, colophons.
-- Footnote/endnote markers and their bodies, sidenotes, folio/manuscript \
-references (e.g. "[Fol. 91a.]", "[Sidenote: ...]", superscript note numbers).
-- Page furniture: running headers/footers, standalone page numbers, \
-printer's marks, section rules.
-- Transcriber/editor bracketed commentary about the transcription itself.
-
-Keep, verbatim (do not correct spelling, do not modernize, do not translate):
-- The actual narrative/poetic/philosophical/legal content of the work itself.
-- Structural labels that are part of the work's own content (e.g. "Fitt the \
-First", "Book I", chapter or verse numbers, stanza numbers) — keep these \
-attached to the unit they introduce, not as separate units.
-
-Split the kept content into an ordered list of short units — one sentence, \
-or for verse, one natural clause/line-group — preserving the original order \
-and exact original wording. If a unit carries a structural label, prefix the \
-unit's text with that label followed by " — ".
-
-Reply with ONLY a JSON array of strings, no prose, no markdown code fence. \
-If this entire chunk is front/back matter with nothing to keep, reply with \
-an empty JSON array: []\
-"""
+_SYSTEM_PROMPT = load_prompt("ingest", "clean_system")
 
 
 def chunk_text(text: str, max_chars: int = _DEFAULT_MAX_CHARS) -> list[str]:
@@ -81,24 +52,7 @@ def chunk_text(text: str, max_chars: int = _DEFAULT_MAX_CHARS) -> list[str]:
     return chunks
 
 
-_REVIEW_SYSTEM_PROMPT = """\
-You are double-checking your own prior work before it is used. You will be \
-given a numbered list of content units already extracted and filtered from \
-a historical text (front/back matter, footnotes, and page furniture should \
-already be gone).
-
-Review each unit for a genuine, clear defect: leftover editorial/note \
-material that should have been removed, a truncated or garbled unit, an \
-obvious transcription artifact, or a unit that was accidentally split or \
-merged wrong. If a unit already has no defect, leave it completely \
-unchanged — do not rephrase, "improve," modernize, or otherwise touch a \
-unit that is already correct. Perfection means an output identical to the \
-input.
-
-Reply with ONLY a JSON array of strings, the same length and order as the \
-input, one corrected (or, usually, unchanged) string per input unit. No \
-prose, no markdown code fence.\
-"""
+_REVIEW_SYSTEM_PROMPT = load_prompt("ingest", "clean_review_system")
 
 
 def review_units_with_llm(
@@ -125,7 +79,7 @@ def review_units_with_llm(
             f"{i}. {u}" for i, u in enumerate(batch)
         )
 
-        def compute():
+        def compute(prompt: str = prompt) -> object:
             return call_llm_json(prompt, system=_REVIEW_SYSTEM_PROMPT, model=model)
 
         try:
@@ -181,7 +135,8 @@ def clean_corpus_file(
     """
     if cache_path is not None and use_cache and cache_path.exists():
         print(f"[clean] {cf.path.name}: using cached {cache_path.name}", file=sys.stderr)
-        return json.loads(cache_path.read_text(encoding="utf-8"))
+        cached: list[str] = json.loads(cache_path.read_text(encoding="utf-8"))
+        return cached
 
     chunks = chunk_text(raw_text)
     partial_path = cache_path.with_name(cache_path.name + ".partial") if cache_path is not None else None
@@ -196,9 +151,7 @@ def clean_corpus_file(
 
     for i in range(start, len(chunks)):
         print(f"[clean] {cf.path.name}: chunk {i + 1}/{len(chunks)}", file=sys.stderr, flush=True)
-        units.extend(
-            clean_chunk_with_llm(chunks[i], lang_code=cf.lang_code, work=cf.work_label, model=model)
-        )
+        units.extend(clean_chunk_with_llm(chunks[i], lang_code=cf.lang_code, work=cf.work_label, model=model))
         if partial_path is not None:
             partial_path.parent.mkdir(parents=True, exist_ok=True)
             partial_path.write_text(

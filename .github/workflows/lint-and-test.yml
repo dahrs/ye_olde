@@ -1,0 +1,67 @@
+name: Lint and test
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+
+jobs:
+  ye-olde:
+    name: ye_olde package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.11"
+
+      - name: Sync environment
+        run: uv sync --extra dev --extra ingest
+
+      - name: ruff check
+        run: uv run ruff check .
+
+      - name: ruff format --check
+        run: uv run ruff format --check .
+
+      - name: mypy
+        run: uv run mypy src
+
+      - name: pytest
+        run: uv run pytest tests -q
+
+  search-api:
+    name: search_api service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r search_api/requirements-dev.txt
+
+      # Run from the repo root so these pick up the root pyproject.toml's
+      # ruff config (one config for the whole repo, see its [tool.ruff]
+      # "known-first-party" comment) while only linting search_api.
+      - name: ruff check
+        run: ruff check search_api
+
+      - name: ruff format --check
+        run: ruff format --check search_api
+
+      # mypy and pytest run with search_api/ as the working directory:
+      # search_api/pyproject.toml scopes mypy's config to this service (its
+      # own dependency set, not the root project's), and pytest.ini's
+      # `pythonpath = .` resolves `app` relative to here.
+      - name: mypy
+        working-directory: search_api
+        run: mypy app
+
+      - name: pytest
+        working-directory: search_api
+        run: pytest tests -q

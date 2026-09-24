@@ -38,6 +38,73 @@ uv sync
 cp .env.example .env   # fill in EMBEDDING_MODEL / LITELLM_MODEL / SEARCH_API_URL
 ```
 
+## Local LLM (llama.cpp)
+
+The generation LLM (`LITELLM_MODEL`) doesn't have to be a hosted API — this repo is public, and
+anyone cloning it can point it at their own local model instead. This section documents a real,
+tested setup (built and run on the reference Pi 5), not just a suggestion.
+
+**1. Build `llama-server`** (llama.cpp's own OpenAI-compatible server), into a shared location
+outside any repo so other projects can reuse the same binary/models:
+```
+mkdir -p ~/tools && cd ~/tools
+git clone --depth 1 https://github.com/ggerganov/llama.cpp.git
+cd llama.cpp
+pip install cmake   # only if your system's package manager isn't available (e.g. no sudo) —
+                     # PyPI ships a prebuilt cmake binary for common platforms including aarch64
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=ON
+cmake --build build --config Release --target llama-server -j$(nproc)
+```
+
+**2. Download a GGUF model** into a shared directory (also outside any repo, e.g. an external
+drive if local storage is tight):
+```
+python3 -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download(repo_id='unsloth/Qwen3.5-9B-GGUF', filename='Qwen3.5-9B-Q4_K_M.gguf',
+                 local_dir='/path/to/shared/models/qwen3.5-9b-gguf')
+"
+```
+Pick a size/quantization your machine can actually hold **with real headroom to spare, not just
+barely fit** — check `free -h`'s `available` column against the file size before assuming it'll
+work, and be aware other things already running (a full desktop environment, in the reference
+case) can permanently claim several GB. A model that technically fits but leaves no margin will
+get its memory-mapped pages evicted and re-read from disk during inference, which is far slower
+than compute-bound generation and easy to mistake for "this hardware is just slow." If a model
+you download turns out to be split into several `-00001-of-000NN.gguf` shards, `llama-server`
+loads them natively by pointing `-m` at the first shard — no merge step needed.
+
+**3. Run the server:**
+```
+~/tools/llama.cpp/build/bin/llama-server -m /path/to/shared/models/.../<file>.gguf \
+  --port 8080 --host 127.0.0.1 -c 4096
+```
+
+**4. Point `.env` at it:**
+```
+LITELLM_MODEL=openai/<any-name>            # llama-server ignores the exact string, but litellm needs the openai/ prefix
+LITELLM_API_BASE=http://localhost:8080/v1
+LITELLM_API_KEY=sk-local                   # llama-server doesn't check it, litellm just needs something non-empty
+LITELLM_EXTRA_BODY={"chat_template_kwargs": {"enable_thinking": false}}
+```
+That last line matters more than it looks: Qwen3(.5)-family models default to emitting a
+"thinking" preamble before the real answer, which — untamed — can consume the whole response
+budget and leave `ingest/llm_client.py` looking at an empty `content` field. Without disabling
+it, the local model doesn't just run slow, it doesn't work at all. Other model families disable
+their equivalent reasoning mode differently (Anthropic: `{"thinking": {"type": "disabled"}}`;
+OpenAI reasoning models: `{"reasoning_effort": "low"}`) — `LITELLM_EXTRA_BODY` is deliberately a
+raw passthrough rather than code that guesses at one provider's convention.
+
+**Honest performance note**: on the reference Pi 5 (16GB, CPU-only, desktop environment already
+using ~7.5GB), Qwen3.5-9B-Q4_K_M ran at roughly **1.5–1.7 tokens/second** generation once
+properly cached in RAM. That's slow enough that a full book through `clean.py`/`align.py` could
+take hours — genuinely workable as an overnight batch job given those modules are already
+checkpointed/resumable, but not something to expect chat-speed responsiveness from. This number
+is specific to that one machine, not a property of the model: it's entirely gated by whatever
+hardware you're actually running it on, and anyone cloning this repo with a stronger machine
+(more free RAM, an SSD instead of a spinning disk, more CPU cores) should expect meaningfully
+better throughput. Benchmark your own setup before assuming either way.
+
 ## Search API (spec §10)
 
 ```

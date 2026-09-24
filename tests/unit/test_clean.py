@@ -1,4 +1,6 @@
-"""Unit tests for clean.py's local-model self-review pass."""
+"""Unit tests for clean.py: paragraph chunking and the local-model
+self-review pass.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +8,14 @@ from pathlib import Path
 
 from ye_olde.ingest import clean
 from ye_olde.ingest.corpus_files import CorpusFile
+
+
+def test_chunk_text_respects_max_chars():
+    paragraphs = [f"Paragraph {i} " + "word " * 20 for i in range(10)]
+    text = "\n\n".join(paragraphs)
+    chunks = clean.chunk_text(text, max_chars=300)
+    assert all(len(c) <= 300 or "\n\n" not in c for c in chunks)
+    assert "".join(chunks).count("Paragraph") == 10
 
 
 def test_review_units_with_llm_leaves_correct_units_unchanged(monkeypatch):
@@ -18,9 +28,7 @@ def test_review_units_with_llm_leaves_correct_units_unchanged(monkeypatch):
 
 def test_review_units_with_llm_applies_a_correction(monkeypatch):
     units = ["A unit with [Sidenote: leftover] noise.", "A clean unit."]
-    monkeypatch.setattr(
-        clean, "call_llm_json", lambda *a, **k: ["A unit with noise.", "A clean unit."]
-    )
+    monkeypatch.setattr(clean, "call_llm_json", lambda *a, **k: ["A unit with noise.", "A clean unit."])
 
     reviewed = clean.review_units_with_llm(units, lang_code="enm", work="Work")
     assert reviewed == ["A unit with noise.", "A clean unit."]
@@ -39,9 +47,7 @@ def test_clean_corpus_file_runs_review_only_for_local_models(monkeypatch, tmp_pa
     monkeypatch.setattr(clean, "clean_chunk_with_llm", lambda chunk, **k: ["one unit"])
 
     review_calls = []
-    monkeypatch.setattr(
-        clean, "review_units_with_llm", lambda units, **k: (review_calls.append(1) or units)
-    )
+    monkeypatch.setattr(clean, "review_units_with_llm", lambda units, **k: review_calls.append(1) or units)
 
     monkeypatch.setattr(clean, "is_local_model", lambda *a, **k: False)
     clean.clean_corpus_file(cf, "raw text", cache_path=tmp_path / "a.cleaned.json", use_cache=False)

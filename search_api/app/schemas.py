@@ -22,8 +22,14 @@ class AttestResult(BaseModel):
     dialect: str | None = None
 
 
+class AttestQuery(BaseModel):
+    lemma: str
+    lang: str
+    year: int
+
+
 class AttestResponse(BaseModel):
-    query: dict
+    query: AttestQuery
     results: list[AttestResult]
 
 
@@ -44,9 +50,20 @@ class LookupResult(BaseModel):
     confidence: float
 
 
+class LookupQuery(BaseModel):
+    text: str
+    lang: str
+    year: int
+
+
+class LookupTarget(BaseModel):
+    lang: str
+    year: int
+
+
 class LookupResponse(BaseModel):
-    query: dict
-    target: dict
+    query: LookupQuery
+    target: LookupTarget
     results: list[LookupResult]
 
 

@@ -1,6 +1,6 @@
 """Public entrypoint — spec section 1 (docs/diachronic-translation-pipeline-plan.md).
 
-translate(sentence, lang_A, year_A, lang_B, year_B) -> {sentence, annotations}
+translate(sentence, lang_a, year_a, lang_b, year_b) -> Translation
 
 Not yet implemented: this stub only establishes the contract. See spec section 9
 for the scoped first build task (single-language COHA round trip).
@@ -8,25 +8,27 @@ for the scoped first build task (single-language COHA round trip).
 
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import Literal
+
+from pydantic import BaseModel
 
 
-class Annotation(TypedDict):
+class Annotation(BaseModel):
     span: str
-    status: str  # "attested" | "loan" | "constructed" | "anachronism-passthrough"
+    status: Literal["attested", "loan", "constructed", "anachronism-passthrough"]
     note: str
 
 
-class Translation(TypedDict):
+class Translation(BaseModel):
     sentence: str
     annotations: list[Annotation]
 
 
 def translate(
     sentence: str,
-    lang_A: str,
-    year_A: int,
-    lang_B: str,
-    year_B: int,
+    lang_a: str,
+    year_a: int,
+    lang_b: str,
+    year_b: int,
 ) -> Translation:
     raise NotImplementedError("pipeline not yet implemented — see docs/diachronic-translation-pipeline-plan.md §9")

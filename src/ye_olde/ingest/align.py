@@ -69,7 +69,9 @@ import sys
 import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, TypeAlias
 
+from ..prompt import load_prompt
 from .checkpoint import Checkpoint
 from .clean import clean_corpus_file
 from .corpus_files import CorpusFile, discover_corpus_files
@@ -79,42 +81,15 @@ from .sentence_align import SentenceMatch, mutual_nearest_neighbor_align
 
 _TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 
-_ALIGN_SYSTEM_PROMPT = """\
-You are building a sentence-level parallel corpus (bitext) from two editions \
-of the same work, written at different points in the language's history, so \
-a diachronic-translation retrieval system can look up "how was this word or \
-phrase rendered at the other point in time" the way Linguee does for modern \
-language pairs.
+# A §3c aligned-pair record in its working (pre-output) shape: heterogeneous
+# values (str, list[str], nested alignment_links dicts, float, None) that
+# get progressively filled in across align_block/extract_links_batch/
+# _finalize_records, so a TypedDict would need every field optional from the
+# start — this alias just names what a bare `dict[str, Any]` here *means*.
+PairRecord: TypeAlias = dict[str, Any]
 
-You will be given two ordered lists of content units: SOURCE units and \
-TARGET units. Both are excerpts of the same work and should express the \
-same content in roughly the same order, though wording, sentence \
-boundaries, and structural labels may differ between the two editions.
+_ALIGN_SYSTEM_PROMPT = load_prompt("ingest", "align_system")
 
-For every place where you can confidently match a stretch of SOURCE content \
-to a stretch of TARGET content (they express the same statement, clause, or \
-verse), emit one aligned pair with these fields:
-- "source_text": the exact verbatim excerpt from the SOURCE units expressing \
-that content (copy character-for-character; do not paraphrase, correct \
-spelling, or translate).
-- "target_text": the exact verbatim excerpt from the TARGET units expressing \
-the same content, same rule.
-- "citation": a structural label attached to this content in either edition \
-(e.g. "Fitt I", "Genesis 1:3", "Book II, ch. 3"), or null if none is present.
-- "confidence": your confidence, 0.0-1.0, that this is a faithful and \
-correctly-bounded match.
-- "links": 1-8 word- or short-phrase-level correspondences within this pair \
-worth highlighting for a learner (an attested form in SOURCE next to its \
-counterpart in TARGET), each `{"source_span": "...", "target_span": "..."}` \
-where both spans are exact verbatim substrings of source_text/target_text \
-respectively. Prefer content words (nouns, verbs, notable archaic forms, \
-proper names) over function words. Omit a link rather than guessing at it.
-
-Skip content you cannot confidently align rather than forcing a low-quality \
-match — a smaller correct bitext is more useful than a larger noisy one. \
-Reply with ONLY a JSON array of pair objects (can be empty if nothing in \
-these two blocks matches), no prose, no markdown code fence.\
-"""
 
 def tokenize(text: str) -> list[str]:
     return _TOKEN_RE.findall(text)
@@ -192,7 +167,7 @@ def align_block(
     cf_b: CorpusFile,
     *,
     model: str | None = None,
-) -> list[dict]:
+) -> list[PairRecord]:
     """One LLM call: proposes aligned pairs between two corresponding
     windows of cleaned content, then algorithmically resolves each
     proposed word/phrase link to token indices in a deterministic
@@ -208,7 +183,7 @@ def align_block(
     if not isinstance(raw_pairs, list):
         raise ValueError(f"expected a JSON array of pair objects, got {raw_pairs!r}")
 
-    resolved: list[dict] = []
+    resolved: list[PairRecord] = []
     for rp in raw_pairs:
         if not isinstance(rp, dict):
             continue
@@ -245,29 +220,11 @@ def align_block(
     return resolved
 
 
-_LINKS_SYSTEM_PROMPT = """\
-You are given several already-matched sentence/verse pairs from two \
-editions of the same work, written at different points in the language's \
-history. The sentence-level matching is already decided and correct — your \
-only job is word/phrase-level linking within each given pair.
-
-For each pair, propose 1-8 word- or short-phrase-level correspondences \
-worth highlighting for a learner (an attested form on the SOURCE side next \
-to its counterpart on the TARGET side). Prefer content words (nouns, \
-verbs, notable archaic forms, proper names) over function words. Omit a \
-link rather than guessing at it.
-
-Reply with ONLY a JSON array, the same length and in the same order as the \
-numbered input pairs, where item k is the list of links for pair k: \
-`[{"source_span": "...", "target_span": "..."}, ...]` (an empty list is \
-fine for a pair with no confident links). Every span must be an exact \
-verbatim substring of that pair's own source/target text — no prose, no \
-markdown code fence.\
-"""
+_LINKS_SYSTEM_PROMPT = load_prompt("ingest", "links_system")
 
 
 def extract_links_batch(
-    pairs: list[dict],
+    pairs: list[PairRecord],
     cf_a: CorpusFile,
     cf_b: CorpusFile,
     *,
@@ -288,18 +245,15 @@ def extract_links_batch(
         print(f"[align] links: batch {batch_num}/{n_batches} ({len(pairs)} anchors)", file=sys.stderr, flush=True)
         batch = pairs[start : start + batch_size]
         prompt = "\n".join(
-            f'{k}. SOURCE ({cf_a.lang_code}): {p["source_text"]}\n'
-            f'   TARGET ({cf_b.lang_code}): {p["target_text"]}'
+            f"{k}. SOURCE ({cf_a.lang_code}): {p['source_text']}\n   TARGET ({cf_b.lang_code}): {p['target_text']}"
             for k, p in enumerate(batch)
         )
+
+        def compute(prompt: str = prompt) -> object:
+            return call_llm_json(prompt, system=_LINKS_SYSTEM_PROMPT, model=model)
+
         try:
-            if checkpoint is not None:
-                raw = checkpoint.get_or_compute(
-                    f"links:{batch_num}",
-                    lambda prompt=prompt: call_llm_json(prompt, system=_LINKS_SYSTEM_PROMPT, model=model),
-                )
-            else:
-                raw = call_llm_json(prompt, system=_LINKS_SYSTEM_PROMPT, model=model)
+            raw = checkpoint.get_or_compute(f"links:{batch_num}", compute) if checkpoint is not None else compute()
         except ValueError:
             continue  # leave alignment_links empty for this batch rather than failing the whole run
         if not isinstance(raw, list):
@@ -327,7 +281,7 @@ def _discover_pairs_llm(
     block_size: int,
     checkpoint: Checkpoint | None = None,
     key_prefix: str = "gap",
-) -> list[dict]:
+) -> list[PairRecord]:
     """Runs full LLM sentence-discovery (same as "llm" mode) over a small
     unmatched stretch left over by the embedding aligner, instead of the
     whole document — this is what keeps hybrid mode's LLM cost down to
@@ -337,7 +291,7 @@ def _discover_pairs_llm(
     exactly the case that died mid-gap on Sir Gawayne.
     """
 
-    def call(block_a: list[str], block_b: list[str], key: str) -> list[dict]:
+    def call(block_a: list[str], block_b: list[str], key: str) -> list[PairRecord]:
         if checkpoint is not None:
             return checkpoint.get_or_compute(key, lambda: align_block(block_a, block_b, cf_a, cf_b, model=model))
         return align_block(block_a, block_b, cf_a, cf_b, model=model)
@@ -359,18 +313,17 @@ def _align_pairs_llm_only(
     model: str | None,
     block_size: int,
     checkpoint: Checkpoint | None = None,
-) -> list[dict]:
+) -> list[PairRecord]:
     blocks = make_blocks(units_a, units_b, block_size=block_size)
     seen: set[tuple[str, str]] = set()
-    pairs: list[dict] = []
+    pairs: list[PairRecord] = []
     for block_num, (block_a, block_b) in enumerate(blocks, start=1):
         print(f"[align] llm mode: block {block_num}/{len(blocks)}", file=sys.stderr, flush=True)
-        if checkpoint is not None:
-            block_pairs = checkpoint.get_or_compute(
-                f"block:{block_num}", lambda ba=block_a, bb=block_b: align_block(ba, bb, cf_a, cf_b, model=model)
-            )
-        else:
-            block_pairs = align_block(block_a, block_b, cf_a, cf_b, model=model)
+
+        def compute(ba: list[str] = block_a, bb: list[str] = block_b) -> list[PairRecord]:
+            return align_block(ba, bb, cf_a, cf_b, model=model)
+
+        block_pairs = checkpoint.get_or_compute(f"block:{block_num}", compute) if checkpoint is not None else compute()
         for pair in block_pairs:
             key = (_normalize(pair["source_text"]), _normalize(pair["target_text"]))
             if key in seen:
@@ -392,7 +345,7 @@ def _align_pairs_hybrid(
     margin_threshold: float,
     link_batch_size: int,
     checkpoint: Checkpoint | None = None,
-) -> list[dict]:
+) -> list[PairRecord]:
     n_a, n_b = len(units_a), len(units_b)
     print(f"[align] hybrid: embedding {n_a}+{n_b} units and matching...", file=sys.stderr, flush=True)
     matches = mutual_nearest_neighbor_align(
@@ -400,8 +353,8 @@ def _align_pairs_hybrid(
     )
     print(f"[align] hybrid: {len(matches)} embedding anchors found", file=sys.stderr)
 
-    pairs: list[dict] = []
-    anchors: list[dict] = []
+    pairs: list[PairRecord] = []
+    anchors: list[PairRecord] = []
     prev_i, prev_j = -1, -1
     gap_index = 0
     for m in [*matches, SentenceMatch(i=n_a, j=n_b, score=0.0)]:  # sentinel: flush the trailing gap
@@ -471,7 +424,7 @@ def align_corpus_pair(
     link_batch_size: int = 15,
     checkpoint_path: Path | None = None,
     use_checkpoint: bool = True,
-) -> list[dict]:
+) -> list[PairRecord]:
     """Aligns two whole cleaned works into deduped §3c-shaped pair records.
     See the module docstring for what `mode="hybrid"` vs. `mode="llm"` mean.
 
@@ -524,40 +477,18 @@ def align_corpus_pair(
     return _finalize_records(cf_a, cf_b, pairs, model=model, embedding_model=embedding_model)
 
 
-_PAIR_REVIEW_SYSTEM_PROMPT = """\
-You are double-checking sentence-pair alignments already produced (by you \
-or an earlier pass of this pipeline) before they're used as reference \
-examples. You will be given several numbered pairs, each with its source \
-text, target text, and citation.
-
-If a pair already looks correct — source_text and target_text genuinely \
-express the same content, nothing is truncated, garbled, or mismatched — \
-leave it completely unchanged. Do not rephrase, "improve," or modernize \
-either side even slightly; do not correct spelling. Perfection means an \
-output identical to the input.
-
-Only fix a pair with an actual, clear defect (target_text doesn't match \
-source_text's content at all, obviously truncated/garbled text, a \
-citation that's clearly wrong). Any corrected source_text/target_text you \
-give must still be an exact excerpt of that side's original wording — \
-never invent or paraphrase replacement text.
-
-Reply with ONLY a JSON array, the same length and order as the numbered \
-input pairs: `[{"source_text": "...", "target_text": "...", "citation": ...}, ...]` \
-— for an unchanged pair, repeat its source_text/target_text/citation \
-exactly as given. No prose, no markdown code fence.\
-"""
+_PAIR_REVIEW_SYSTEM_PROMPT = load_prompt("ingest", "pair_review_system")
 
 
 def review_pairs_with_llm(
-    pairs: list[dict],
+    pairs: list[PairRecord],
     cf_a: CorpusFile,
     cf_b: CorpusFile,
     *,
     model: str | None = None,
     batch_size: int = 15,
     checkpoint: Checkpoint | None = None,
-) -> list[dict]:
+) -> list[PairRecord]:
     """Second-opinion pass over already-aligned pairs — see `is_local_model`
     for why this only runs for local models. A pair whose text the review
     actually changes has its tokens retokenized and its `alignment_links`
@@ -565,19 +496,19 @@ def review_pairs_with_llm(
     point at the wrong words) — `_verify_pairs_against_source` afterwards
     is what actually guards against the review inventing new wording.
     """
-    reviewed: list[dict] = []
+    reviewed: list[PairRecord] = []
     n_batches = -(-len(pairs) // batch_size) if pairs else 0
     for batch_num, start in enumerate(range(0, len(pairs), batch_size), start=1):
         print(f"[align] review: batch {batch_num}/{n_batches}", file=sys.stderr, flush=True)
         batch = pairs[start : start + batch_size]
         prompt = "\n".join(
-            f'{k}. SOURCE ({cf_a.lang_code}): {p["source_text"]}\n'
-            f'   TARGET ({cf_b.lang_code}): {p["target_text"]}\n'
-            f'   citation: {p.get("citation")!r}'
+            f"{k}. SOURCE ({cf_a.lang_code}): {p['source_text']}\n"
+            f"   TARGET ({cf_b.lang_code}): {p['target_text']}\n"
+            f"   citation: {p.get('citation')!r}"
             for k, p in enumerate(batch)
         )
 
-        def compute():
+        def compute(prompt: str = prompt) -> object:
             return call_llm_json(prompt, system=_PAIR_REVIEW_SYSTEM_PROMPT, model=model)
 
         try:
@@ -616,7 +547,7 @@ def _normalize_for_verification(text: str) -> str:
     return " ".join(text.split()).lower()
 
 
-def _verify_pairs_against_source(pairs: list[dict], units_a: list[str], units_b: list[str]) -> list[dict]:
+def _verify_pairs_against_source(pairs: list[PairRecord], units_a: list[str], units_b: list[str]) -> list[PairRecord]:
     """Deterministic, non-LLM safety net: a pair's source_text/target_text
     must be a verbatim, in-order excerpt of the cleaned units it was
     aligned from. The alignment step (and the optional review pass above)
@@ -648,11 +579,11 @@ def _verify_pairs_against_source(pairs: list[dict], units_a: list[str], units_b:
 def _finalize_records(
     cf_a: CorpusFile,
     cf_b: CorpusFile,
-    pairs: list[dict],
+    pairs: list[PairRecord],
     *,
     model: str | None,
     embedding_model: str | None,
-) -> list[dict]:
+) -> list[PairRecord]:
     slug = _slugify(cf_a.title)
     resolved_model = model or _default_model_label()
     resolved_embedding_model = embedding_model or _default_embedding_model_label()
@@ -696,7 +627,7 @@ def _default_embedding_model_label() -> str:
     return get_settings().embedding_model
 
 
-def write_jsonl(records: list[dict], path: Path) -> None:
+def write_jsonl(records: list[PairRecord], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as f:
         for record in records:
@@ -742,9 +673,7 @@ def align_corpus_folder(
     for cf in files:
         raw_text = strip_boilerplate(extract_text(cf.path))
         cache_path = processed_root / f"{cf.path.stem}.cleaned.json"
-        cleaned[cf.path] = clean_corpus_file(
-            cf, raw_text, cache_path=cache_path, model=model, use_cache=use_cache
-        )
+        cleaned[cf.path] = clean_corpus_file(cf, raw_text, cache_path=cache_path, model=model, use_cache=use_cache)
 
     written: list[Path] = []
     for cf_a, cf_b in itertools.combinations(files, 2):

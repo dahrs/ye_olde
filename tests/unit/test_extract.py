@@ -1,8 +1,26 @@
-"""Unit tests for extract.py's deterministic PDF mojibake repair."""
+"""Unit tests for extract.py: Gutenberg boilerplate stripping and
+deterministic PDF mojibake repair.
+"""
 
 from __future__ import annotations
 
-from ye_olde.ingest.extract import fix_pdf_mojibake
+from ye_olde.ingest.extract import fix_pdf_mojibake, strip_boilerplate
+
+
+def test_strip_boilerplate_cuts_gutenberg_banner():
+    text = (
+        "License preamble...\n"
+        "*** START OF THE PROJECT GUTENBERG EBOOK FOO ***\n"
+        "Actual content here.\n"
+        "*** END OF THE PROJECT GUTENBERG EBOOK FOO ***\n"
+        "Donation appeal..."
+    )
+    assert strip_boilerplate(text) == "Actual content here."
+
+
+def test_strip_boilerplate_passthrough_without_banner():
+    text = "No banner here, just content."
+    assert strip_boilerplate(text) == text
 
 
 def test_fix_pdf_mojibake_repairs_macroman_typographic_punctuation():

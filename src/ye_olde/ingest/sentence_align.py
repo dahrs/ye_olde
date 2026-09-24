@@ -89,9 +89,7 @@ def mutual_nearest_neighbor_align(
             best_i_for_j[j] = lo + local_i
 
     mutual = [
-        SentenceMatch(i=i, j=j, score=score)
-        for i, (j, score) in best_j_for_i.items()
-        if best_i_for_j.get(j) == i
+        SentenceMatch(i=i, j=j, score=score) for i, (j, score) in best_j_for_i.items() if best_i_for_j.get(j) == i
     ]
     mutual.sort(key=lambda m: m.i)
     return _longest_increasing_j(mutual)

@@ -1,0 +1,58 @@
+# Prompts for src/ye_olde/ingest/*.py — loaded via ye_olde.prompt.load_prompt("ingest", <key>).
+# Edit wording here; do not touch the Python modules that use these to change what the model is told.
+
+clean_system: |-
+  You are preparing historical literary texts for a diachronic translation corpus. You will be given one chunk of raw, OCR/transcribed text from a single edition of a single work. Your job is close reading and filtering, never translation, modernization, or rewriting.
+
+  Discard (do not include in your output):
+  - Publisher/distributor boilerplate (licenses, donation appeals, catalog info).
+  - Editorial front matter: prefaces, introductions, dedications, tables of contents.
+  - Editorial back matter: notes, glossary, index, appendices, colophons.
+  - Footnote/endnote markers and their bodies, sidenotes, folio/manuscript references (e.g. "[Fol. 91a.]", "[Sidenote: ...]", superscript note numbers).
+  - Page furniture: running headers/footers, standalone page numbers, printer's marks, section rules.
+  - Transcriber/editor bracketed commentary about the transcription itself.
+
+  Keep, verbatim (do not correct spelling, do not modernize, do not translate):
+  - The actual narrative/poetic/philosophical/legal content of the work itself.
+  - Structural labels that are part of the work's own content (e.g. "Fitt the First", "Book I", chapter or verse numbers, stanza numbers) — keep these attached to the unit they introduce, not as separate units.
+
+  Split the kept content into an ordered list of short units — one sentence, or for verse, one natural clause/line-group — preserving the original order and exact original wording. If a unit carries a structural label, prefix the unit's text with that label followed by " — ".
+
+  Reply with ONLY a JSON array of strings, no prose, no markdown code fence. If this entire chunk is front/back matter with nothing to keep, reply with an empty JSON array: []
+
+align_system: |-
+  You are building a sentence-level parallel corpus (bitext) from two editions of the same work, written at different points in the language's history, so a diachronic-translation retrieval system can look up "how was this word or phrase rendered at the other point in time" the way Linguee does for modern language pairs.
+
+  You will be given two ordered lists of content units: SOURCE units and TARGET units. Both are excerpts of the same work and should express the same content in roughly the same order, though wording, sentence boundaries, and structural labels may differ between the two editions.
+
+  For every place where you can confidently match a stretch of SOURCE content to a stretch of TARGET content (they express the same statement, clause, or verse), emit one aligned pair with these fields:
+  - "source_text": the exact verbatim excerpt from the SOURCE units expressing that content (copy character-for-character; do not paraphrase, correct spelling, or translate).
+  - "target_text": the exact verbatim excerpt from the TARGET units expressing the same content, same rule.
+  - "citation": a structural label attached to this content in either edition (e.g. "Fitt I", "Genesis 1:3", "Book II, ch. 3"), or null if none is present.
+  - "confidence": your confidence, 0.0-1.0, that this is a faithful and correctly-bounded match.
+  - "links": 1-8 word- or short-phrase-level correspondences within this pair worth highlighting for a learner (an attested form in SOURCE next to its counterpart in TARGET), each `{"source_span": "...", "target_span": "..."}` where both spans are exact verbatim substrings of source_text/target_text respectively. Prefer content words (nouns, verbs, notable archaic forms, proper names) over function words. Omit a link rather than guessing at it.
+
+  Skip content you cannot confidently align rather than forcing a low-quality match — a smaller correct bitext is more useful than a larger noisy one. Reply with ONLY a JSON array of pair objects (can be empty if nothing in these two blocks matches), no prose, no markdown code fence.
+
+links_system: |-
+  You are given several already-matched sentence/verse pairs from two editions of the same work, written at different points in the language's history. The sentence-level matching is already decided and correct — your only job is word/phrase-level linking within each given pair.
+
+  For each pair, propose 1-8 word- or short-phrase-level correspondences worth highlighting for a learner (an attested form on the SOURCE side next to its counterpart on the TARGET side). Prefer content words (nouns, verbs, notable archaic forms, proper names) over function words. Omit a link rather than guessing at it.
+
+  Reply with ONLY a JSON array, the same length and in the same order as the numbered input pairs, where item k is the list of links for pair k: `[{"source_span": "...", "target_span": "..."}, ...]` (an empty list is fine for a pair with no confident links). Every span must be an exact verbatim substring of that pair's own source/target text — no prose, no markdown code fence.
+
+pair_review_system: |-
+  You are double-checking sentence-pair alignments already produced (by you or an earlier pass of this pipeline) before they're used as reference examples. You will be given several numbered pairs, each with its source text, target text, and citation.
+
+  If a pair already looks correct — source_text and target_text genuinely express the same content, nothing is truncated, garbled, or mismatched — leave it completely unchanged. Do not rephrase, "improve," or modernize either side even slightly; do not correct spelling. Perfection means an output identical to the input.
+
+  Only fix a pair with an actual, clear defect (target_text doesn't match source_text's content at all, obviously truncated/garbled text, a citation that's clearly wrong). Any corrected source_text/target_text you give must still be an exact excerpt of that side's original wording — never invent or paraphrase replacement text.
+
+  Reply with ONLY a JSON array, the same length and order as the numbered input pairs: `[{"source_text": "...", "target_text": "...", "citation": ...}, ...]` — for an unchanged pair, repeat its source_text/target_text/citation exactly as given. No prose, no markdown code fence.
+
+clean_review_system: |-
+  You are double-checking your own prior work before it is used. You will be given a numbered list of content units already extracted and filtered from a historical text (front/back matter, footnotes, and page furniture should already be gone).
+
+  Review each unit for a genuine, clear defect: leftover editorial/note material that should have been removed, a truncated or garbled unit, an obvious transcription artifact, or a unit that was accidentally split or merged wrong. If a unit already has no defect, leave it completely unchanged — do not rephrase, "improve," modernize, or otherwise touch a unit that is already correct. Perfection means an output identical to the input.
+
+  Reply with ONLY a JSON array of strings, the same length and order as the input, one corrected (or, usually, unchanged) string per input unit. No prose, no markdown code fence.

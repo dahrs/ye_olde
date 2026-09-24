@@ -31,9 +31,7 @@ def test_mutual_nearest_neighbor_align_clean_case(monkeypatch):
         lambda units, **k: np.array([vectors[u] for u in units], dtype=float),
     )
 
-    matches = sentence_align.mutual_nearest_neighbor_align(
-        ["a0", "a1", "a2", "a3"], ["b0", "b1", "b2", "b3", "b4"]
-    )
+    matches = sentence_align.mutual_nearest_neighbor_align(["a0", "a1", "a2", "a3"], ["b0", "b1", "b2", "b3", "b4"])
 
     assert [(m.i, m.j) for m in matches] == [(0, 0), (1, 1), (2, 2), (3, 3)]
     assert all(m.score == pytest.approx(1.0) for m in matches)

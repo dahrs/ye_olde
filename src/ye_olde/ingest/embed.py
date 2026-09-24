@@ -11,10 +11,14 @@ footprint of the deployed pipeline.
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from ..config import get_settings
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
 
 # intfloat's e5 model family is trained with a "query: "/"passage: " input
 # convention; for symmetric similarity tasks (STS, bitext mining — this is
@@ -25,7 +29,7 @@ _E5_PREFIX = "query: "
 
 
 @lru_cache(maxsize=2)
-def _get_model(model_name: str):
+def _get_model(model_name: str) -> SentenceTransformer:
     from sentence_transformers import SentenceTransformer
 
     return SentenceTransformer(model_name)

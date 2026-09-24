@@ -44,10 +44,7 @@ def parse_corpus_filename(path: Path) -> CorpusFile:
     stem = path.stem
     parts = stem.split("-")
     if len(parts) < 5:
-        raise ValueError(
-            f"{path.name!r} doesn't match "
-            "<lang>-<year>-<title>-<author>-<source>{.txt,.pdf}"
-        )
+        raise ValueError(f"{path.name!r} doesn't match <lang>-<year>-<title>-<author>-<source>{{.txt,.pdf}}")
     lang_code, year_str = parts[0], parts[1]
     source = parts[-1]
     author = parts[-2]
@@ -79,7 +76,6 @@ def discover_corpus_files(folder: Path) -> list[CorpusFile]:
     ]
     if len(files) < 2:
         raise ValueError(
-            f"{folder} has {len(files)} supported file(s); need at least 2 "
-            "parallel translations to build a bitext"
+            f"{folder} has {len(files)} supported file(s); need at least 2 parallel translations to build a bitext"
         )
     return sorted(files, key=lambda cf: cf.year)

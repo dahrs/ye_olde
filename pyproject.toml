@@ -9,6 +9,7 @@ dependencies = [
     "pydantic>=2",
     "pydantic-settings>=2",
     "python-dotenv>=1",
+    "pyyaml>=6",
 ]
 
 [project.optional-dependencies]
@@ -29,6 +30,10 @@ ingest = [
 ]
 dev = [
     "pytest>=8",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML>=6",
+    "types-jsonschema>=4",
 ]
 
 [build-system]
@@ -37,3 +42,58 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ye_olde"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "search_api", "scripts", "eval"]
+extend-exclude = ["search_api/.venv", "data", "eval/baselines", "eval/outputs", "eval/reports"]
+
+[tool.ruff.lint.isort]
+# Two independent first-party trees in this repo: the ye_olde package
+# (src/ye_olde, imported project-wide) and search_api's own `app` package
+# (a separately deployed service, see search_api/app/config.py's docstring
+# for why it doesn't depend on ye_olde) — both sort after third-party
+# imports, neither after the other.
+known-first-party = ["ye_olde", "app"]
+
+[tool.ruff.lint]
+# E/W: pycodestyle (PEP 8). F: pyflakes. I: import sorting. UP: pyupgrade
+# (modern syntax for the declared target-version). B: flake8-bugbear (common
+# correctness bugs). N: PEP 8 naming. C4: flake8-comprehensions.
+select = ["E", "W", "F", "I", "UP", "B", "N", "C4"]
+ignore = [
+    "E501",  # line length is enforced by the formatter, not the linter
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use monkeypatch on private module attributes (leading underscore) by
+# design, and assert-heavy style pytest itself expects.
+"tests/**" = ["N802"]
+# LOCAL_MODEL/LOCAL_API_BASE are deliberately the first thing in the file,
+# above the imports, since they're the two lines a dev is meant to hand-edit
+# before running this harness (see the module docstring) — imports below
+# them is the point, not an oversight.
+"eval/run_local_model_eval.py" = ["E402"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+# Checked against the interpreter mypy actually runs under (3.13, see
+# .venv), not `requires-python`'s floor (3.11) — numpy's bundled stubs use
+# PEP 695 `type` statement syntax mypy only parses under python_version
+# >= 3.12, and nothing in this project's own code uses anything numpy/
+# sentence-transformers-adjacent that isn't also valid on 3.11.
+python_version = "3.13"
+strict = true
+warn_unused_ignores = true
+exclude = ["^\\.venv/", "^search_api/\\.venv/", "^eval/(baselines|outputs|reports)/"]
+
+# Third-party libraries this project uses that ship no type stubs and have
+# none published on PyPI (types-PyYAML/types-jsonschema above cover the two
+# that do) — silenced here, once, rather than with a per-call-site
+# `# type: ignore` scattered through every module that imports them.
+[[tool.mypy.overrides]]
+module = ["litellm.*", "sentence_transformers.*", "pypdf.*"]
+ignore_missing_imports = true

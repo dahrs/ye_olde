@@ -23,7 +23,7 @@ T = TypeVar("T")
 
 
 class Checkpoint:
-    def __init__(self, path: Path, meta: dict):
+    def __init__(self, path: Path, meta: dict[str, object]):
         self.path = path
         self.meta = meta
         self.entries: dict[str, object] = {}

@@ -1,0 +1,39 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      # Local (not the mirrored mypy-mirrors-mypy hook) because this repo has
+      # two independently-installed environments — the root ye_olde package
+      # (src/, uv-managed) and search_api's own app package (its own
+      # requirements.txt, see search_api/app/config.py) — and each needs
+      # mypy running with *its own* dependencies importable to type-check
+      # third-party calls correctly.
+      - id: mypy-ye-olde
+        name: mypy (ye_olde package)
+        entry: .venv/bin/mypy src
+        language: system
+        pass_filenames: false
+        files: ^src/
+
+      - id: mypy-search-api
+        name: mypy (search_api)
+        entry: bash -c 'cd search_api && .venv/bin/mypy app'
+        language: system
+        pass_filenames: false
+        files: ^search_api/app/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1000]

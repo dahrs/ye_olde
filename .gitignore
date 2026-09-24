@@ -58,6 +58,9 @@ cover/
 # Django stuff:
 *.log
 local_settings.py
+
+# ye_olde runtime logs (rotating file handler, see src/ye_olde/common/logging.py)
+logs/
 db.sqlite3
 db.sqlite3-journal
 
