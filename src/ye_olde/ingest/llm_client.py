@@ -25,9 +25,11 @@ than an uncapped local reasoning call can need.
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import re
 from typing import Any
+from urllib.parse import urlparse
 
 from ..common.errors import LLMEmptyResponseError, LLMNotConfiguredError
 from ..common.logging import get_logger
@@ -74,18 +76,44 @@ _LOCAL_INFERENCE_PROVIDERS = {
 }
 
 
-def is_local_model(model: str | None = None) -> bool:
-    """True if litellm resolves the model to a self-hosted/local-inference
-    provider (Ollama, vLLM, LM Studio, ...) rather than a commercial hosted
-    API.
+def _is_loopback_or_private_host(url: str) -> bool:
+    try:
+        host = urlparse(url).hostname
+    except ValueError:
+        return False
+    if not host:
+        return False
+    if host == "localhost":
+        return True
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False  # a real hostname (not an IP/localhost) -> not treated as local
+    return addr.is_loopback or addr.is_private
 
-    Deliberately asks litellm this directly (`get_llm_provider`, which
-    parses the model string the same way `litellm.completion` itself will)
-    rather than inferring it from our own project config: checking whether
-    `LITELLM_API_BASE` happens to be set would be wrong in both directions
-    — it can be set for a hosted API behind a corporate proxy/gateway, and
-    it can be left unset for a local provider litellm defaults a base URL
-    for automatically (e.g. `ollama/*` -> `http://localhost:11434`).
+
+def is_local_model(model: str | None = None) -> bool:
+    """True if this call is going to a self-hosted/local-inference backend
+    rather than a commercial hosted API, checked two independent ways:
+
+    1. litellm resolves the model string to a known local-inference
+       provider (Ollama, vLLM, LM Studio, ...) — asked of litellm directly
+       (`get_llm_provider`, which parses the model string the same way
+       `litellm.completion` itself will) rather than inferred from our own
+       project config.
+    2. The resolved `api_base` points at a loopback/private address. This
+       catches the llama.cpp setup this README documents: `llama-server`
+       is an OpenAI-*compatible* server, so its recommended
+       `LITELLM_MODEL=openai/<any-name>` resolves to provider "openai" —
+       indistinguishable from the real hosted OpenAI API by provider name
+       alone. Checking whether the request is actually going to a private
+       address closes that gap.
+
+    Neither check alone is sufficient: `LITELLM_API_BASE` being set can
+    also mean a hosted API behind a corporate proxy/gateway (not local),
+    and a local provider can leave it unset since litellm defaults one
+    automatically (e.g. `ollama/*` -> `http://localhost:11434`, which is
+    why check 2 uses litellm's *resolved* api_base, not the raw setting).
     """
     import litellm
 
@@ -94,14 +122,18 @@ def is_local_model(model: str | None = None) -> bool:
     if not resolved_model:
         return False
     try:
-        _, provider, _, _ = litellm.get_llm_provider(resolved_model, api_base=settings.litellm_api_base or None)
+        _, provider, _, resolved_api_base = litellm.get_llm_provider(
+            resolved_model, api_base=settings.litellm_api_base or None
+        )
     except Exception as exc:
         # Unresolvable model string -> don't assume it's free to call again.
         # Logged (not silent) since this changes downstream behavior (no
         # review pass) even though it's an expected, handled case.
         _log.debug("could not resolve provider for %r: %s", resolved_model, exc)
         return False
-    return provider in _LOCAL_INFERENCE_PROVIDERS
+    if provider in _LOCAL_INFERENCE_PROVIDERS:
+        return True
+    return bool(resolved_api_base) and _is_loopback_or_private_host(resolved_api_base)
 
 
 def call_llm_json(

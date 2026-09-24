@@ -156,3 +156,39 @@ def test_is_local_model_false_for_unresolvable_model(monkeypatch):
 
     monkeypatch.setattr(lc, "get_settings", lambda: Settings(litellm_model=""))
     assert lc.is_local_model() is False
+
+
+def test_is_local_model_true_for_llama_cpp_openai_compatible_setup(monkeypatch):
+    """llama-server (README's documented local setup) is OpenAI-compatible,
+    so its recommended LITELLM_MODEL=openai/<any-name> resolves to provider
+    "openai" — indistinguishable from the real hosted API by provider name
+    alone. The loopback api_base is what makes this correctly local.
+    """
+    from ye_olde.config import Settings
+    from ye_olde.ingest import llm_client as lc
+
+    monkeypatch.setattr(
+        lc,
+        "get_settings",
+        lambda: Settings(litellm_model="openai/local-qwen", litellm_api_base="http://localhost:8080/v1"),
+    )
+    assert lc.is_local_model() is True
+
+
+def test_is_local_model_true_for_loopback_ip_and_private_network_base_url(monkeypatch):
+    from ye_olde.config import Settings
+    from ye_olde.ingest import llm_client as lc
+
+    monkeypatch.setattr(
+        lc,
+        "get_settings",
+        lambda: Settings(litellm_model="openai/x", litellm_api_base="http://127.0.0.1:8080/v1"),
+    )
+    assert lc.is_local_model() is True
+
+    monkeypatch.setattr(
+        lc,
+        "get_settings",
+        lambda: Settings(litellm_model="openai/x", litellm_api_base="http://192.168.1.50:8080/v1"),
+    )
+    assert lc.is_local_model() is True

@@ -44,6 +44,13 @@ The generation LLM (`LITELLM_MODEL`) doesn't have to be a hosted API — this re
 anyone cloning it can point it at their own local model instead. This section documents a real,
 tested setup (built and run on the reference Pi 5), not just a suggestion.
 
+llama.cpp's own server is one way to do this, not the only one — e.g. Ollama works too, with its
+own native `LITELLM_MODEL=ollama/<name>` prefix instead of an OpenAI-compatible endpoint (litellm
+resolves that prefix to a genuinely different code path, not just a naming choice). This section
+documents llama.cpp specifically because that's the setup actually built and benchmarked here;
+`ye_olde.ingest.llm_client.is_local_model()` recognizes both patterns (and others — see that
+function's docstring) when deciding whether a call is free to re-check with a second pass.
+
 **1. Build `llama-server`** (llama.cpp's own OpenAI-compatible server), into a shared location
 outside any repo so other projects can reuse the same binary/models:
 ```
@@ -88,6 +95,14 @@ LITELLM_API_KEY=sk-local                   # llama-server doesn't check it, lite
 LITELLM_TIMEOUT_SECONDS=6000               # litellm's own implicit default is far too short for a slow local reasoning call
 LITELLM_NO_THINKING_EXTRA_BODY={"chat_template_kwargs": {"enable_thinking": false}}
 ```
+**This does not call the real OpenAI API.** The `openai/` prefix is only litellm's way of picking which wire
+protocol to speak — llama-server deliberately implements that same request/response shape so any
+OpenAI-compatible client can talk to it, but every request still goes to `LITELLM_API_BASE` above (your own
+machine), never to `api.openai.com`. `LITELLM_API_KEY` is a throwaway placeholder for the same reason:
+llama-server doesn't check it, litellm just requires the field to be non-empty. If this ever looks
+suspicious, two easy ways to confirm you're actually hitting the local server: response latency (real OpenAI
+answers in ~1-2s; this setup is ~1.5-1.7 tok/s, so anything more than a couple words takes minutes) and the
+fact that a fake API key like `sk-local` works at all (the real API would reject it immediately).
 Leave `LITELLM_EXTRA_BODY` itself blank. Qwen3(.5)-family models default to emitting a
 "thinking" preamble before the real answer — left alone, deliberately, since reasoning can
 genuinely help `ingest/llm_client.py`'s close-reading/alignment judgment calls. The risk is a
