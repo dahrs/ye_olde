@@ -35,7 +35,10 @@ class HighlightedSpan(BaseModel):
 class LookupResult(BaseModel):
     pair_id: str
     target_sentence: str
-    highlighted_span: HighlightedSpan
+    # None when the pair's word-alignment step hasn't run yet (spec §6) — the
+    # sentence pair still matched on the queried source token, just without a
+    # precise span to highlight in the target.
+    highlighted_span: HighlightedSpan | None = None
     source_sentence: str
     citation: str
     confidence: float

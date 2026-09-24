@@ -53,22 +53,29 @@ def lookup(text: str, lang: str, year: int, target_lang: str, target_year: int) 
             match_idx = {i for i, t in enumerate(source_tokens) if t.lower() == text.lower()}
             if not match_idx:
                 continue
+            # Prefer a precise word-level highlight when alignment_links
+            # exist; fall back to the matched sentence pair with no
+            # highlight when they don't (§6's word-alignment step hasn't
+            # run on this pair yet) rather than dropping a real match.
+            span = None
             for link in row.get("alignment_links") or []:
                 if match_idx & set(link["source_idx"]):
                     span_idx = link["target_idx"]
-                    results.append(
-                        LookupResult(
-                            pair_id=row["pair_id"],
-                            target_sentence=row["target_text"],
-                            highlighted_span=HighlightedSpan(
-                                token_idx=span_idx,
-                                surface=" ".join(target_tokens[i] for i in span_idx),
-                            ),
-                            source_sentence=row["source_text"],
-                            citation=row.get("citation", ""),
-                            confidence=row.get("sentence_confidence", 0.0),
-                        )
+                    span = HighlightedSpan(
+                        token_idx=span_idx,
+                        surface=" ".join(target_tokens[i] for i in span_idx),
                     )
+                    break
+            results.append(
+                LookupResult(
+                    pair_id=row["pair_id"],
+                    target_sentence=row["target_text"],
+                    highlighted_span=span,
+                    source_sentence=row["source_text"],
+                    citation=row.get("citation") or "",
+                    confidence=row.get("sentence_confidence") or 0.0,
+                )
+            )
     return LookupResponse(
         query={"text": text, "lang": lang, "year": year},
         target={"lang": target_lang, "year": target_year},
