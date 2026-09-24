@@ -85,25 +85,36 @@ loads them natively by pointing `-m` at the first shard — no merge step needed
 LITELLM_MODEL=openai/<any-name>            # llama-server ignores the exact string, but litellm needs the openai/ prefix
 LITELLM_API_BASE=http://localhost:8080/v1
 LITELLM_API_KEY=sk-local                   # llama-server doesn't check it, litellm just needs something non-empty
-LITELLM_EXTRA_BODY={"chat_template_kwargs": {"enable_thinking": false}}
+LITELLM_TIMEOUT_SECONDS=6000               # litellm's own implicit default is far too short for a slow local reasoning call
+LITELLM_NO_THINKING_EXTRA_BODY={"chat_template_kwargs": {"enable_thinking": false}}
 ```
-That last line matters more than it looks: Qwen3(.5)-family models default to emitting a
-"thinking" preamble before the real answer, which — untamed — can consume the whole response
-budget and leave `ingest/llm_client.py` looking at an empty `content` field. Without disabling
-it, the local model doesn't just run slow, it doesn't work at all. Other model families disable
-their equivalent reasoning mode differently (Anthropic: `{"thinking": {"type": "disabled"}}`;
-OpenAI reasoning models: `{"reasoning_effort": "low"}`) — `LITELLM_EXTRA_BODY` is deliberately a
-raw passthrough rather than code that guesses at one provider's convention.
+Leave `LITELLM_EXTRA_BODY` itself blank. Qwen3(.5)-family models default to emitting a
+"thinking" preamble before the real answer — left alone, deliberately, since reasoning can
+genuinely help `ingest/llm_client.py`'s close-reading/alignment judgment calls. The risk is a
+reasoning trace long enough to fill the whole context window before producing an answer, which
+comes back as empty `content`. `call_llm_json` handles that itself: one retry of the same call
+using `LITELLM_NO_THINKING_EXTRA_BODY` instead, then reasoning is back on for the next call
+regardless. Leave that setting blank and a call like that raises instead of being rescued. Other
+model families disable their equivalent reasoning mode differently (Anthropic:
+`{"thinking": {"type": "disabled"}}`; OpenAI reasoning models: `{"reasoning_effort": "low"}`) —
+both extra-body settings are deliberately raw passthroughs rather than code guessing at one
+provider's convention.
 
 **Honest performance note**: on the reference Pi 5 (16GB, CPU-only, desktop environment already
-using ~7.5GB), Qwen3.5-9B-Q4_K_M ran at roughly **1.5–1.7 tokens/second** generation once
-properly cached in RAM. That's slow enough that a full book through `clean.py`/`align.py` could
-take hours — genuinely workable as an overnight batch job given those modules are already
-checkpointed/resumable, but not something to expect chat-speed responsiveness from. This number
-is specific to that one machine, not a property of the model: it's entirely gated by whatever
-hardware you're actually running it on, and anyone cloning this repo with a stronger machine
-(more free RAM, an SSD instead of a spinning disk, more CPU cores) should expect meaningfully
-better throughput. Benchmark your own setup before assuming either way.
+using ~7.5GB), Qwen3.5-9B-Q4_K_M generates at roughly **1.5–1.7 tokens/second** once properly
+cached in RAM — and with reasoning left on, that's tokens spent thinking *and* answering. A real
+test of a single one-sentence chunk took **~15 minutes** (1,472 tokens, entirely on the primary
+reasoning-enabled call). Reasoning length isn't fixed either: the same prompt exhausted the full
+4096-token context and came back empty in one run, then finished fine within budget on the next
+attempt — which is exactly the scenario the empty-content fallback above exists for. Given
+`clean.py`'s real chunks run up to 6000 characters, expect real calls to take considerably
+longer than 15 minutes — this is overnight-batch-job territory, not something to expect
+chat-speed responsiveness from, and worth raising `-c` above 4096 if reasoning is regularly
+getting cut off. This number is specific to that one machine, not a property of the model: it's
+entirely gated by whatever hardware you're actually running it on, and anyone cloning this repo
+with a stronger machine (more free RAM, an SSD instead of a spinning disk, more CPU cores)
+should expect meaningfully better throughput. Benchmark your own setup before assuming either
+way.
 
 ## Search API (spec §10)
 
