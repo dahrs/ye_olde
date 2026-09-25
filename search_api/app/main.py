@@ -25,6 +25,8 @@ from .schemas import (
     LookupResponse,
     LookupResult,
     LookupTarget,
+    SearchQuery,
+    SearchResponse,
 )
 
 app = FastAPI(title="ye_olde Search API")
@@ -117,3 +119,14 @@ def lookup(text: str, lang: str, year: int, target_lang: str, target_year: int) 
         target=LookupTarget(lang=target_lang, year=target_year),
         results=results,
     )
+
+
+@app.get("/search", response_model=SearchResponse)
+def search(text: str, lang: str, year: int | None = None, window: int = 50, top_k: int = 5) -> SearchResponse:
+    """Semantic passage search (spec §10): ranks indexed passages by
+    embedding similarity to `text` rather than requiring an exact token
+    match — the RAG-style "find a sentence, not just an exact word" lookup
+    /lookup can't do. See loader.search_passages for the retrieval logic.
+    """
+    results = loader.search_passages(lang, text, year=year, window=window, top_k=top_k)
+    return SearchResponse(query=SearchQuery(text=text, lang=lang, year=year), results=results)

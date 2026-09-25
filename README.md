@@ -142,7 +142,64 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Deploys automatically to Google Cloud Run on push to `main` — see
-`.github/workflows/deploy-search-api.yml`. Data (Parquet/FAISS shards) stays on the free
-Hugging Face Dataset repo regardless; only compute runs on Cloud Run. One-time setup (GCP
-project/billing/Workload Identity Federation + GitHub secrets) isn't automatable from here —
-see the steps given alongside this scaffold.
+`.github/workflows/deploy-search-api.yml`. Data (Parquet/FAISS shards) stays on a free
+Hugging Face Dataset repo regardless; only compute runs on Cloud Run.
+
+### Reference deployment
+
+The maintainer's own instance, so third-party deployers have a working example to compare
+against — none of this is secret, all of it is safe to be public (Workload Identity Federation,
+below, means knowing these values alone doesn't grant access to anything):
+
+| | |
+|---|---|
+| Search API URL | `https://ye-olde-search-api-say7jittea-uc.a.run.app` |
+| GCP project | `ye-olde-search-api` |
+| Cloud Run service | `ye-olde-search-api`, region `us-central1` |
+| HF Dataset repo | [`dahrs/ye_olde_data-index`](https://huggingface.co/datasets/dahrs/ye_olde_data-index) (public) |
+
+Smoke test:
+```
+curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/health"
+curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/lookup?text=gladly&lang=enm&year=1400&target_lang=eng&target_year=1999"
+```
+
+### Setting up your own deployment
+
+Two accounts, both free tier: a Google Cloud project for compute, a Hugging Face account for
+data storage. High level (a coding assistant with shell access can follow the fuller version of
+this in the project's spec doc/artifact §13, which has exact commands):
+
+1. **Hugging Face**: create a Dataset repo (public) to hold the Parquet/FAISS shards — this is
+   `HF_DATASET_REPO_ID` below. Create a write-scoped access token (huggingface.co/settings/tokens)
+   — needed even for a public repo, since Hugging Face rate-limits fully anonymous API reads (see
+   spec §10).
+2. **Google Cloud**: create a project, link billing (Cloud Run's free tier needs billing enabled
+   even though it won't be charged at this scale — see spec §10 for the actual numbers), enable
+   `run.googleapis.com`, `artifactregistry.googleapis.com`, `cloudbuild.googleapis.com`,
+   `iamcredentials.googleapis.com`, `secretmanager.googleapis.com`.
+3. **Store the HF token in Secret Manager** (`gcloud secrets create hf-token --data-file=...`),
+   never as a GitHub secret or a plain env var — see spec §10 for why.
+4. **Create a deploy service account** and grant it `roles/run.admin`,
+   `roles/artifactregistry.admin`, `roles/cloudbuild.builds.editor`, `roles/iam.serviceAccountUser`,
+   `roles/storage.admin`, plus `roles/secretmanager.secretAccessor` on the `hf-token` secret.
+5. **Set up Workload Identity Federation** between GitHub Actions and that service account,
+   scoped to your fork's `owner/repo` — this is what lets `.github/workflows/deploy-search-api.yml`
+   deploy without a downloadable, leakable GCP key ever existing.
+6. **Add to your fork's GitHub Actions secrets/variables**:
+
+   | Name | Kind | Value |
+   |---|---|---|
+   | `GCP_WORKLOAD_IDENTITY_PROVIDER` | secret | full WIF provider resource name from step 5 |
+   | `GCP_SERVICE_ACCOUNT` | secret | the deploy service account's email from step 4 |
+   | `GCP_PROJECT_ID` | variable | your GCP project ID |
+   | `GCP_REGION` | variable | a Cloud Run region, e.g. `us-central1` |
+   | `HF_DATASET_REPO_ID` | variable | your HF dataset repo ID from step 1 |
+
+   `HF_TOKEN` is deliberately not in this table — the workflow references the Secret Manager
+   secret from step 3 directly (`hf-token:latest`), so the raw token value never touches GitHub
+   at all.
+7. Push to `main` — the workflow builds and deploys. First deploy takes a few minutes.
+
+The full version of these steps, with exact `gcloud` commands, is in the project's spec
+doc/artifact — see its §13.

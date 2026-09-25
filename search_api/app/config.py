@@ -28,6 +28,18 @@ class Settings(BaseSettings):
     # /tmp is the one reliably-writable path in a Spaces Docker container.
     hf_cache_dir: str = "/tmp/hf-cache"
 
+    # Embedding model used to embed an incoming /search query, so it lands
+    # in the same vector space as the FAISS shards ye_olde.ingest.index
+    # built (spec §10). Must match whatever EMBEDDING_MODEL the ingest side
+    # used to build the shards currently being served — a mismatch here
+    # wouldn't error, it would just silently produce meaningless similarity
+    # scores, so this default is deliberately kept identical to
+    # ye_olde.config.Settings.embedding_model's default rather than picked
+    # independently. Duplicated, not imported, same as the rest of this
+    # module — see this file's own docstring for why search_api never
+    # depends on the ye_olde package.
+    embedding_model: str = "intfloat/multilingual-e5-large"
+
 
 def get_settings() -> Settings:
     return Settings()

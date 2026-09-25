@@ -234,14 +234,19 @@ The rest of the pipeline never touches the corpus, the vector index, or a databa
   │   └── 842-1600.parquet
   └── lat/                         # donor-only, no embeddings
       └── 1-1500.parquet
-  vectors/                         # mirrors the same shard boundaries as relational/
-  ├── eng/1600-1634.faiss
+  vectors/                         # mirrors the same shard boundaries as relational/ and pairs/
+  ├── eng/1600-1634.faiss          # relational vectors — not built yet, no contribution data exists
   ├── eng/1635-1671.faiss
+  ├── pairs/
+  │   └── enm_eng/1400-1999.faiss  # implemented: ye_olde.ingest.index, one shard per pairs/ shard
   └── …
   ```
+
+  `vectors/pairs/<lang_a>_<lang_b>/<year_from>-<year_to>.faiss` holds one L2-normalized embedding per side (`source_text`, `target_text`) of every row in the *identically-named* `pairs/` shard — `id = row_index * 2` (`+1` for the target side). That id is only meaningful paired with that exact shard's own row order, so a vector shard and its Parquet counterpart are always downloaded and read together, never merged across shards before resolving a hit back to a row (see `ye_olde.ingest.index` and `search_api/app/loader.py`'s `load_pair_shards_with_vectors`).
 - **Compute — Google Cloud Run, free "Always Free" tier.** A small FastAPI app (`search_api/`, not Gradio — this is a pure JSON API, no UI needed) that on request downloads the current Parquet + FAISS files from the Dataset repo (`hf_hub_download`) and loads them into memory/`mmap`. Cloud Run's free tier (2M requests/mo, 360k GB-seconds, 180k vCPU-seconds — a standing monthly quota, not a trial) covers this project's scale indefinitely; the service scales to zero, so idle time costs nothing. *Revised from the original plan*: Hugging Face discontinued free CPU-tier Docker/Gradio Spaces mid-2026 — data storage stayed on the free HF Dataset repo (unaffected), only compute moved. Cold-starts on the first request after idle are the same acceptable-for-v1 tradeoff the original plan already accepted.
 - **Endpoints (v1, minimal):**
-  - `GET /lookup?text=…&lang=…&year=…&target_lang=…&target_year=…` — the Linguee-style query: given a word/phrase at one point in the language's history, return attested sentences at the other point with the corresponding span highlighted. Backed by §3c pairs + word-alignment links.
+  - `GET /lookup?text=…&lang=…&year=…&target_lang=…&target_year=…` — the Linguee-style query: given a word/phrase at one point in the language's history, return attested sentences at the other point with the corresponding span highlighted. Backed by §3c pairs + word-alignment links. Token-exact matching only.
+  - `GET /search?text=…&lang=…&year=…&window=…&top_k=…` — semantic passage search: ranks indexed passages by embedding similarity rather than requiring an exact match, across every language pair that has `lang` on either side. This is the vector half of the index (below) actually being queried — the RAG-style "find a sentence, not just an exact word" retrieval the rest of the pipeline (and eventually `generation/`'s context-bundle step, §2) needs. Embeds the query at request time with the same model the shards were indexed with (`EMBEDDING_MODEL`) — a real dependency/memory cost added to the service, flagged in `search_api/README.md`.
   - `GET /attest?lemma=…&lang=…&year=…` — exact/relational lookup over §3a (attestation, loan, anachronism gating) — what the fallback chain (§2) actually calls.
   - `GET /health`.
 - **Code hosting — GitHub**, same repo as everything else. `.github/workflows/deploy-search-api.yml` deploys `search_api/` to Cloud Run on every push to `main` that touches it, authenticating via Workload Identity Federation (short-lived OIDC tokens minted per CI run) rather than a downloadable service-account key — Cloud Run requires a billing-enabled GCP account, so a long-lived static credential sitting in a GitHub secret would be a real-money risk if it ever leaked; WIF avoids that by never issuing one.
@@ -258,3 +263,87 @@ Paste this whole document as your opening message (or attach it as a file) in th
 > I'm building the pipeline described in this spec. Let's start with §11 (the first task) — §6's data acquisition/alignment pipeline plus the §10 Search API, using Bible translations as the first parallel-text source. Ask me before making a choice listed under §9 (Open decisions) rather than guessing.
 
 That gives the new session the full architecture up front, points it at a scoped starting task instead of the whole system at once, and tells it explicitly which decisions to check with you on rather than silently picking one.
+
+## 13. Operations — accessing and administering the deployed infrastructure
+
+Written for whichever Claude Code session (or human) next needs to touch the live Search API. Everything here is either non-secret (safe to also be in the public README, and most of it is) or already resolved to where the actual secret lives — nothing below requires guessing a credential.
+
+### 13a. Where things are, concretely
+
+| Thing | Value |
+|---|---|
+| GCP account | `sirchaos6@gmail.com` |
+| GCP project | `ye-olde-search-api` (project number `1086548285460`) |
+| Cloud Run service | `ye-olde-search-api`, region `us-central1` |
+| Service URL(s) | `https://ye-olde-search-api-say7jittea-uc.a.run.app` (stable) and `https://ye-olde-search-api-1086548285460.us-central1.run.app` (numeric alias) — both route to the same service |
+| Deploy service account | `search-api-deployer@ye-olde-search-api.iam.gserviceaccount.com` — what GitHub Actions impersonates via WIF to build/deploy |
+| Runtime service account | `1086548285460-compute@developer.gserviceaccount.com` — the default compute SA the *container itself* runs as; this is what needs (and has) `roles/secretmanager.secretAccessor` on `hf-token` |
+| Workload Identity pool/provider | `github-pool` / `github-provider`, full resource name `projects/1086548285460/locations/global/workloadIdentityPools/github-pool/providers/github-provider` — scoped by `--attribute-condition="assertion.repository=='dahrs/ye_olde'"`, i.e. only Actions runs from that exact GitHub repo can deploy |
+| Secret Manager secret | `hf-token` (project `ye-olde-search-api`) — the HF token, referenced by the deploy workflow as `HF_TOKEN=hf-token:latest`, never a GitHub secret |
+| HF Dataset repo | [`dahrs/ye_olde_data-index`](https://huggingface.co/datasets/dahrs/ye_olde_data-index) — public |
+| GitHub repo | `dahrs/ye_olde` |
+| Workflows | `.github/workflows/deploy-search-api.yml` (Cloud Run deploy, on push touching `search_api/**`), `lint-and-test.yml`, `validate-contributions.yml` |
+| GitHub Actions secrets | `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT` |
+| GitHub Actions variables | `GCP_PROJECT_ID`, `GCP_REGION`, `HF_DATASET_REPO_ID` |
+
+**Secrets, and only secrets, live outside this list**: the HF write token is in `search_api/.env` (gitignored, local dev/admin use) and as the `hf-token` Secret Manager secret (production, what the running service actually reads). It is never a GitHub secret, never a plain Cloud Run env var, and never appears as a literal value in any command — every `gcloud` invocation below that touches it reads from a file, not a command-line argument (see §10's credential-leakage note; a `gcloud run services update --update-env-vars="HF_TOKEN=$TOKEN"` was flagged and blocked by a safety check for exactly this reason during setup).
+
+### 13b. GCP auth on this machine
+
+`gcloud` is installed (`~/google-cloud-sdk`) and already authenticated as `sirchaos6@gmail.com` (`~/.config/gcloud`) — this project's Claude Code session runs directly on the user's own machine, not an isolated sandbox, so a fresh session can generally run the commands below immediately without re-authenticating. If `gcloud config get-value account` doesn't return `sirchaos6@gmail.com`, that state was cleared and needs `gcloud auth login` again (device-flow: run it, the user opens the printed URL in their own browser, pastes back the verification code — Google requires that interactively from the account owner, it can't be automated further).
+
+### 13c. Common operational commands
+
+```
+# Service status
+gcloud run services describe ye-olde-search-api --region=us-central1 --project=ye-olde-search-api
+
+# Tail recent logs
+gcloud run services logs read ye-olde-search-api --region=us-central1 --project=ye-olde-search-api --limit=50
+
+# Manual redeploy (bypasses GitHub Actions — same effect as pushing to main,
+# useful for fast local iteration on search_api/ before committing)
+gcloud run deploy ye-olde-search-api --source=search_api \
+  --region=us-central1 --project=ye-olde-search-api --allow-unauthenticated \
+  --update-env-vars="HF_DATASET_REPO_ID=dahrs/ye_olde_data-index" \
+  --update-secrets="HF_TOKEN=hf-token:latest"
+
+# Rotate the HF token: write the NEW token to a file first (never inline on
+# the command line — see 13a), no trailing newline (a prior rotation broke
+# the Authorization header this way — strip it explicitly):
+#   printf '%s' '<new-token>' > /path/to/token.secret
+gcloud secrets versions add hf-token --project=ye-olde-search-api --data-file=/path/to/token.secret
+# then redeploy (above) to force already-running instances to pick it up —
+# :latest resolves at container start, so a warm instance keeps its old copy
+# until it restarts.
+
+# Smoke test
+curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/health"
+curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/lookup?text=gladly&lang=enm&year=1400&target_lang=eng&target_year=1999"
+```
+
+### 13d. Pushing new data to the index
+
+`search_api` never builds an index, only serves what's already in the HF Dataset repo (§10's shard layout: `relational/<iso_code>/...`, `pairs/<lang_a>_<lang_b>/...`, `vectors/pairs/<lang_a>_<lang_b>/...`). The ingestion side writes shards locally (`scripts/align_corpus.py` → `scripts/build_index.py` → `data/index/`); pushing them to HF is a separate, currently-manual step:
+
+```python
+from huggingface_hub import HfApi
+HfApi(token=hf_token).upload_file(
+    path_or_fileobj="data/index/pairs/enm_eng/1400-1999.parquet",
+    path_in_repo="pairs/enm_eng/1400-1999.parquet",   # must match the shard-naming convention, §10
+    repo_id="dahrs/ye_olde_data-index",
+    repo_type="dataset",
+)
+```
+
+`search_api`'s file listing is cached per-process (`loader._list_repo_files`, no TTL) — a newly-pushed shard is picked up automatically only once the Cloud Run container restarts (a fresh cold start after scale-to-zero, or a new revision from a redeploy). There's no live-refresh endpoint yet; triggering a manual redeploy (13c) after a data push is the reliable way to see it immediately.
+
+### 13e. How the Search API actually works (current real state)
+
+Three endpoints, three different data dependencies — worth knowing which currently have real data behind them:
+
+- **`GET /lookup`** (spec §3c) — token-exact match against `pairs/` shards. **Has real data**: `pairs/enm_eng/1400-1999.parquet`, 704 sentence pairs from *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999), partially word-aligned (some rows have real `alignment_links`, most don't yet). Handles query direction per-row — each row carries its own `source.lang_code`/`target.lang_code`, so a shard stored `enm→eng` still answers an `eng→enm` query correctly (§10, the directionality fix) — rather than assuming the shard's stored order matches the query's order.
+- **`GET /attest`** (spec §3a) — exact/relational lookup for the loanword/anachronism fallback chain. **No data yet** — nothing has been pushed to `relational/`, so this always returns `results: []`. Not a bug; §3a data (dictionary-style attestation entries) hasn't been built by the ingestion side yet, only §3c pairs have.
+- **`GET /search`** (spec §10) — semantic passage search: embeds the query at request time (`sentence-transformers`, same model the shards were built with) and does a FAISS nearest-neighbor search. **No data yet** — `scripts/build_index.py` writes a FAISS shard alongside each Parquet pairs shard, but only the Parquet half of `pairs/enm_eng/1400-1999` has actually been pushed to HF (13d's manual step hasn't been done for the vector half); `search_api` soft-fails a shard with a Parquet file but no matching `.faiss` file, so this always returns `[]` against the current live data.
+
+Shared plumbing across all three (`search_api/app/loader.py`): every shard lookup is soft-fail (missing repo, missing shard, missing vector file → empty result, never an error) — deliberate, so the service is meaningfully testable before any real corpus exists (§11). Shard filenames are parsed as `<prefix>/<start>-<end>.parquet` to support the volume-triggered year-range partitioning from §10; a `pairs/` shard's `<lang_a>_<lang_b>` directory name is tried both ways (`load_pairs("eng", "enm")` also checks `pairs/enm_eng/`) since the physical file only exists in whichever direction the alignment job happened to run.

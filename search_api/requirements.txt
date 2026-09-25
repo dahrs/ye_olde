@@ -5,3 +5,5 @@ pydantic-settings>=2
 pyarrow>=17
 huggingface_hub>=0.25
 httpx>=0.27
+faiss-cpu>=1.8
+sentence-transformers>=3

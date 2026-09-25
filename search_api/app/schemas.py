@@ -70,3 +70,31 @@ class LookupResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     hf_dataset_repo_id: str
+
+
+class SearchQuery(BaseModel):
+    text: str
+    lang: str
+    year: int | None = None
+
+
+class SearchResult(BaseModel):
+    pair_id: str
+    lang: str
+    year: int
+    work: str | None = None
+    text: str
+    score: float
+    # The aligned counterpart passage (spec §3c) — every indexed passage
+    # today comes from a pair, so a semantic hit always has one; there's no
+    # unpaired, single-language semantic index yet.
+    other_lang: str
+    other_year: int
+    other_work: str | None = None
+    other_text: str
+    citation: str
+
+
+class SearchResponse(BaseModel):
+    query: SearchQuery
+    results: list[SearchResult]

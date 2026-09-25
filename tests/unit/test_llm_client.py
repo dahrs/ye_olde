@@ -20,9 +20,9 @@ class _FakeUsage:
 
 
 class _FakeResponse:
-    def __init__(self, content: str, prompt_tokens: int, completion_tokens: int):
+    def __init__(self, content: str, prompt_tokens: int, completion_tokens: int, finish_reason: str | None = "stop"):
         self.usage = _FakeUsage(prompt_tokens, completion_tokens)
-        self.choices = [{"message": {"content": content}}]
+        self.choices = [{"message": {"content": content}, "finish_reason": finish_reason}]
 
     def __getitem__(self, key):
         return getattr(self, key)
@@ -115,6 +115,150 @@ def test_repair_call_recovers_from_bad_first_reply(monkeypatch):
     result = llm_client.call_llm_json("p", model="test-model")
     assert result == ["fixed", "output"]
     assert llm_client.get_usage_summary()["calls"] == 2
+
+
+def test_repair_call_itself_empty_gets_no_thinking_rescue_not_a_confusing_parse_error(monkeypatch):
+    """Regression test: a real local-model run hit this exactly. The
+    initial call returned genuinely malformed (non-empty, non-truncated)
+    JSON, triggering the repair path — but the repair call itself came
+    back completely empty (its conversation is longer than the original:
+    original prompt + bad output + fix-it instruction, so it's at least as
+    likely to hit the same token-budget wall). Before the fix, this
+    surfaced as a bare, confusing JSONDecodeError instead of using the
+    no-thinking rescue that exists for exactly this condition.
+    """
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(
+        llm_client,
+        "get_settings",
+        lambda: Settings(litellm_no_thinking_extra_body='{"chat_template_kwargs": {"enable_thinking": false}}'),
+    )
+    responses = iter(
+        [
+            _FakeResponse("not json at all", prompt_tokens=1, completion_tokens=1, finish_reason="stop"),
+            _FakeResponse("", prompt_tokens=1, completion_tokens=0, finish_reason="stop"),  # repair call: empty
+            _FakeResponse('["rescued"]', prompt_tokens=1, completion_tokens=2, finish_reason="stop"),
+        ]
+    )
+
+    fake_litellm = types.SimpleNamespace(
+        completion=lambda **kwargs: next(responses),
+        completion_cost=lambda **k: 0.0,
+    )
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    result = llm_client.call_llm_json("p", model="test-model")
+    assert result == ["rescued"]
+    assert llm_client.get_usage_summary()["calls"] == 3
+
+
+def test_empty_content_retries_with_no_thinking_fallback(monkeypatch):
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(
+        llm_client,
+        "get_settings",
+        lambda: Settings(litellm_no_thinking_extra_body='{"chat_template_kwargs": {"enable_thinking": false}}'),
+    )
+    bodies_seen = []
+
+    def fake_completion(extra_body, **kwargs):
+        bodies_seen.append(extra_body)
+        if len(bodies_seen) == 1:
+            return _FakeResponse("", prompt_tokens=5, completion_tokens=0, finish_reason="stop")
+        return _FakeResponse('["ok"]', prompt_tokens=5, completion_tokens=2, finish_reason="stop")
+
+    fake_litellm = types.SimpleNamespace(completion=fake_completion, completion_cost=lambda **k: 0.0)
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    result = llm_client.call_llm_json("p", model="test-model")
+    assert result == ["ok"]
+    assert len(bodies_seen) == 2
+    assert bodies_seen[1] == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
+def test_empty_content_raises_when_no_fallback_configured(monkeypatch):
+    from ye_olde.common.errors import LLMEmptyResponseError
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(llm_client, "get_settings", lambda: Settings())
+    fake_litellm = types.SimpleNamespace(
+        completion=lambda **k: _FakeResponse("", prompt_tokens=5, completion_tokens=0, finish_reason="stop"),
+        completion_cost=lambda **k: 0.0,
+    )
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    with pytest.raises(LLMEmptyResponseError):
+        llm_client.call_llm_json("p", model="test-model")
+
+
+def test_truncated_content_retries_with_no_thinking_fallback(monkeypatch):
+    """A non-empty but finish_reason='length' response (a reasoning trace
+    that ran the context out before finishing, not just before starting)
+    must trigger the same no-thinking rescue as a fully empty response —
+    confirmed against a real local model run where re-asking without this
+    fallback just truncated again in a different place.
+    """
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(
+        llm_client,
+        "get_settings",
+        lambda: Settings(litellm_no_thinking_extra_body='{"chat_template_kwargs": {"enable_thinking": false}}'),
+    )
+    calls = []
+
+    def fake_completion(extra_body, **kwargs):
+        calls.append(extra_body)
+        if len(calls) == 1:
+            return _FakeResponse('["truncated', prompt_tokens=5, completion_tokens=100, finish_reason="length")
+        return _FakeResponse('["complete"]', prompt_tokens=5, completion_tokens=3, finish_reason="stop")
+
+    fake_litellm = types.SimpleNamespace(completion=fake_completion, completion_cost=lambda **k: 0.0)
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    result = llm_client.call_llm_json("p", model="test-model")
+    assert result == ["complete"]
+    assert len(calls) == 2  # the repair-JSON path was never reached; truncation is caught first
+
+
+def test_truncated_content_raises_when_fallback_also_truncated(monkeypatch):
+    from ye_olde.common.errors import LLMEmptyResponseError
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(
+        llm_client,
+        "get_settings",
+        lambda: Settings(litellm_no_thinking_extra_body='{"chat_template_kwargs": {"enable_thinking": false}}'),
+    )
+    fake_litellm = types.SimpleNamespace(
+        completion=lambda **k: _FakeResponse(
+            '["still truncated', prompt_tokens=5, completion_tokens=100, finish_reason="length"
+        ),
+        completion_cost=lambda **k: 0.0,
+    )
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    with pytest.raises(LLMEmptyResponseError):
+        llm_client.call_llm_json("p", model="test-model")
+
+
+def test_truncated_content_raises_when_no_fallback_configured(monkeypatch):
+    from ye_olde.common.errors import LLMEmptyResponseError
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(llm_client, "get_settings", lambda: Settings())
+    fake_litellm = types.SimpleNamespace(
+        completion=lambda **k: _FakeResponse(
+            '["truncated', prompt_tokens=5, completion_tokens=100, finish_reason="length"
+        ),
+        completion_cost=lambda **k: 0.0,
+    )
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    with pytest.raises(LLMEmptyResponseError):
+        llm_client.call_llm_json("p", model="test-model")
 
 
 def test_is_local_model_true_for_known_local_providers(monkeypatch):

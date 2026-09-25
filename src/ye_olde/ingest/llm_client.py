@@ -10,12 +10,20 @@ reasoning-capable backend means "thinking" stays on, deliberately: it can
 genuinely help this module's close-reading/alignment judgment calls.
 
 The risk with that is a reasoning trace long enough to consume the whole
-context window before producing an actual answer, which comes back as an
-empty `message.content`. `call_llm_json` handles that with exactly one
-retry of the same call using `LITELLM_NO_THINKING_EXTRA_BODY` (also
-config.py) instead — a one-shot rescue for that call alone. It does not
-change `LITELLM_EXTRA_BODY` or affect any later call: reasoning is back on
-for the next call regardless of whether this one needed the fallback.
+context window before producing an actual answer. That surfaces two ways —
+`message.content` comes back completely empty, or (observed running a real
+Qwen3.5 chunk against a 4096-token local context) non-empty but cut off
+mid-answer, reported as `finish_reason="length"`. `call_llm_json` treats
+both as the same condition and handles it with exactly one retry of the
+same call using `LITELLM_NO_THINKING_EXTRA_BODY` (also config.py) instead —
+a one-shot rescue for that call alone. It does not change
+`LITELLM_EXTRA_BODY` or affect any later call: reasoning is back on for the
+next call regardless of whether this one needed the fallback. Re-sending
+the *same* prompt through the ordinary "fix your JSON" repair path instead
+would very likely hit the identical token budget and truncate again in
+roughly the same place — that repair path is for a genuine formatting
+mistake, not a budget problem, so truncation is intercepted before ever
+reaching it.
 
 Every call also passes an explicit `timeout` from `LITELLM_TIMEOUT_SECONDS`
 (config.py, default 6000s) rather than trusting litellm's own implicit
@@ -146,15 +154,27 @@ def call_llm_json(
     as JSON.
 
     Two independent retry paths, each exactly one attempt (neither is
-    recursive):
-    - Empty `content` (a reasoning trace ran the context window out before
-      producing an answer): retried once with LITELLM_NO_THINKING_EXTRA_BODY
-      in place of LITELLM_EXTRA_BODY, if configured — see config.py and the
-      module docstring. If that retry is also empty, or no fallback is
-      configured, this raises rather than guessing further.
-    - Invalid JSON: retried once by showing the model its own bad output
-      plus the parse error and asking for a corrected reply. A second
-      failure here propagates rather than trying again.
+    recursive), applied at *every* completion this function makes — the
+    initial call and the JSON-repair retry below both go through
+    `_complete_with_truncation_rescue`, since the repair conversation
+    (original prompt + bad output + a fix-it instruction) is longer than
+    the original and therefore, if anything, more likely to hit the same
+    token-budget wall, not less; confirmed in practice when a repair call
+    itself came back completely empty and the earlier version of this
+    function (which only rescued the initial call) surfaced a confusing
+    generic JSONDecodeError instead of the real cause:
+    - Empty or truncated content (a reasoning trace ran the context
+      window out before producing a complete answer — empty if it consumed
+      the whole budget, truncated/`finish_reason="length"` if it left a
+      partial answer): retried once with LITELLM_NO_THINKING_EXTRA_BODY in
+      place of LITELLM_EXTRA_BODY, if configured — see config.py and the
+      module docstring. If that retry is also empty or truncated, or no
+      fallback is configured, this raises rather than guessing further.
+    - Invalid JSON (content was neither empty nor truncated — a genuine
+      formatting mistake, not a budget problem): retried once by showing
+      the model its own bad output plus the parse error and asking for a
+      corrected reply. A second failure here propagates rather than trying
+      again.
     """
     settings = get_settings()
     resolved_model = model or settings.litellm_model
@@ -166,22 +186,7 @@ def call_llm_json(
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
 
-    content = _complete(resolved_model, messages, settings, _default_extra_body(settings))
-    if not content.strip():
-        fallback_body = _no_thinking_extra_body(settings)
-        if fallback_body is None:
-            raise LLMEmptyResponseError(
-                "model returned empty content — likely a reasoning trace that filled the "
-                "context window before any answer. Set LITELLM_NO_THINKING_EXTRA_BODY to "
-                "enable a one-shot retry without reasoning for cases like this."
-            )
-        content = _complete(resolved_model, messages, settings, fallback_body)
-        if not content.strip():
-            raise LLMEmptyResponseError(
-                "model returned empty content even with LITELLM_NO_THINKING_EXTRA_BODY applied "
-                "— not a reasoning-budget issue, something else is wrong."
-            )
-
+    content = _complete_with_truncation_rescue(resolved_model, messages, settings)
     try:
         return _parse_json(content)
     except (json.JSONDecodeError, ValueError) as exc:
@@ -196,13 +201,39 @@ def call_llm_json(
                 ),
             }
         )
-        repaired_content = _complete(resolved_model, messages, settings, _default_extra_body(settings))
+        repaired_content = _complete_with_truncation_rescue(resolved_model, messages, settings)
         return _parse_json(repaired_content)  # a second failure here is not caught/retried again
+
+
+def _complete_with_truncation_rescue(resolved_model: str, messages: list[dict[str, str]], settings: Settings) -> str:
+    """One completion, with a single automatic rescue (via
+    LITELLM_NO_THINKING_EXTRA_BODY) if the reply is empty or was cut off
+    mid-answer (`finish_reason="length"`) — see `call_llm_json`'s
+    docstring. Shared by both completions it makes so neither is exempt
+    from this check.
+    """
+    content, finish_reason = _complete(resolved_model, messages, settings, _default_extra_body(settings))
+    if not content.strip() or finish_reason == "length":
+        fallback_body = _no_thinking_extra_body(settings)
+        if fallback_body is None:
+            reason = "empty" if not content.strip() else "truncated (finish_reason='length')"
+            raise LLMEmptyResponseError(
+                f"model response was {reason} — likely a reasoning trace that filled the "
+                "context window before completing an answer. Set LITELLM_NO_THINKING_EXTRA_BODY to "
+                "enable a one-shot retry without reasoning for cases like this."
+            )
+        content, finish_reason = _complete(resolved_model, messages, settings, fallback_body)
+        if not content.strip() or finish_reason == "length":
+            raise LLMEmptyResponseError(
+                "model response was empty or truncated even with LITELLM_NO_THINKING_EXTRA_BODY applied "
+                "— not a reasoning-budget issue, something else is wrong."
+            )
+    return content
 
 
 def _complete(
     resolved_model: str, messages: list[dict[str, str]], settings: Settings, extra_body: dict[str, Any] | None
-) -> str:
+) -> tuple[str, str | None]:
     import litellm
 
     response = litellm.completion(
@@ -214,7 +245,10 @@ def _complete(
         timeout=settings.litellm_timeout_seconds,
     )
     _record_usage(response)
-    return response["choices"][0]["message"]["content"] or ""
+    choice = response["choices"][0]
+    content: str = choice["message"]["content"] or ""
+    finish_reason: str | None = choice.get("finish_reason")
+    return content, finish_reason
 
 
 def _default_extra_body(settings: Settings) -> dict[str, Any] | None:

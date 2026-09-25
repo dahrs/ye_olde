@@ -1,5 +1,10 @@
 [tool.mypy]
-python_version = "3.11"
+# Checked against the interpreter mypy actually runs under, not this
+# service's own requires-python floor (3.11) — numpy's bundled stubs
+# (pulled in transitively via faiss-cpu/sentence-transformers now) use PEP
+# 695 `type` statement syntax mypy only parses under python_version >= 3.12.
+# Same reasoning as the root project's pyproject.toml.
+python_version = "3.13"
 strict = true
 warn_unused_ignores = true
 exclude = ["^\\.venv/"]
@@ -10,7 +15,7 @@ exclude = ["^\\.venv/"]
 # root pyproject.toml, and is run with this directory as the working
 # directory (see README.md "Local development").
 [[tool.mypy.overrides]]
-module = ["pyarrow.*"]
+module = ["pyarrow.*", "faiss.*", "sentence_transformers.*"]
 ignore_missing_imports = true
 
 # huggingface_hub ships types but doesn't declare `utils`' re-exports (e.g.

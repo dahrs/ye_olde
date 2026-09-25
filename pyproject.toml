@@ -27,6 +27,8 @@ ingest = [
     "pypdf>=4",
     "sentence-transformers>=3",
     "numpy>=1.26",
+    "faiss-cpu>=1.8",
+    "pyarrow>=17",
 ]
 dev = [
     "pytest>=8",
@@ -95,5 +97,5 @@ exclude = ["^\\.venv/", "^search_api/\\.venv/", "^eval/(baselines|outputs|report
 # that do) — silenced here, once, rather than with a per-call-site
 # `# type: ignore` scattered through every module that imports them.
 [[tool.mypy.overrides]]
-module = ["litellm.*", "sentence_transformers.*", "pypdf.*"]
+module = ["litellm.*", "sentence_transformers.*", "pypdf.*", "faiss.*", "pyarrow.*"]
 ignore_missing_imports = true
