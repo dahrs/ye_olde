@@ -6,8 +6,10 @@ Translates `(sentence, lang_code, year) → (sentence, lang_code, year)` — bet
 ## Status
 
 Translation pipeline (`src/ye_olde/`): scaffolding only, no logic implemented yet.
-Search API (`search_api/`): stood up and deployable, no real data yet. See the spec's §11 for
-the first scoped build task (gather + align a corpus, then it has something to serve).
+Search API (`search_api/`): deployed and serving real data — `/lookup` and `/search` both work
+against *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999, 704 aligned pairs). `/attest`
+has no data yet (spec §3a — community contributions aren't ingested yet). See spec §13e for the
+current state of each endpoint, and §7 for the next build-order step.
 
 ## Project layout
 
@@ -162,7 +164,11 @@ Smoke test:
 ```
 curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/health"
 curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/lookup?text=gladly&lang=enm&year=1400&target_lang=eng&target_year=1999"
+curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/search?text=greetings,%20sir&lang=enm&top_k=3"
 ```
+`/search` embeds the query with `sentence-transformers` at request time, so the first call after the
+service scales to zero re-downloads the ~2.2GB model (~60–80s measured); warm calls are ~1–2s. This is
+also why the service runs at `--memory=4Gi --cpu=2` rather than the Cloud Run default.
 
 ### Setting up your own deployment
 

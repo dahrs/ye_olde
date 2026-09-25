@@ -1,6 +1,6 @@
 # Diachronic Translation Pipeline — Implementation Spec (v1)
 
-**Status**: ready for implementation kickoff. Scope for v1: **English only** (`ang`/`enm`/`eng`). Other languages (French resources are already scoped — see §8) are deferred until the English pipeline works end to end.
+**Status**: §6/§10's first build task (§11) is done and live — see §13e for exactly what has real data behind it today. Scope for v1: **English only** (`ang`/`enm`/`eng`). Other languages (French resources are already scoped — see §8) are deferred until the English pipeline works end to end.
 
 ## 0. Summary
 
@@ -302,9 +302,13 @@ gcloud run services describe ye-olde-search-api --region=us-central1 --project=y
 gcloud run services logs read ye-olde-search-api --region=us-central1 --project=ye-olde-search-api --limit=50
 
 # Manual redeploy (bypasses GitHub Actions — same effect as pushing to main,
-# useful for fast local iteration on search_api/ before committing)
+# useful for fast local iteration on search_api/ before committing). --memory/--cpu
+# are explicit here (not just left at whatever the previous revision had) because
+# sentence-transformers + the e5-large model (added for /search) genuinely need
+# the headroom — the original 512Mi/1vCPU default OOMs on the first /search call.
 gcloud run deploy ye-olde-search-api --source=search_api \
   --region=us-central1 --project=ye-olde-search-api --allow-unauthenticated \
+  --memory=4Gi --cpu=2 \
   --update-env-vars="HF_DATASET_REPO_ID=dahrs/ye_olde_data-index" \
   --update-secrets="HF_TOKEN=hf-token:latest"
 
@@ -320,6 +324,8 @@ gcloud secrets versions add hf-token --project=ye-olde-search-api --data-file=/p
 # Smoke test
 curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/health"
 curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/lookup?text=gladly&lang=enm&year=1400&target_lang=eng&target_year=1999"
+curl "https://ye-olde-search-api-say7jittea-uc.a.run.app/search?text=greetings,%20sir&lang=enm&top_k=3"
+# first call after idle: ~60-80s (model re-download, cold start); warm: ~1-2s
 ```
 
 ### 13d. Pushing new data to the index
@@ -342,8 +348,8 @@ HfApi(token=hf_token).upload_file(
 
 Three endpoints, three different data dependencies — worth knowing which currently have real data behind them:
 
-- **`GET /lookup`** (spec §3c) — token-exact match against `pairs/` shards. **Has real data**: `pairs/enm_eng/1400-1999.parquet`, 704 sentence pairs from *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999), partially word-aligned (some rows have real `alignment_links`, most don't yet). Handles query direction per-row — each row carries its own `source.lang_code`/`target.lang_code`, so a shard stored `enm→eng` still answers an `eng→enm` query correctly (§10, the directionality fix) — rather than assuming the shard's stored order matches the query's order.
+- **`GET /lookup`** (spec §3c) — token-exact match against `pairs/` shards. **Has real data**: `pairs/enm_eng/1400-1999.parquet`, 704 sentence pairs from *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999), partially word-aligned (689/704 rows have real `alignment_links`; a handful don't yet). Handles query direction per-row — each row carries its own `source.lang_code`/`target.lang_code`, so a shard stored `enm→eng` still answers an `eng→enm` query correctly (§10, the directionality fix) — rather than assuming the shard's stored order matches the query's order.
 - **`GET /attest`** (spec §3a) — exact/relational lookup for the loanword/anachronism fallback chain. **No data yet** — nothing has been pushed to `relational/`, so this always returns `results: []`. Not a bug; §3a data (dictionary-style attestation entries) hasn't been built by the ingestion side yet, only §3c pairs have.
-- **`GET /search`** (spec §10) — semantic passage search: embeds the query at request time (`sentence-transformers`, same model the shards were built with) and does a FAISS nearest-neighbor search. **No data yet** — `scripts/build_index.py` writes a FAISS shard alongside each Parquet pairs shard, but only the Parquet half of `pairs/enm_eng/1400-1999` has actually been pushed to HF (13d's manual step hasn't been done for the vector half); `search_api` soft-fails a shard with a Parquet file but no matching `.faiss` file, so this always returns `[]` against the current live data.
+- **`GET /search`** (spec §10) — semantic passage search: embeds the query at request time (`sentence-transformers`, same model the shards were built with) and does a FAISS nearest-neighbor search. **Deployed and has real data**: `vectors/pairs/enm_eng/1400-1999.faiss` was pushed alongside the Parquet shard, and the endpoint is live (revision `ye-olde-search-api-00010-gc6` deployed 2026-09-24 with `--memory=4Gi --cpu=2`, up from the default 512Mi/1vCPU — sentence-transformers + the e5-large model need real headroom). Verified live: bidirectional (`lang=eng` correctly matches against the `enm` side of a pair and vice versa), ranks by meaning not exact wording. **Cold start is real and slow**: ~77s measured live — the model (~2.2GB) re-downloads from the HF Hub on every cold start after scale-to-zero, since Cloud Run's ephemeral storage doesn't persist between instances. `embedding.py` passes the HF token on this download (not just for the data shards) to avoid anonymous-read rate-limiting, but the download time itself is unavoidable without baking the model into the container image (not done — would grow the image significantly; revisit if cold-start latency becomes a real problem). Warm requests: ~1.4s.
 
 Shared plumbing across all three (`search_api/app/loader.py`): every shard lookup is soft-fail (missing repo, missing shard, missing vector file → empty result, never an error) — deliberate, so the service is meaningfully testable before any real corpus exists (§11). Shard filenames are parsed as `<prefix>/<start>-<end>.parquet` to support the volume-triggered year-range partitioning from §10; a `pairs/` shard's `<lang_a>_<lang_b>` directory name is tried both ways (`load_pairs("eng", "enm")` also checks `pairs/enm_eng/`) since the physical file only exists in whichever direction the alignment job happened to run.

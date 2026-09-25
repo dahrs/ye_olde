@@ -26,22 +26,27 @@ mid-2026, see spec §10).
   an exact word" query needs, and what `generation/`'s eventual context-bundle step (spec §2)
   will build on. Embeds the query with `sentence-transformers` at request time
   (`EMBEDDING_MODEL`, must match whatever built the indexed shards — see
-  `ye_olde.ingest.index`) — a real cost this endpoint adds to the service: `sentence-transformers`
-  and its model weights now load into the Cloud Run container, where before it only needed
-  `pyarrow`/`httpx`. Worth watching if it pushes memory/cold-start past the free tier's comfort
-  zone; not yet hit in practice.
+  `ye_olde.ingest.index`) — this is why the deployed service runs at `--memory=4Gi --cpu=2`
+  rather than Cloud Run's 512Mi/1vCPU default: the model doesn't fit in the default. It's also
+  why the *first* call after the service scales to zero is slow (~60-80s measured — the ~2.2GB
+  model re-downloads from the HF Hub every cold start, since Cloud Run's ephemeral storage
+  doesn't persist between instances); warm calls are ~1-2s. `embedding.py` authenticates that
+  download with the HF token to avoid anonymous-read rate-limiting, same as the data shards below.
 
-All three return an empty `results: []` rather than erroring when no data exists yet for the
-requested `iso_code`/year range — this service is meant to run correctly before any corpus has
-been gathered (spec §11). `/search` additionally returns `[]` for a shard that has a `pairs/`
-Parquet file but no matching `vectors/pairs/` FAISS file yet, without affecting other shards.
+`/attest` returns an empty `results: []` — no relational/attestation data has been ingested yet
+(spec §3a; only §3c aligned pairs exist so far). `/lookup` and `/search` both have real data:
+704 aligned `(enm, eng)` sentence pairs from *Sir Gawayne and the Green Knight* (1400 ↔ 1999).
+All three are still soft-fail by design for whatever *isn't* covered yet — a language pair or
+year range with no shard returns `[]` rather than erroring (spec §11); `/search` specifically
+returns `[]` for a shard that has a `pairs/` Parquet file but no matching `vectors/pairs/` FAISS
+file, without affecting other shards.
 
 ## Local development
 
 ```
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # fill in HF_DATASET_REPO_ID
+cp .env.example .env   # fill in HF_TOKEN (HF_DATASET_REPO_ID already defaults to the real repo)
 uvicorn app.main:app --reload --port 8000
 ```
 
