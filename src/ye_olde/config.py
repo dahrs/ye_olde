@@ -65,6 +65,17 @@ class Settings(BaseSettings):
     # than silently retrieving nothing if this isn't set.
     search_api_url: str = ""
 
+    # Request timeout (seconds) for every call to the Search API. Generous
+    # by design, same reasoning as litellm_timeout_seconds above: /search
+    # embeds its query with sentence-transformers at request time, so the
+    # first call after the service scales to zero re-downloads its ~2.2GB
+    # model from the Hugging Face Hub before it can answer — measured live
+    # at ~70-77s (search_api/README.md). A 30s timeout was tried first and
+    # reliably failed on exactly this, the common case (any call after a
+    # ~15-minute idle gap), not a rare edge case. Warm calls return in ~1-2s
+    # regardless of this setting.
+    search_api_timeout_seconds: float = 120.0
+
 
 def get_settings() -> Settings:
     return Settings()

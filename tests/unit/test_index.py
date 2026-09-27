@@ -90,17 +90,61 @@ def test_build_vector_index_ids_map_to_source_then_target(monkeypatch):
     assert ids2[0][0] in (2, 3)  # either side of p2, both share the same vector here
 
 
-def test_write_pair_shard_writes_matching_parquet_and_faiss(tmp_path: Path, monkeypatch):
+def test_char_trigrams_pads_and_lowercases():
+    assert index.char_trigrams("Sir") == {"  s", " si", "sir", "ir ", "r  "}
+    assert index.char_trigrams("SIR") == index.char_trigrams("sir")
+
+
+def test_build_ngram_table_indexes_both_sides():
+    table = index.build_ngram_table(_RECORDS)
+    rows = table.to_pylist()
+
+    # Total posting rows = sum of trigram-set sizes over every token on both sides.
+    expected = sum(
+        len(index.char_trigrams(t)) for rec in _RECORDS for key in ("source_tokens", "target_tokens") for t in rec[key]
+    )
+    assert len(rows) == expected
+
+    # p2's source token 1 is "sir" (row_index=1, side=0) -- its "sir" trigram
+    # should be findable and carry the token's own trigram count (5).
+    hits = [r for r in rows if r["ngram"] == "sir" and r["row_index"] == 1 and r["side"] == 0]
+    assert len(hits) == 1
+    assert hits[0]["token_index"] == 1
+    assert hits[0]["token_ngram_count"] == 5
+
+
+def test_build_bm25_table_counts_term_frequency():
+    records = [
+        {
+            "source": {"lang_code": "eng", "year": 2000},
+            "target": {"lang_code": "enm", "year": 1400},
+            "source_tokens": ["the", "cat", "sat", "on", "the", "mat"],
+            "target_tokens": ["a", "b"],
+        }
+    ]
+    table = index.build_bm25_table(records)
+    rows = {(r["term"], r["row_index"], r["side"]): r["term_frequency"] for r in table.to_pylist()}
+
+    assert rows[("the", 0, 0)] == 2
+    assert rows[("cat", 0, 0)] == 1
+    assert len(table) == 5 + 2  # 5 distinct source terms (the,cat,sat,on,mat) + 2 distinct target terms
+
+
+def test_write_pair_shard_writes_all_four_artifacts(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(index, "embed_units", _fake_embed_units)
-    parquet_path, faiss_path = index.write_pair_shard(_RECORDS, tmp_path)
+    parquet_path, faiss_path, ngram_path, bm25_path = index.write_pair_shard(_RECORDS, tmp_path)
 
     assert parquet_path == tmp_path / "pairs" / "enm_eng" / "1400-1999.parquet"
     assert faiss_path == tmp_path / "vectors" / "pairs" / "enm_eng" / "1400-1999.faiss"
-    assert parquet_path.is_file()
-    assert faiss_path.is_file()
+    assert ngram_path == tmp_path / "ngrams" / "pairs" / "enm_eng" / "1400-1999.parquet"
+    assert bm25_path == tmp_path / "bm25" / "pairs" / "enm_eng" / "1400-1999.parquet"
+    for path in (parquet_path, faiss_path, ngram_path, bm25_path):
+        assert path.is_file()
 
     table = pq.read_table(parquet_path)
     assert table.num_rows == 2
+    assert pq.read_table(ngram_path).num_rows > 0
+    assert pq.read_table(bm25_path).num_rows > 0
 
     import faiss as faiss_lib
 
@@ -127,9 +171,9 @@ def test_build_index_for_processed_root_discovers_and_groups(tmp_path: Path, mon
     written = index.build_index_for_processed_root(tmp_path / "processed", out_dir)
 
     assert len(written) == 1
-    parquet_path, faiss_path = written[0]
-    assert parquet_path.is_file()
-    assert faiss_path.is_file()
+    parquet_path, faiss_path, ngram_path, bm25_path = written[0]
+    for path in (parquet_path, faiss_path, ngram_path, bm25_path):
+        assert path.is_file()
 
 
 def test_build_index_for_processed_root_raises_when_nothing_found(tmp_path: Path):

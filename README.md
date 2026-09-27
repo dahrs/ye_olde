@@ -5,7 +5,9 @@ Translates `(sentence, lang_code, year) → (sentence, lang_code, year)` — bet
 
 ## Status
 
-Translation pipeline (`src/ye_olde/`): scaffolding only, no logic implemented yet.
+Translation pipeline (`src/ye_olde/`): `resolver/` and `retrieval/` are implemented (adaptive
+temporal reranking against the live Search API — see §4/§9); `classify/`, `fallback/`,
+`generation/`, and `translate()` itself are still stubs.
 Search API (`search_api/`): deployed and serving real data — `/lookup` and `/search` both work
 against *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999, 704 aligned pairs). `/attest`
 has no data yet (spec §3a — community contributions aren't ingested yet). See spec §13e for the
@@ -17,9 +19,9 @@ current state of each endpoint, and §7 for the next build-order step.
 src/ye_olde/
 ├── api.py          # translate() — the public entrypoint (spec §1)
 ├── config.py       # settings: embedding model, generation LLM, Search API URL
-├── resolver/       # (lang_code, year) -> weighted corpus partitions (§2, §3a)
+├── resolver/       # (lang_code, year) -> adaptive temporal-decay rate λ (§2, §9)
 ├── classify/       # name vs. common-word vs. anachronism token classification (§2)
-├── retrieval/      # thin HTTP client for the Search API (§10) + temporal rerank
+├── retrieval/      # thin HTTP client for the Search API (§10) + λ-based temporal rerank
 ├── fallback/       # native -> loan -> constructed -> temporal-loan chain (§2, §3a)
 ├── generation/      # grounded LLM generation + self-check (§2)
 ├── ingest/         # corpus ingestion into the queryable index (§3a, §5, §6)

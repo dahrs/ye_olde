@@ -27,7 +27,7 @@ def test_attest_empty_without_data(monkeypatch) -> None:
 
 
 def test_lookup_empty_without_data(monkeypatch) -> None:
-    monkeypatch.setattr(loader, "load_pairs", lambda *a, **k: _EMPTY_TABLE)
+    monkeypatch.setattr(loader, "load_pair_shards", lambda *a, **k: [])
     response = client.get(
         "/lookup",
         params={"text": "light", "lang": "eng", "year": 2026, "target_lang": "enm", "target_year": 1382},

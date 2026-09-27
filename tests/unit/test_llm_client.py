@@ -83,6 +83,89 @@ def test_unpriced_model_still_tracks_tokens_with_zero_cost(monkeypatch):
     assert usage["cost_usd"] == 0.0
 
 
+def test_call_llm_json_tolerates_literal_control_characters_without_a_repair_call(monkeypatch):
+    """Regression test: a real local-model (Qwen3.5) run embedded a literal
+    newline inside a JSON string (source verse text reproduced verbatim
+    instead of escaped as \\n) — a genuine JSON-spec violation that
+    Python's strict json.loads rejects, but the data itself is fully
+    recoverable, so this must resolve in the *same* call rather than
+    wasting a slow/billable repair round-trip on content that wasn't
+    actually a formatting mistake needing the model's help.
+    """
+    calls = []
+    raw_with_literal_newline = '["line one\nstill same unit", "second unit"]'
+
+    def fake_completion(**kwargs):
+        calls.append(1)
+        return _FakeResponse(raw_with_literal_newline, prompt_tokens=5, completion_tokens=5)
+
+    fake_litellm = types.SimpleNamespace(completion=fake_completion, completion_cost=lambda **k: 0.0)
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    result = llm_client.call_llm_json("p", model="test-model")
+    assert result == ["line one\nstill same unit", "second unit"]
+    assert len(calls) == 1  # no repair call needed
+
+
+def test_call_llm_json_tolerates_trailing_extra_data_without_a_repair_call(monkeypatch):
+    """Regression test: a real local-model (Qwen3.5) run produced a
+    complete, valid JSON array, then kept going and appended trailing
+    content anyway (observed: on a second line) despite being told to
+    reply with only JSON. Python's json.loads demands the *whole* string
+    be one value and rejects this as "Extra data" — but the first value is
+    still perfectly good, so this resolves in the same call rather than
+    spending a repair round-trip re-asking for what was already there.
+    """
+    calls = []
+
+    def fake_completion(**kwargs):
+        calls.append(1)
+        return _FakeResponse('["a", "b"]\nHope that helps!', prompt_tokens=5, completion_tokens=5)
+
+    fake_litellm = types.SimpleNamespace(completion=fake_completion, completion_cost=lambda **k: 0.0)
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    result = llm_client.call_llm_json("p", model="test-model")
+    assert result == ["a", "b"]
+    assert len(calls) == 1  # no repair call needed
+
+
+def test_call_llm_json_rescues_truncation_even_when_finish_reason_says_stop(monkeypatch):
+    """Regression test: a real local-model (Qwen3.5) run returned content
+    that was clearly cut off mid-array (a JSON parse failure right at the
+    end of the string) while the API still reported finish_reason="stop",
+    not "length" — so the finish_reason check alone missed it, and the
+    content went to the generic "fix your JSON" repair prompt instead of
+    the no-thinking truncation rescue, which is what a genuinely cut-off
+    answer actually needs (asking the same model to "fix" content that
+    isn't there yet doesn't help). The position-based check must catch
+    this even though finish_reason didn't flag it.
+    """
+    from ye_olde.config import Settings
+
+    monkeypatch.setattr(
+        llm_client,
+        "get_settings",
+        lambda: Settings(litellm_no_thinking_extra_body='{"chat_template_kwargs": {"enable_thinking": false}}'),
+    )
+    calls = []
+
+    def fake_completion(extra_body, **kwargs):
+        calls.append(extra_body)
+        if len(calls) == 1:
+            # cut off mid-array, but finish_reason under-reports it
+            return _FakeResponse('["one", "two much longer unit here", "thr', prompt_tokens=5, completion_tokens=200)
+        return _FakeResponse('["complete", "array"]', prompt_tokens=5, completion_tokens=3, finish_reason="stop")
+
+    fake_litellm = types.SimpleNamespace(completion=fake_completion, completion_cost=lambda **k: 0.0)
+    monkeypatch.setitem(sys.modules, "litellm", fake_litellm)
+
+    result = llm_client.call_llm_json("p", model="test-model")
+    assert result == ["complete", "array"]
+    assert len(calls) == 2  # rescued directly; the generic repair prompt was never sent
+    assert calls[1] == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
 def test_bad_json_triggers_exactly_one_repair_call(monkeypatch):
     calls = []
 

@@ -189,7 +189,10 @@ def call_llm_json(
     content = _complete_with_truncation_rescue(resolved_model, messages, settings)
     try:
         return _parse_json(content)
-    except (json.JSONDecodeError, ValueError) as exc:
+    except json.JSONDecodeError as exc:
+        if _looks_like_truncation(content, exc):
+            return _parse_json(_rescue_truncation(resolved_model, messages, settings))
+
         messages.append({"role": "assistant", "content": content})
         messages.append(
             {
@@ -202,33 +205,80 @@ def call_llm_json(
             }
         )
         repaired_content = _complete_with_truncation_rescue(resolved_model, messages, settings)
-        return _parse_json(repaired_content)  # a second failure here is not caught/retried again
+        try:
+            return _parse_json(repaired_content)
+        except json.JSONDecodeError as exc2:
+            # a second failure here is not caught/retried again — except
+            # truncation gets one more rescue even at this point, since
+            # nothing about round 2 makes it less likely than round 1
+            if _looks_like_truncation(repaired_content, exc2):
+                return _parse_json(_rescue_truncation(resolved_model, messages, settings))
+            raise
 
 
 def _complete_with_truncation_rescue(resolved_model: str, messages: list[dict[str, str]], settings: Settings) -> str:
-    """One completion, with a single automatic rescue (via
-    LITELLM_NO_THINKING_EXTRA_BODY) if the reply is empty or was cut off
-    mid-answer (`finish_reason="length"`) — see `call_llm_json`'s
-    docstring. Shared by both completions it makes so neither is exempt
-    from this check.
+    """One completion, with a single automatic rescue (`_rescue_truncation`)
+    if the reply is empty or was cut off mid-answer (`finish_reason="length"`)
+    — see `call_llm_json`'s docstring. Shared by both completions it makes
+    so neither is exempt from this check.
     """
     content, finish_reason = _complete(resolved_model, messages, settings, _default_extra_body(settings))
     if not content.strip() or finish_reason == "length":
-        fallback_body = _no_thinking_extra_body(settings)
-        if fallback_body is None:
-            reason = "empty" if not content.strip() else "truncated (finish_reason='length')"
-            raise LLMEmptyResponseError(
-                f"model response was {reason} — likely a reasoning trace that filled the "
-                "context window before completing an answer. Set LITELLM_NO_THINKING_EXTRA_BODY to "
-                "enable a one-shot retry without reasoning for cases like this."
-            )
-        content, finish_reason = _complete(resolved_model, messages, settings, fallback_body)
-        if not content.strip() or finish_reason == "length":
-            raise LLMEmptyResponseError(
-                "model response was empty or truncated even with LITELLM_NO_THINKING_EXTRA_BODY applied "
-                "— not a reasoning-budget issue, something else is wrong."
-            )
+        return _rescue_truncation(resolved_model, messages, settings)
     return content
+
+
+def _rescue_truncation(resolved_model: str, messages: list[dict[str, str]], settings: Settings) -> str:
+    """The shared last resort for anything that looks like the previous
+    completion ran out of token budget before finishing: empty content,
+    `finish_reason="length"`, or — a corroborating signal that proved
+    necessary in practice, since `finish_reason` alone has been observed
+    under-reporting truncation on this backend — a JSON parse failure whose
+    error position sits at the very end of the content (see
+    `_looks_like_truncation`). One completion using
+    `LITELLM_NO_THINKING_EXTRA_BODY` in place of the default extra body;
+    raises if that's unconfigured or also comes back empty/truncated.
+    """
+    fallback_body = _no_thinking_extra_body(settings)
+    if fallback_body is None:
+        raise LLMEmptyResponseError(
+            "model response was empty or looked truncated — likely a reasoning trace that "
+            "filled the context window before completing an answer. Set "
+            "LITELLM_NO_THINKING_EXTRA_BODY to enable a one-shot retry without reasoning for "
+            "cases like this."
+        )
+    content, finish_reason = _complete(resolved_model, messages, settings, fallback_body)
+    if not content.strip() or finish_reason == "length":
+        raise LLMEmptyResponseError(
+            "model response was empty or truncated even with LITELLM_NO_THINKING_EXTRA_BODY applied "
+            "— not a reasoning-budget issue, something else is wrong."
+        )
+    return content
+
+
+def _looks_like_truncation(content: str, exc: json.JSONDecodeError) -> bool:
+    """True if a JSON parse failure looks like the model stopped generating
+    before finishing a complete value — the same underlying problem
+    `finish_reason="length"` is meant to report, but observed in practice
+    (a real local-model run) to sometimes go unreported as such (the API
+    said `finish_reason="stop"` on content that was still clearly cut off
+    mid-array). Two checks, since one error position convention doesn't
+    cover both ways this shows up:
+    - "Unterminated string starting at" is raised *only* when the parser
+      reaches the end of the entire input while still inside a string with
+      no closing quote — never for a mid-string syntax mistake elsewhere in
+      an otherwise-complete reply — so this message alone is a reliable
+      signal regardless of position.
+    - Every other JSONDecodeError reports `.pos` as where the *problem*
+      is, which for "Expecting value"/"Expecting ',' delimiter" etc. is
+      only truncation if that position is at (or right at) the end of the
+      content — the same error can also legitimately occur mid-string for
+      a genuine formatting mistake, so position is what distinguishes them.
+    """
+    if "Unterminated string" in exc.msg:
+        return True
+    cleaned = _strip_json_fences(content)
+    return exc.pos >= len(cleaned) - 1
 
 
 def _complete(
@@ -275,9 +325,41 @@ def _parse_extra_body(raw: str, var_name: str) -> dict[str, Any] | None:
     return parsed
 
 
+_LENIENT_JSON_DECODER = json.JSONDecoder(strict=False)
+_LEADING_WHITESPACE_RE = re.compile(r"[ \t\n\r]*")
+
+
+def _strip_json_fences(content: str) -> str:
+    return _JSON_FENCE_RE.sub("", content.strip()).strip()
+
+
 def _parse_json(content: str) -> object:
-    cleaned = _JSON_FENCE_RE.sub("", content.strip()).strip()
-    return json.loads(cleaned)
+    cleaned = _strip_json_fences(content)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        # Two failure modes observed from a real local model (Qwen3.5 via
+        # llama.cpp), both recoverable without spending another billable/
+        # slow LLM repair call — the data itself was fine, strict json.loads
+        # was just pickier than necessary:
+        # - "Invalid control character": a literal control character
+        #   (almost always a raw newline from source verse/prose text)
+        #   embedded in a JSON string instead of escaped as \n.
+        # - "Extra data": a complete, valid JSON value followed by trailing
+        #   content the model appended anyway (commentary, a repeated/
+        #   duplicated echo) despite being told to reply with only JSON.
+        # strict=False tolerates the first; raw_decode (rather than loads,
+        # which demands the *entire* string be one value) tolerates the
+        # second by parsing just the first complete value and discarding
+        # whatever follows it. Re-raises the *original* error unchanged if
+        # the content is broken some other way this can't fix either.
+        try:
+            leading_whitespace = _LEADING_WHITESPACE_RE.match(cleaned)
+            start = leading_whitespace.end() if leading_whitespace else 0
+            obj, _end = _LENIENT_JSON_DECODER.raw_decode(cleaned, start)
+        except json.JSONDecodeError:
+            raise exc from None
+        return obj
 
 
 def _record_usage(response: Any) -> None:

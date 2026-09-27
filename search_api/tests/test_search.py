@@ -24,7 +24,7 @@ def test_search_shapes_loader_results_into_response(monkeypatch) -> None:
     ]
     captured: dict[str, object] = {}
 
-    def fake_search_passages(lang, text, *, year=None, window=50, top_k=5):
+    def fake_search_passages(lang, text, *, year=None, window=None, top_k=5):
         captured.update(lang=lang, text=text, year=year, window=window, top_k=top_k)
         return fake_hits
 
@@ -49,7 +49,7 @@ def test_search_shapes_loader_results_into_response(monkeypatch) -> None:
             "citation": "",
         }
     ]
-    assert captured == {"lang": "enm", "text": "gladly indeed", "year": 1400, "window": 50, "top_k": 5}
+    assert captured == {"lang": "enm", "text": "gladly indeed", "year": 1400, "window": None, "top_k": 5}
 
 
 def test_search_returns_empty_results_when_nothing_indexed(monkeypatch) -> None:
@@ -63,7 +63,9 @@ def test_search_returns_empty_results_when_nothing_indexed(monkeypatch) -> None:
 def test_search_passages_ranks_across_shards_and_pair_dirs(monkeypatch) -> None:
     """Exercises loader.search_passages itself (not just the endpoint):
     two shards, one of them for a lang pair discovered only via
-    _lang_pair_dirs_containing, results merged and sorted by score.
+    _lang_pair_dirs_containing, results merged and sorted by score. No
+    `year` given -> pure FAISS similarity, the pre-hybrid-scoring behavior
+    (see the hybrid-specific test below for the year-given path).
     """
     import faiss as faiss_lib
     import numpy as np
@@ -98,7 +100,11 @@ def test_search_passages_ranks_across_shards_and_pair_dirs(monkeypatch) -> None:
     index_b = make_index(np.array([[0.0, 1.0], [0.0, 1.0]]))
 
     monkeypatch.setattr(loader, "_lang_pair_dirs_containing", lambda lang: [("enm", "eng")])
-    monkeypatch.setattr(loader, "load_pair_shards_with_vectors", lambda a, b: [(table_a, index_a), (table_b, index_b)])
+    monkeypatch.setattr(
+        loader,
+        "load_pair_shards",
+        lambda a, b: [(table_a, index_a, "pairs/enm_eng/a.parquet"), (table_b, index_b, "pairs/enm_eng/b.parquet")],
+    )
     monkeypatch.setattr(
         loader, "embed_query", lambda text, *, model_name, hf_token: np.array([[1.0, 0.0]], dtype="float32")
     )
@@ -107,3 +113,53 @@ def test_search_passages_ranks_across_shards_and_pair_dirs(monkeypatch) -> None:
     assert [r.pair_id for r in results] == ["a1", "b1"]
     assert results[0].score > results[1].score
     assert results[0].other_text == "close match (modern)"
+
+
+def test_search_passages_hybrid_blend_favors_lexical_for_an_ancient_query(monkeypatch) -> None:
+    """With `year` given, a candidate that's a poor semantic match but a
+    strong lexical (n-gram/BM25) match should win once the query's era is
+    old enough that semantic_weight pushes most of the trust onto the
+    lexical signals — the whole point of the hybrid design (spec §10).
+    """
+    import faiss as faiss_lib
+    import numpy as np
+    import pyarrow as pa
+
+    row_semantic = {
+        "pair_id": "semantic-match",
+        "source": {"lang_code": "enm", "year": 1400, "work": "W"},
+        "target": {"lang_code": "eng", "year": 1999, "work": "W"},
+        "source_text": "completely different words",
+        "target_text": "x",
+        "citation": None,
+        "sentence_confidence": 0.9,
+        "alignment_links": [],
+    }
+    row_lexical = {
+        "pair_id": "lexical-match",
+        "source": {"lang_code": "enm", "year": 1400, "work": "W"},
+        "target": {"lang_code": "eng", "year": 1999, "work": "W"},
+        "source_text": "gladly sir for sothe",
+        "target_text": "x",
+        "citation": None,
+        "sentence_confidence": 0.9,
+        "alignment_links": [],
+    }
+    table = pa.Table.from_pylist([row_semantic, row_lexical])
+
+    idx = faiss_lib.IndexIDMap(faiss_lib.IndexFlatIP(2))
+    # row_semantic (id 0) is the closer FAISS match; row_lexical (id 2) is
+    # semantically orthogonal but textually identical to the query.
+    idx.add_with_ids(np.array([[1.0, 0.0], [0.9, 0.1], [0.0, 1.0], [0.1, 0.9]], dtype="float32"), np.arange(4))
+
+    monkeypatch.setattr(loader, "_lang_pair_dirs_containing", lambda lang: [("enm", "eng")])
+    monkeypatch.setattr(loader, "load_pair_shards", lambda a, b: [(table, idx, "pairs/enm_eng/1400-1999.parquet")])
+    monkeypatch.setattr(
+        loader, "embed_query", lambda text, *, model_name, hf_token: np.array([[1.0, 0.0]], dtype="float32")
+    )
+    monkeypatch.setattr(loader, "load_bm25_postings", lambda shard_path, terms: pa.table({}))
+
+    # A genuinely ancient query year -> semantic_weight is near 0, so the
+    # lexical signal should dominate despite the weaker FAISS score.
+    results = loader.search_passages("enm", "gladly sir for sothe", year=600, top_k=2)
+    assert results[0].pair_id == "lexical-match"

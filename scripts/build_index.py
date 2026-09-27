@@ -4,9 +4,10 @@
 
 Reads every `data/processed/<work>/*.bitext.jsonl` written by
 `scripts/align_corpus.py`, groups them by language pair, and writes a
-Parquet pairs shard + FAISS vector shard per pair — the artifacts
-`search_api/` reads (locally under `--output-dir` for now; pushing them to
-the Hugging Face Dataset repo is a separate, later step, spec §10).
+Parquet pairs shard + FAISS vector shard + n-gram postings shard + BM25
+postings shard per pair — the artifacts `search_api/` reads (locally under
+`--output-dir` for now; pushing them to the Hugging Face Dataset repo is a
+separate, later step, spec §10).
 
 Usage:
     python scripts/build_index.py
@@ -36,8 +37,8 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     written = build_index_for_processed_root(args.processed_dir, args.output_dir)
-    for parquet_path, faiss_path in written:
-        print(f"[index] wrote {parquet_path} + {faiss_path}", file=sys.stderr)
+    for parquet_path, faiss_path, ngram_path, bm25_path in written:
+        print(f"[index] wrote {parquet_path} + {faiss_path} + {ngram_path} + {bm25_path}", file=sys.stderr)
 
 
 if __name__ == "__main__":
