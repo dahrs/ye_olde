@@ -17,10 +17,37 @@ import json
 import sys
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from ..prompt import load_prompt
 from .checkpoint import Checkpoint
 from .corpus_files import CorpusFile
 from .llm_client import call_llm_json, is_local_model
+
+
+class CleanedDocument(BaseModel):
+    """On-disk cache format for a cleaned file (see `clean_corpus_file`).
+    Saved identically regardless of which model did the cleaning -- this is
+    plain bookkeeping about the *source chunking*, not a model-specific
+    behavior, so nothing here is gated on `is_local_model` or any other
+    model check.
+
+    `chunk_unit_counts[i]` is how many of `units` came from source chunk
+    `i` -- the cumulative sum gives the exact index range in `units` that
+    came from any given chunk. This is what lets two independently-cleaned
+    runs of the same file (a different model, or the same model run twice)
+    be compared chunk-for-chunk instead of only by an approximate
+    proportional slice of the flat list, which was the previous format's
+    only option (see eval/README.md's "Known limitations" section).
+
+    The review pass (`review_units_with_llm`) never changes `len(units)`
+    -- it maps one input unit to one output unit -- so `chunk_unit_counts`
+    computed before review stays valid after it.
+    """
+
+    units: list[str]
+    chunk_unit_counts: list[int]
+
 
 # Paragraph-based chunking keeps each LLM call well inside context limits
 # and lets the model reason about a chunk without losing track of it, at
@@ -127,6 +154,10 @@ def clean_corpus_file(
     LLM calls) resumes from the last completed chunk instead of re-billing
     every chunk cleaned so far.
 
+    Chunk provenance (which of `units` came from which source chunk) is
+    always saved to `cache_path`, regardless of which model did the
+    cleaning — see `CleanedDocument`.
+
     If the configured model is local (`is_local_model`), a second-opinion
     review pass (`review_units_with_llm`) runs once over the fully-cleaned
     unit list before it's cached — free for a self-hosted model, so it's
@@ -135,27 +166,39 @@ def clean_corpus_file(
     """
     if cache_path is not None and use_cache and cache_path.exists():
         print(f"[clean] {cf.path.name}: using cached {cache_path.name}", file=sys.stderr)
-        cached: list[str] = json.loads(cache_path.read_text(encoding="utf-8"))
-        return cached
+        cached = CleanedDocument.model_validate_json(cache_path.read_text(encoding="utf-8"))
+        return cached.units
 
     chunks = chunk_text(raw_text)
     partial_path = cache_path.with_name(cache_path.name + ".partial") if cache_path is not None else None
 
     units: list[str] = []
+    chunk_unit_counts: list[int] = []
     start = 0
     if partial_path is not None and use_cache and partial_path.exists():
         saved = json.loads(partial_path.read_text(encoding="utf-8"))
         if saved.get("total_chunks") == len(chunks):
             units, start = saved["units"], saved["next_chunk"]
+            chunk_unit_counts = saved["chunk_unit_counts"]
             print(f"[clean] {cf.path.name}: resuming from chunk {start + 1}/{len(chunks)}", file=sys.stderr)
 
     for i in range(start, len(chunks)):
         print(f"[clean] {cf.path.name}: chunk {i + 1}/{len(chunks)}", file=sys.stderr, flush=True)
-        units.extend(clean_chunk_with_llm(chunks[i], lang_code=cf.lang_code, work=cf.work_label, model=model))
+        new_units = clean_chunk_with_llm(chunks[i], lang_code=cf.lang_code, work=cf.work_label, model=model)
+        units.extend(new_units)
+        chunk_unit_counts.append(len(new_units))
         if partial_path is not None:
             partial_path.parent.mkdir(parents=True, exist_ok=True)
             partial_path.write_text(
-                json.dumps({"total_chunks": len(chunks), "next_chunk": i + 1, "units": units}, ensure_ascii=False),
+                json.dumps(
+                    {
+                        "total_chunks": len(chunks),
+                        "next_chunk": i + 1,
+                        "units": units,
+                        "chunk_unit_counts": chunk_unit_counts,
+                    },
+                    ensure_ascii=False,
+                ),
                 encoding="utf-8",
             )
     print(f"[clean] {cf.path.name}: {len(units)} content units kept", file=sys.stderr)
@@ -175,7 +218,8 @@ def clean_corpus_file(
 
     if cache_path is not None:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps(units, ensure_ascii=False, indent=2), encoding="utf-8")
+        document = CleanedDocument(units=units, chunk_unit_counts=chunk_unit_counts)
+        cache_path.write_text(document.model_dump_json(indent=2), encoding="utf-8")
         if partial_path is not None and partial_path.exists():
             partial_path.unlink()
     return units

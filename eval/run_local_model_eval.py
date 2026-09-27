@@ -51,7 +51,7 @@ from make_baseline import make_baseline  # noqa: E402
 from metrics import compare_alignment, compare_cleaning, format_report, slugify  # noqa: E402
 from ye_olde.config import get_settings  # noqa: E402
 from ye_olde.ingest.align import align_corpus_pair, write_jsonl  # noqa: E402
-from ye_olde.ingest.clean import clean_corpus_file  # noqa: E402
+from ye_olde.ingest.clean import CleanedDocument, clean_corpus_file  # noqa: E402
 from ye_olde.ingest.corpus_files import CorpusFile, discover_corpus_files  # noqa: E402
 from ye_olde.ingest.extract import extract_text, strip_boilerplate  # noqa: E402
 from ye_olde.ingest.llm_client import get_usage_summary, is_local_model, reset_usage  # noqa: E402
@@ -159,7 +159,7 @@ def run_cleaning_eval(
         if baseline_path is None:
             print(f"[eval] skip cleaning-compare for {cf.path.name}: no baseline cleaned file for it")
             continue
-        baseline_units = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline_units = CleanedDocument.model_validate_json(baseline_path.read_text(encoding="utf-8")).units
 
         raw_text = strip_boilerplate(extract_text(cf.path))
         # A stable (non-timestamped) path so a crash mid-file resumes via
@@ -211,8 +211,8 @@ def run_alignment_eval(
                 f"[eval] skip alignment-compare for {cf_a.lang_code}-{cf_b.lang_code}: missing baseline cleaned file(s)"
             )
             continue
-        units_a = json.loads(base_a.read_text(encoding="utf-8"))
-        units_b = json.loads(base_b.read_text(encoding="utf-8"))
+        units_a = CleanedDocument.model_validate_json(base_a.read_text(encoding="utf-8")).units
+        units_b = CleanedDocument.model_validate_json(base_b.read_text(encoding="utf-8")).units
         pair_records = [
             r
             for r in baseline_records

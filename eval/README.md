@@ -81,3 +81,16 @@ eval/
   sandbox this was first built in) — the script was validated with a
   smoke test using a faked local model, not a real one. Point it at an
   actual running local server to get a real comparison.
+- `compare_cleaning` compares baseline and local units as flat,
+  whole-file lists — it doesn't yet use each unit's source-chunk
+  provenance (`CleanedDocument.chunk_unit_counts`, see
+  `ye_olde.ingest.clean`) to compare chunk-for-chunk instead. That
+  provenance is saved by every cleaning run regardless of model, so a
+  chunk-scoped comparison is a reasonable future addition here.
+- A `.cleaned.json` written before `chunk_unit_counts` existed is a bare
+  JSON array, not a `CleanedDocument` object — `clean_corpus_file` and
+  `run_local_model_eval.py` both now expect the new shape and will raise
+  a pydantic validation error on an old-format file. Re-clean (or
+  re-run `make_baseline.py` against a freshly re-cleaned
+  `data/processed/<work>/`) to pick up the new format; there's no
+  migration path back onto an old cache file.
