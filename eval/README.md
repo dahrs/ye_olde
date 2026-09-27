@@ -49,7 +49,8 @@ point.
 eval/
 ├── metrics.py               # comparison metric functions (shared, reusable)
 ├── make_baseline.py          # snapshot data/processed/<work>/ -> eval/baselines/<work>/
-├── run_local_model_eval.py   # the comparison itself
+├── run_local_model_eval.py   # local model vs. Claude baseline comparison
+├── compare_runs.py           # two arbitrary runs of the same work vs. each other (e.g. determinism checks)
 ├── baselines/<work>/         # frozen reference snapshots, tagged <model>_<timestamp>
 ├── outputs/<work>/           # local-model run outputs, tagged <model>_<timestamp>
 └── reports/<work>/           # generated comparison reports (Markdown)
@@ -69,6 +70,36 @@ eval/
   duration. The baseline's original cost/time isn't reconstructable after
   the fact unless it was recorded at baseline-creation time — treat its
   absence as "not recorded," not "free."
+
+## Same-work determinism check (e.g. Claude run vs. Claude run)
+
+`compare_runs.py` compares two independently-produced cleaning+alignment
+runs of the *same* work against each other — unlike `run_local_model_eval.py`,
+neither run has to be a fixed "baseline" and both can be the same model
+(this is how Claude's own run-to-run determinism was checked for Sir
+Gawayne: re-running `scripts/align_corpus.py --no-cache` on unchanged
+source files and comparing the fresh output against an archived earlier
+run). It reuses the same `compare_cleaning`/`compare_alignment` metrics,
+and its report always records exactly which files, models, and timestamp
+were compared (see `eval/reports/<work>/*.md`) so a report is self-contained
+evidence, not something you have to reconstruct from memory later.
+
+### Usage
+
+```bash
+python eval/compare_runs.py data/raw/<work> \
+    --run-a-dir eval/baselines/<work> --run-a-suffix ".baseline_<tag>_<timestamp>" \
+    --run-a-label "run1-imperfect" --run-a-model "anthropic/claude-sonnet-5" \
+    --run-b-dir data/processed/<work> \
+    --run-b-label "run2" --run-b-model "anthropic/claude-sonnet-5" \
+    --run-b-dropped 8 --run-b-candidates 760
+```
+
+`--run-a-dropped`/`--run-a-candidates`/`--run-b-dropped`/`--run-b-candidates`
+are align.py's verification-drop numerator/denominator for each run, if
+known (align.py only prints this to stderr, so it's lost for a run whose
+console output wasn't captured — leave the flag off rather than guess; the
+report only shows a drop rate when both numbers for that run are given).
 
 ### Known limitations (first version — improve as needed, not exhaustive)
 

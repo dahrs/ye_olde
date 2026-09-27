@@ -139,8 +139,9 @@ def format_report(title: str, sections: dict[str, dict]) -> str:
         for key, value in metrics.items():
             if isinstance(value, float):
                 lines.append(f"- **{key}**: {value:.4f}")
-            elif isinstance(value, dict):
-                lines.append(f"- **{key}**: {value}")
+            elif isinstance(value, list):
+                lines.append(f"- **{key}**:")
+                lines += [f"  - {item}" for item in value]
             else:
                 lines.append(f"- **{key}**: {value}")
         lines.append("")
