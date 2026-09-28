@@ -100,15 +100,37 @@ def _is_loopback_or_private_host(url: str) -> bool:
     return addr.is_loopback or addr.is_private
 
 
+def _resolve_provider(resolved_model: str, settings: Settings) -> tuple[str, str | None] | None:
+    """Provider name and litellm-resolved `api_base` for `resolved_model`
+    (asked of litellm directly via `get_llm_provider`, which parses the
+    model string the same way `litellm.completion` itself will, rather
+    than inferred from our own project config), or `None` if the model
+    string doesn't resolve. Shared by `is_local_model` and
+    `_resolve_api_key`, which both need to know which backend a model
+    string actually routes to.
+    """
+    import litellm
+
+    try:
+        _, provider, _, resolved_api_base = litellm.get_llm_provider(
+            resolved_model, api_base=settings.litellm_api_base or None
+        )
+    except Exception as exc:
+        # Unresolvable model string -> callers treat this as "unknown/not
+        # local" / "use the default key" rather than guessing. Logged (not
+        # silent) since this changes downstream behavior even though it's
+        # an expected, handled case.
+        _log.debug("could not resolve provider for %r: %s", resolved_model, exc)
+        return None
+    return provider, resolved_api_base
+
+
 def is_local_model(model: str | None = None) -> bool:
     """True if this call is going to a self-hosted/local-inference backend
     rather than a commercial hosted API, checked two independent ways:
 
     1. litellm resolves the model string to a known local-inference
-       provider (Ollama, vLLM, LM Studio, ...) — asked of litellm directly
-       (`get_llm_provider`, which parses the model string the same way
-       `litellm.completion` itself will) rather than inferred from our own
-       project config.
+       provider (Ollama, vLLM, LM Studio, ...).
     2. The resolved `api_base` points at a loopback/private address. This
        catches the llama.cpp setup this README documents: `llama-server`
        is an OpenAI-*compatible* server, so its recommended
@@ -123,25 +145,41 @@ def is_local_model(model: str | None = None) -> bool:
     automatically (e.g. `ollama/*` -> `http://localhost:11434`, which is
     why check 2 uses litellm's *resolved* api_base, not the raw setting).
     """
-    import litellm
-
     settings = get_settings()
     resolved_model = model or settings.litellm_model
     if not resolved_model:
         return False
-    try:
-        _, provider, _, resolved_api_base = litellm.get_llm_provider(
-            resolved_model, api_base=settings.litellm_api_base or None
-        )
-    except Exception as exc:
-        # Unresolvable model string -> don't assume it's free to call again.
-        # Logged (not silent) since this changes downstream behavior (no
-        # review pass) even though it's an expected, handled case.
-        _log.debug("could not resolve provider for %r: %s", resolved_model, exc)
+    resolved = _resolve_provider(resolved_model, settings)
+    if resolved is None:
         return False
+    provider, resolved_api_base = resolved
     if provider in _LOCAL_INFERENCE_PROVIDERS:
         return True
-    return bool(resolved_api_base) and _is_loopback_or_private_host(resolved_api_base)
+    return resolved_api_base is not None and _is_loopback_or_private_host(resolved_api_base)
+
+
+def _resolve_api_key(resolved_model: str, settings: Settings) -> str | None:
+    """The credential to send for `resolved_model` — `settings.aws_bearer_token_bedrock`
+    when (and only when) this call is going to AWS Bedrock's Mantle
+    endpoint (`LITELLM_MODEL=bedrock_mantle/openai.<model>`, e.g. GPT-6
+    Sol), `settings.litellm_api_key` (today's default backend's
+    credential, e.g. Anthropic's) otherwise. This is what lets both keys
+    stay configured side by side in `.env` and be switched between purely
+    via which provider `LITELLM_MODEL`/`--model` resolves to. Unlike the
+    "openai" provider name (which is ambiguous with a local llama-server's
+    own OpenAI-compatible masquerade — see `is_local_model`), litellm's
+    "bedrock_mantle" provider only ever means the real AWS-hosted
+    endpoint, so no loopback/local check is needed here.
+    """
+    if not settings.aws_bearer_token_bedrock:
+        return settings.litellm_api_key or None
+    resolved = _resolve_provider(resolved_model, settings)
+    if resolved is None:
+        return settings.litellm_api_key or None
+    provider, _resolved_api_base = resolved
+    if provider == "bedrock_mantle":
+        return settings.aws_bearer_token_bedrock
+    return settings.litellm_api_key or None
 
 
 def call_llm_json(
@@ -289,7 +327,7 @@ def _complete(
     response = litellm.completion(
         model=resolved_model,
         messages=messages,
-        api_key=settings.litellm_api_key or None,
+        api_key=_resolve_api_key(resolved_model, settings),
         api_base=settings.litellm_api_base or None,
         extra_body=extra_body,
         timeout=settings.litellm_timeout_seconds,

@@ -445,3 +445,48 @@ def test_align_corpus_pair_runs_review_pass_only_for_local_models(monkeypatch):
     monkeypatch.setattr(align, "is_local_model", lambda *a, **k: True)
     align.align_corpus_pair(cf_a, cf_b, units_a, units_b, mode="llm", block_size=40)
     assert len(review_calls) == 1
+
+
+def test_align_pairs_lexical_matches_by_character_overlap():
+    units_a = ["the sothe light of day", "many wordes were spoken", "no match here at all"]
+    units_b = ["the soothe light of day", "many words were spoken", "something totally unrelated"]
+
+    pairs = align._align_pairs_lexical(units_a, units_b, margin_threshold=0.05)
+
+    texts = {(p["source_text"], p["target_text"]) for p in pairs}
+    assert texts == {
+        ("the sothe light of day", "the soothe light of day"),
+        ("many wordes were spoken", "many words were spoken"),
+    }
+    assert all(p["alignment_links"] == [] for p in pairs)
+    assert all(p["method"] == "lexical" for p in pairs)
+
+
+def test_align_corpus_pair_mode_algorithmic_makes_no_llm_calls(monkeypatch):
+    """mode="algorithmic" must never call an LLM, even if called with a
+    model string is_local_model would treat as local (which would normally
+    trigger the free review pass).
+    """
+    cf_a = CorpusFile(Path("a.txt"), "enm", 1400, "Work", "Author", "Src")
+    cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
+    units_a = ["the sothe light of day", "many wordes were spoken"]
+    units_b = ["the soothe light of day", "many words were spoken"]
+
+    def fail_if_called(*a, **k):
+        raise AssertionError("mode='algorithmic' must not call the LLM")
+
+    monkeypatch.setattr(align, "call_llm_json", fail_if_called)
+    monkeypatch.setattr(align, "is_local_model", lambda *a, **k: True)  # would trigger review, if reached
+
+    records = align.align_corpus_pair(cf_a, cf_b, units_a, units_b, mode="algorithmic")
+
+    assert len(records) == 2
+    assert all(r["sentence_method"] == "lexical:trigram-dice" for r in records)
+    assert all(r["alignment_links"] == [] for r in records)
+
+
+def test_align_corpus_pair_invalid_mode_raises():
+    cf_a = CorpusFile(Path("a.txt"), "enm", 1400, "Work", "Author", "Src")
+    cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
+    with pytest.raises(ValueError, match="mode must be"):
+        align.align_corpus_pair(cf_a, cf_b, ["a"], ["b"], mode="bogus")

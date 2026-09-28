@@ -419,3 +419,45 @@ def test_is_local_model_true_for_loopback_ip_and_private_network_base_url(monkey
         lambda: Settings(litellm_model="openai/x", litellm_api_base="http://192.168.1.50:8080/v1"),
     )
     assert lc.is_local_model() is True
+
+
+def test_resolve_api_key_uses_litellm_api_key_when_bedrock_token_unset():
+    from ye_olde.config import Settings
+    from ye_olde.ingest import llm_client as lc
+
+    settings = Settings(
+        litellm_model="bedrock_mantle/openai.gpt-6-sol", litellm_api_key="claude-key", aws_bearer_token_bedrock=""
+    )
+    assert lc._resolve_api_key("bedrock_mantle/openai.gpt-6-sol", settings) == "claude-key"
+
+
+def test_resolve_api_key_uses_bedrock_token_for_bedrock_mantle_provider():
+    from ye_olde.config import Settings
+    from ye_olde.ingest import llm_client as lc
+
+    settings = Settings(
+        litellm_model="bedrock_mantle/openai.gpt-6-sol",
+        litellm_api_key="claude-key",
+        aws_bearer_token_bedrock="bedrock-token",
+    )
+    assert lc._resolve_api_key("bedrock_mantle/openai.gpt-6-sol", settings) == "bedrock-token"
+
+
+def test_resolve_api_key_uses_litellm_api_key_for_non_bedrock_provider():
+    from ye_olde.config import Settings
+    from ye_olde.ingest import llm_client as lc
+
+    settings = Settings(
+        litellm_model="anthropic/claude-sonnet-5",
+        litellm_api_key="claude-key",
+        aws_bearer_token_bedrock="bedrock-token",
+    )
+    assert lc._resolve_api_key("anthropic/claude-sonnet-5", settings) == "claude-key"
+
+
+def test_resolve_api_key_falls_back_to_litellm_api_key_for_unresolvable_model():
+    from ye_olde.config import Settings
+    from ye_olde.ingest import llm_client as lc
+
+    settings = Settings(litellm_api_key="claude-key", aws_bearer_token_bedrock="bedrock-token")
+    assert lc._resolve_api_key("", settings) == "claude-key"

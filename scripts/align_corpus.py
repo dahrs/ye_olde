@@ -32,11 +32,13 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument(
         "--mode",
-        choices=["hybrid", "llm"],
+        choices=["hybrid", "llm", "algorithmic"],
         default="hybrid",
         help="'hybrid' (default): cheap embedding-based sentence matching, LLM only for the gaps it "
         "misses plus word-link extraction. 'llm': the LLM proposes sentence matches from scratch "
-        "(no sentence-transformers dependency, more LLM calls on a long text).",
+        "(no sentence-transformers dependency, more LLM calls on a long text). 'algorithmic': "
+        "character-trigram lexical matching only, no LLM and no embedding model at all -- a "
+        "no-model baseline (see align.py's module docstring).",
     )
     parser.add_argument(
         "--model",

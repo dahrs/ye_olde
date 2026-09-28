@@ -21,10 +21,24 @@ class Settings(BaseSettings):
 
     # Generation LLM — via litellm, so this can be an API model string
     # (e.g. "anthropic/claude-...") or a local/OpenAI-compatible endpoint
-    # (e.g. "ollama/<model>" with litellm_api_base set).
+    # (e.g. "ollama/<model>" with litellm_api_base set). litellm_api_key is
+    # this default backend's credential (today: the Anthropic key, for
+    # LITELLM_MODEL=anthropic/claude-...).
     litellm_model: str = ""
     litellm_api_key: str = ""
     litellm_api_base: str = ""
+
+    # A second, independent credential for OpenAI models hosted on AWS
+    # Bedrock's Mantle endpoint (e.g. GPT-6 Sol/Luna/Astra, LITELLM_MODEL=
+    # "bedrock_mantle/openai.gpt-6-sol") -- kept side by side with
+    # litellm_api_key rather than replacing it, so both Claude's and this
+    # Bedrock key stay configured at once, switched between purely via
+    # which provider LITELLM_MODEL (or a --model override) resolves to.
+    # This is AWS's own long-term Bedrock API key (bearer-token auth, not
+    # the classic AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY SigV4 pair) --
+    # used when litellm_client._resolve_api_key determines the call is
+    # going to provider "bedrock_mantle".
+    aws_bearer_token_bedrock: str = ""
 
     # Optional raw JSON object merged into every litellm.completion() call as
     # extra_body — for whatever provider-specific parameter your chosen

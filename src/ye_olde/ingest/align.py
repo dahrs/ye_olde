@@ -17,7 +17,7 @@ Two halves, deliberately split:
     aligners (fast_align, awesome-align) handle poorly here because they
     weren't built for text with this much spelling/grammar drift.
 
-Two alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
+Three alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
   - "hybrid" (default): `sentence_align.mutual_nearest_neighbor_align` finds
     high-confidence sentence matches cheaply via embeddings; only the gaps
     it leaves unmatched (and the runner-up-margin cases it wasn't sure
@@ -30,6 +30,16 @@ Two alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
     windows of the whole text, with no embedding pass at all — simpler,
     slower/costlier at scale, and doesn't depend on `sentence-transformers`
     being installed or the embedding model download succeeding.
+  - "algorithmic": no LLM call and no embedding model at all —
+    `sentence_align.lexical_align` matches units by character-trigram
+    overlap alone, and a unit either side leaves unmatched is simply left
+    out rather than filled in by anything else. A from-scratch, no-model
+    baseline: how much of the other two modes' quality is actually earned
+    by semantic embeddings/LLM judgment, versus what plain lexical overlap
+    already gets for free. `alignment_links` is always empty in this mode
+    (word/phrase linking is an LLM-only capability elsewhere in this
+    module) and the local-model review pass never runs for it, regardless
+    of `LITELLM_MODEL` — this mode's whole point is zero model involvement.
 
 Every LLM call this module makes — cleaning (clean.py), gap/block
 discovery, word-link batches — is checkpointed to disk as it succeeds (see
@@ -77,7 +87,7 @@ from .clean import clean_corpus_file
 from .corpus_files import CorpusFile, discover_corpus_files
 from .extract import extract_text, strip_boilerplate
 from .llm_client import call_llm_json, is_local_model
-from .sentence_align import SentenceMatch, mutual_nearest_neighbor_align
+from .sentence_align import SentenceMatch, lexical_align, mutual_nearest_neighbor_align
 
 _TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 
@@ -410,6 +420,36 @@ def _align_pairs_hybrid(
     return deduped
 
 
+def _align_pairs_lexical(
+    units_a: list[str],
+    units_b: list[str],
+    *,
+    margin_threshold: float,
+) -> list[PairRecord]:
+    """`mode="algorithmic"`'s whole implementation: match units by
+    character-trigram overlap alone (`sentence_align.lexical_align`), no
+    LLM anywhere — not even for the gaps this leaves unmatched, unlike
+    hybrid mode's embedding pass. A unit with no accepted match on either
+    side is simply absent from the output, not filled in by anything else:
+    a deliberate, honest floor on how much bitext this corpus yields with
+    no model involvement at all, semantic or generative.
+    """
+    matches = lexical_align(units_a, units_b, margin_threshold=margin_threshold)
+    return [
+        {
+            "source_text": units_a[m.i],
+            "target_text": units_b[m.j],
+            "source_tokens": tokenize(units_a[m.i]),
+            "target_tokens": tokenize(units_b[m.j]),
+            "citation": None,
+            "sentence_confidence": m.score,
+            "alignment_links": [],
+            "method": "lexical",
+        }
+        for m in matches
+    ]
+
+
 def align_corpus_pair(
     cf_a: CorpusFile,
     cf_b: CorpusFile,
@@ -426,7 +466,8 @@ def align_corpus_pair(
     use_checkpoint: bool = True,
 ) -> list[PairRecord]:
     """Aligns two whole cleaned works into deduped §3c-shaped pair records.
-    See the module docstring for what `mode="hybrid"` vs. `mode="llm"` mean.
+    See the module docstring for what `mode="hybrid"`/`"llm"`/`"algorithmic"`
+    mean.
 
     If `checkpoint_path` is given, every LLM call this makes (gap/block
     discovery, word-link batches) is persisted there as it succeeds; a call
@@ -460,10 +501,15 @@ def align_corpus_pair(
             link_batch_size=link_batch_size,
             checkpoint=checkpoint,
         )
+    elif mode == "algorithmic":
+        pairs = _align_pairs_lexical(units_a, units_b, margin_threshold=margin_threshold)
     else:
-        raise ValueError(f"mode must be 'hybrid' or 'llm', got {mode!r}")
+        raise ValueError(f"mode must be 'hybrid', 'llm', or 'algorithmic', got {mode!r}")
 
-    if is_local_model(model):
+    # "algorithmic" mode's whole point is zero model involvement -- never
+    # run the (free-but-still-a-model-call) local review pass for it,
+    # regardless of what LITELLM_MODEL happens to be configured to.
+    if mode != "algorithmic" and is_local_model(model):
         print("[align] local model, running pair review pass", file=sys.stderr)
         pairs = review_pairs_with_llm(pairs, cf_a, cf_b, model=model, checkpoint=checkpoint)
 
@@ -591,7 +637,15 @@ def _finalize_records(
     records = []
     for i, pair in enumerate(pairs):
         method = pair.pop("method", "llm")
-        sentence_method = f"embedding:{resolved_embedding_model}" if method == "embedding" else f"llm:{resolved_model}"
+        if method == "embedding":
+            sentence_method = f"embedding:{resolved_embedding_model}"
+        elif method == "lexical":
+            # Fixed, honest label -- deliberately not derived from
+            # resolved_model/resolved_embedding_model, since no model of
+            # either kind was actually involved in producing this pair.
+            sentence_method = "lexical:trigram-dice"
+        else:
+            sentence_method = f"llm:{resolved_model}"
         records.append(
             {
                 "pair_id": f"{slug}_{cf_a.year}x{cf_b.year}_{i:05d}",

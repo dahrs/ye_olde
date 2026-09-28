@@ -1,6 +1,7 @@
-"""Unit tests for the embedding-based sentence aligner. `embed_units` is
-monkeypatched to return hand-built vectors, so these run with no model
-download and no network access.
+"""Unit tests for the algorithmic sentence aligners. `embed_units` is
+monkeypatched to return hand-built vectors for the embedding-based aligner's
+tests, so those run with no model download and no network access;
+`lexical_align`'s tests need no mocking at all (pure character comparison).
 """
 
 from __future__ import annotations
@@ -9,6 +10,7 @@ import numpy as np
 import pytest
 
 from ye_olde.ingest import sentence_align
+from ye_olde.ingest.sentence_align import lexical_align
 
 
 def test_mutual_nearest_neighbor_align_clean_case(monkeypatch):
@@ -81,3 +83,38 @@ def test_empty_inputs_return_no_matches(monkeypatch):
     monkeypatch.setattr(sentence_align, "embed_units", lambda units, **k: np.zeros((len(units), 3)))
     assert sentence_align.mutual_nearest_neighbor_align([], ["b0"]) == []
     assert sentence_align.mutual_nearest_neighbor_align(["a0"], []) == []
+
+
+def test_lexical_align_matches_near_identical_strings():
+    # a0/b0 and a1/b1 share almost all their characters (cognate-like
+    # overlap); a2 has no real counterpart on the b side at all.
+    units_a = ["the sothe light of day", "many wordes were spoken", "no match here at all"]
+    units_b = ["the soothe light of day", "many words were spoken", "something totally unrelated"]
+
+    matches = lexical_align(units_a, units_b)
+
+    assert [(m.i, m.j) for m in matches] == [(0, 0), (1, 1)]
+    assert all(0.0 < m.score <= 1.0 for m in matches)
+
+
+def test_lexical_align_rejects_low_margin():
+    # a0 is equally (dis)similar to both b0 and b1 -> no confident winner.
+    matches = lexical_align(["abc"], ["xyz", "zyx"], margin_threshold=0.05)
+    assert matches == []
+
+
+def test_lexical_align_drops_crossing_match():
+    # a0 best-matches b1 and a1 best-matches b0 -- a genuine crossing that
+    # the longest-increasing-subsequence cleanup must resolve to one match.
+    units_a = ["alpha beta", "gamma delta"]
+    units_b = ["gamma delta", "alpha beta"]
+
+    matches = lexical_align(units_a, units_b)
+    js = [m.j for m in matches]
+    assert js == sorted(js)
+    assert len(matches) <= 1
+
+
+def test_lexical_align_empty_inputs_return_no_matches():
+    assert lexical_align([], ["b0"]) == []
+    assert lexical_align(["a0"], []) == []

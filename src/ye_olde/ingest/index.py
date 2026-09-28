@@ -19,10 +19,10 @@ function — the same list, same order, must be used for all four):
     them paired for exactly this reason instead of concatenating tables
     the way the plain exact-match path does).
   - `ngrams/pairs/<lang_a>_<lang_b>/<year_from>-<year_to>.parquet` —
-    character-trigram postings for every token on both sides, spec §10's
+    character-trigram postings (`scorer.char_trigrams`, same technique as
+    PostgreSQL's `pg_trgm`) for every token on both sides, spec §10's
     "Hybrid retrieval scoring": the inverted index `/lookup`'s fuzzy
-    candidate generation reads (same technique as PostgreSQL's `pg_trgm`),
-    and `/search`'s lexical scoring reads too.
+    candidate generation reads, and `/search`'s lexical scoring reads too.
   - `bm25/pairs/<lang_a>_<lang_b>/<year_from>-<year_to>.parquet` — term
     postings (same spec section) for `/search`'s BM25 signal. Document
     frequency and corpus size aren't stored here — `search_api` derives
@@ -50,6 +50,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from .embed import embed_units
+from .scorer import char_trigrams
 
 
 def _read_bitext_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -115,27 +116,10 @@ def build_vector_index(records: list[dict[str, Any]], *, model_name: str | None 
     return index
 
 
-_TRIGRAM_SIZE = 3
-
 # Which side each record contributes tokens from, and what search_api's
 # `side` column value means for it (0=source, 1=target) — shared by the
 # n-gram and BM25 table builders since both index the same token lists.
 _SIDES: tuple[tuple[int, str], ...] = ((0, "source_tokens"), (1, "target_tokens"))
-
-
-def char_trigrams(token: str) -> set[str]:
-    """Character trigrams of `token`, lowercased and padded with 2 spaces on
-    each side (the standard `pg_trgm`-style convention) so short tokens and
-    word-boundary positions still produce a useful number of trigrams —
-    spec §10's "Hybrid retrieval scoring". A duplicate of this exact
-    function lives in `search_api/app/lexical.py` for computing a *query's*
-    trigrams at request time — the two services don't share a dependency
-    tree by design (see `search_api/app/config.py`'s docstring), but the
-    trigram *definition* must stay identical between them or postings built
-    here wouldn't match queries computed there.
-    """
-    padded = f"  {token.lower()}  "
-    return {padded[i : i + _TRIGRAM_SIZE] for i in range(len(padded) - _TRIGRAM_SIZE + 1)}
 
 
 def build_ngram_table(records: list[dict[str, Any]]) -> pa.Table:

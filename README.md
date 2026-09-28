@@ -42,6 +42,35 @@ uv sync
 cp .env.example .env   # fill in EMBEDDING_MODEL / LITELLM_MODEL / SEARCH_API_URL
 ```
 
+## Switching between multiple LLM backends
+
+`LITELLM_API_KEY` is the credential for whatever `LITELLM_MODEL` is currently set to (the
+default backend). A second, independent `AWS_BEARER_TOKEN_BEDROCK` can also be set in `.env` at
+the same time, without disturbing `LITELLM_API_KEY` — this lets both a Claude key and an AWS
+Bedrock key stay configured at once, switched between purely by which provider the model string
+resolves to. Bedrock's Mantle endpoint is how OpenAI's own frontier models (GPT-6 Sol/Luna/Astra,
+GPT-5.6, ...) are served on AWS — `AWS_BEARER_TOKEN_BEDROCK` is AWS's own long-term Bedrock API
+key (a bearer token), not the classic `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` SigV4 pair:
+
+```
+LITELLM_MODEL=anthropic/claude-sonnet-5    # uses LITELLM_API_KEY
+LITELLM_API_KEY=sk-ant-...
+AWS_BEARER_TOKEN_BEDROCK=ABSK...           # used automatically once LITELLM_MODEL (or --model) is bedrock_mantle/openai.<model>
+```
+
+No `.env` edit is needed to switch — either change `LITELLM_MODEL` to
+`bedrock_mantle/openai.gpt-6-sol` (or another Mantle-hosted model), or pass
+`--model bedrock_mantle/openai.gpt-6-sol` on a one-off `scripts/*.py` call, and
+`ye_olde.ingest.llm_client._resolve_api_key` picks `AWS_BEARER_TOKEN_BEDROCK` automatically.
+Unlike the "openai" provider name (ambiguous with a local llama-server's own OpenAI-compatible
+masquerade — see below), litellm's "bedrock_mantle" provider only ever means the real AWS-hosted
+endpoint, so no loopback/local disambiguation is needed for it.
+
+**Before this will actually work**, the AWS account also needs "model access" explicitly granted
+for the target model in the Bedrock console (per-model, per-region) — a valid API key alone
+doesn't grant that; an `AccessDenied`-style error on first use almost always means this step, not
+the key, is missing.
+
 ## Local LLM (llama.cpp)
 
 The generation LLM (`LITELLM_MODEL`) doesn't have to be a hosted API — this repo is public, and

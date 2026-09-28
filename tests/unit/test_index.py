@@ -13,6 +13,7 @@ import pyarrow.parquet as pq
 import pytest
 
 from ye_olde.ingest import index
+from ye_olde.ingest.scorer import char_trigrams
 
 _RECORDS = [
     {
@@ -90,18 +91,13 @@ def test_build_vector_index_ids_map_to_source_then_target(monkeypatch):
     assert ids2[0][0] in (2, 3)  # either side of p2, both share the same vector here
 
 
-def test_char_trigrams_pads_and_lowercases():
-    assert index.char_trigrams("Sir") == {"  s", " si", "sir", "ir ", "r  "}
-    assert index.char_trigrams("SIR") == index.char_trigrams("sir")
-
-
 def test_build_ngram_table_indexes_both_sides():
     table = index.build_ngram_table(_RECORDS)
     rows = table.to_pylist()
 
     # Total posting rows = sum of trigram-set sizes over every token on both sides.
     expected = sum(
-        len(index.char_trigrams(t)) for rec in _RECORDS for key in ("source_tokens", "target_tokens") for t in rec[key]
+        len(char_trigrams(t)) for rec in _RECORDS for key in ("source_tokens", "target_tokens") for t in rec[key]
     )
     assert len(rows) == expected
 
