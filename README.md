@@ -71,6 +71,28 @@ for the target model in the Bedrock console (per-model, per-region) — a valid 
 doesn't grant that; an `AccessDenied`-style error on first use almost always means this step, not
 the key, is missing.
 
+## Using your Claude Code subscription instead of an API key
+
+A third, independent backend, alongside a hosted API key and Bedrock:
+`ye_olde.ingest.claude_cli_client.complete_via_claude_cli` shells out to the real `claude` CLI's
+`-p`/print mode instead of `litellm.completion` — see that module's docstring for exactly how and
+why. It's a standalone function any script can import and call directly; `LITELLM_MODEL=
+claude_code_cli/<alias>` (e.g. `claude_code_cli/sonnet`, `claude_code_cli/opus`) is just
+`ye_olde.ingest.llm_client`'s own convention for routing `call_llm_json` to it. The practical
+effect: if you're logged into Claude Code (`claude login`) with a Pro/Max subscription and don't
+set `ANTHROPIC_API_KEY`, calls draw on that subscription instead of a separate pay-per-token key —
+useful for a contributor's own small/dev-scale runs, since it needs no key of its own to get
+started.
+
+```
+LITELLM_MODEL=claude_code_cli/sonnet   # no LITELLM_API_KEY needed — uses `claude login`'s session
+```
+
+This is a genuine tradeoff, not a strictly-better option — see `claude_cli_client.py`'s docstring
+for the full list, but the headline one: it draws on the *same* usage quota as your interactive
+Claude Code sessions, so a large ingestion run competes with your own coding work for it. Meant for
+occasional runs, not the project's production ingestion path.
+
 ## Local LLM (llama.cpp)
 
 The generation LLM (`LITELLM_MODEL`) doesn't have to be a hosted API — this repo is public, and

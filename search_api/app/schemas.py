@@ -47,6 +47,16 @@ class LookupResult(BaseModel):
     highlighted_span: HighlightedSpan | None = None
     source_sentence: str
     citation: str
+    # Straight from the pairs shard's `sentence_confidence` (see
+    # ye_olde.ingest.align._finalize_records) — its `sentence_method` sibling
+    # field says which of three incompatible scales produced it: embedding
+    # cosine similarity (roughly [-1, 1]), trigram Dice coefficient ([0, 1],
+    # noisier on short sentences), or LLM-self-reported confidence. Not
+    # normalized across those — a client sorting/filtering by `confidence`
+    # alone across a corpus indexed by more than one alignment mode gets a
+    # meaningless cross-provenance ordering. Flagged, not fixed: reconciling
+    # the scales is a real design decision (normalize at index time? expose
+    # method alongside confidence and let clients weight it?), not a bug fix.
     confidence: float
 
 

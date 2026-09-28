@@ -1,7 +1,9 @@
 """Algorithmic sentence aligners — the non-LLM matching techniques align.py
 builds on. Two independent scoring methods share the same banded,
-mutual-nearest-neighbor, monotonic matching skeleton (`_band`,
-`scorer.top1_top2`, `_longest_increasing_j`):
+mutual-nearest-neighbor, monotonic matching skeleton, factored into
+`_band_and_match` (itself built on `_band`, `scorer.find_top1_top2`, and
+`_longest_increasing_j`) so the two aligners below differ only in how a
+candidate pair's score is computed, not in how that score becomes a match:
 
   - `mutual_nearest_neighbor_align` (embedding-based): the cheap first pass
     of the hybrid pipeline. Conceptually the same idea as Vecalign/
@@ -42,19 +44,22 @@ starting point to revisit once real aligned output exists to inspect.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
 
 from .embed import embed_units
-from .scorer import char_trigrams, cosine_similarities, dice_coefficient, top1_top2
+from .scorer import char_trigrams, cosine_similarities, dice_coefficient, find_top1_top2
 
 
 @dataclass(frozen=True)
 class SentenceMatch:
     i: int  # index into units_a
     j: int  # index into units_b
-    score: float  # raw cosine similarity of the matched pair, for reporting
+    score: float  # raw score of the matched pair, for reporting: cosine similarity from
+    # mutual_nearest_neighbor_align, trigram Dice coefficient from lexical_align — the two
+    # scales aren't comparable pair-for-pair, see each function's own docstring
 
 
 def _band(center_input_idx: int, n_from: int, n_to: int, band_size: int) -> tuple[int, int]:
@@ -84,21 +89,58 @@ def mutual_nearest_neighbor_align(
 
     emb_a = embed_units(units_a, model_name=model_name)
     emb_b = embed_units(units_b, model_name=model_name)
+    return _band_and_match(
+        n_a,
+        n_b,
+        band_ratio=band_ratio,
+        min_band=min_band,
+        margin_threshold=margin_threshold,
+        score_a_to_b=lambda i, lo, hi: cosine_similarities(emb_a[i], emb_b[lo:hi]),
+        score_b_to_a=lambda j, lo, hi: cosine_similarities(emb_b[j], emb_a[lo:hi]),
+    )
+
+
+def _band_and_match(
+    n_a: int,
+    n_b: int,
+    *,
+    band_ratio: float,
+    min_band: int,
+    margin_threshold: float,
+    score_a_to_b: Callable[[int, int, int], np.ndarray],
+    score_b_to_a: Callable[[int, int, int], np.ndarray],
+) -> list[SentenceMatch]:
+    """The banded/mutual-nearest-neighbor/margin-gated/monotonic matching
+    skeleton shared by both aligners above — the only thing that differs
+    between `mutual_nearest_neighbor_align` and `lexical_align` is *how* a
+    candidate pair's score is computed (`score_a_to_b`/`score_b_to_a`, each
+    called as `(index, lo, hi) -> score array over units_b[lo:hi]` or its
+    mirror); everything about turning those scores into accepted,
+    monotonic matches — banding, the top1/top2 margin gate, the mutual-pick
+    intersection, sorting, and the LIS cleanup — is identical, so it's
+    written once here instead of once per aligner. Callers are expected to
+    have already handled the `n_a == 0 or n_b == 0` case themselves, before
+    doing whatever per-unit precompute (embedding, trigram extraction) this
+    function's callbacks close over — this function re-checks it too, as a
+    cheap safety net, but does none of that precompute itself.
+    """
+    if n_a == 0 or n_b == 0:
+        return []
     band_size = max(min_band, round(band_ratio * max(n_a, n_b)))
 
     best_j_for_i: dict[int, tuple[int, float]] = {}
     for i in range(n_a):
         lo, hi = _band(i, n_a, n_b, band_size)
-        sims = cosine_similarities(emb_a[i], emb_b[lo:hi])
-        local_j, top1, top2 = top1_top2(sims)
+        sims = score_a_to_b(i, lo, hi)
+        local_j, top1, top2 = find_top1_top2(sims)
         if top1 - top2 >= margin_threshold:
             best_j_for_i[i] = (lo + local_j, top1)
 
     best_i_for_j: dict[int, int] = {}
     for j in range(n_b):
         lo, hi = _band(j, n_b, n_a, band_size)
-        sims = cosine_similarities(emb_b[j], emb_a[lo:hi])
-        local_i, top1, top2 = top1_top2(sims)
+        sims = score_b_to_a(j, lo, hi)
+        local_i, top1, top2 = find_top1_top2(sims)
         if top1 - top2 >= margin_threshold:
             best_i_for_j[j] = lo + local_i
 
@@ -162,6 +204,18 @@ def lexical_align(
     `score` on the returned matches is the raw Dice coefficient — not on
     the same numeric scale as `mutual_nearest_neighbor_align`'s cosine
     similarity, so the two aren't directly comparable pair-for-pair.
+
+    Scoring here is an unvectorized Python-level loop (one `dice_coefficient`
+    call per in-band candidate), unlike the embedding aligner's single
+    matrix multiply over its whole band — a real, measurable cost at
+    whole-book scale, and a known, deliberately-deferred gap: a vectorized
+    version needs either an approximate hashed-feature representation
+    (trades exact Dice values for speed) or an exact shared-vocabulary
+    sparse matrix (more code, a real engineering lift), and this is the
+    from-scratch *baseline* mode (`align_corpus_pair`'s default is
+    `mode="hybrid"`), not the pipeline's default path — not worth the
+    accuracy/complexity tradeoff until someone actually needs `mode=
+    "algorithmic"` to run fast at scale.
     """
     n_a, n_b = len(units_a), len(units_b)
     if n_a == 0 or n_b == 0:
@@ -169,26 +223,12 @@ def lexical_align(
 
     grams_a = [char_trigrams(u) for u in units_a]
     grams_b = [char_trigrams(u) for u in units_b]
-    band_size = max(min_band, round(band_ratio * max(n_a, n_b)))
-
-    best_j_for_i: dict[int, tuple[int, float]] = {}
-    for i in range(n_a):
-        lo, hi = _band(i, n_a, n_b, band_size)
-        sims = np.array([dice_coefficient(grams_a[i], grams_b[k]) for k in range(lo, hi)])
-        local_j, top1, top2 = top1_top2(sims)
-        if top1 - top2 >= margin_threshold:
-            best_j_for_i[i] = (lo + local_j, top1)
-
-    best_i_for_j: dict[int, int] = {}
-    for j in range(n_b):
-        lo, hi = _band(j, n_b, n_a, band_size)
-        sims = np.array([dice_coefficient(grams_b[j], grams_a[k]) for k in range(lo, hi)])
-        local_i, top1, top2 = top1_top2(sims)
-        if top1 - top2 >= margin_threshold:
-            best_i_for_j[j] = lo + local_i
-
-    mutual = [
-        SentenceMatch(i=i, j=j, score=score) for i, (j, score) in best_j_for_i.items() if best_i_for_j.get(j) == i
-    ]
-    mutual.sort(key=lambda m: m.i)
-    return _longest_increasing_j(mutual)
+    return _band_and_match(
+        n_a,
+        n_b,
+        band_ratio=band_ratio,
+        min_band=min_band,
+        margin_threshold=margin_threshold,
+        score_a_to_b=lambda i, lo, hi: np.array([dice_coefficient(grams_a[i], grams_b[k]) for k in range(lo, hi)]),
+        score_b_to_a=lambda j, lo, hi: np.array([dice_coefficient(grams_b[j], grams_a[k]) for k in range(lo, hi)]),
+    )

@@ -29,6 +29,23 @@ Every call also passes an explicit `timeout` from `LITELLM_TIMEOUT_SECONDS`
 (config.py, default 6000s) rather than trusting litellm's own implicit
 default for this code path — that turned out in practice to be far shorter
 than an uncapped local reasoning call can need.
+
+A third backend, alongside "hosted API" and "local inference server" (both
+served through `litellm.completion` below): `claude_cli_client.py`, a
+standalone sibling module that shells out to the real `claude` CLI so calls
+can draw on a Claude Pro/Max subscription instead of a separate
+`ANTHROPIC_API_KEY` — see that module's docstring for what it is and why.
+This module only adapts it to fit here: `LITELLM_MODEL=claude_code_cli/
+<alias>` (e.g. `claude_code_cli/sonnet`) is this module's own convention for
+picking that backend, recognized by `_is_claude_cli_model`/`_complete`
+before anything litellm-specific (provider resolution, API-key lookup) runs
+— none of that applies to a CLI invocation. `_render_cli_messages` is the
+other half of the adaptation: `claude_cli_client.complete_via_claude_cli`
+takes a plain `(prompt, system)` pair, but this module's internal
+`messages` list can grow a repair-retry's extra turns (the model's own bad
+reply, a follow-up fix-it request) — `claude -p` has no conversation to
+append those to (a fresh, stateless process each call), so they get
+flattened into one prompt string here before the call.
 """
 
 from __future__ import annotations
@@ -42,6 +59,7 @@ from urllib.parse import urlparse
 from ..common.errors import LLMEmptyResponseError, LLMNotConfiguredError
 from ..common.logging import get_logger
 from ..config import Settings, get_settings
+from .claude_cli_client import complete_via_claude_cli
 
 _JSON_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
 _log = get_logger(__name__)
@@ -319,9 +337,33 @@ def _looks_like_truncation(content: str, exc: json.JSONDecodeError) -> bool:
     return exc.pos >= len(cleaned) - 1
 
 
+_CLAUDE_CLI_PREFIX = "claude_code_cli/"
+
+
+def _is_claude_cli_model(resolved_model: str) -> bool:
+    return resolved_model.startswith(_CLAUDE_CLI_PREFIX)
+
+
 def _complete(
     resolved_model: str, messages: list[dict[str, str]], settings: Settings, extra_body: dict[str, Any] | None
 ) -> tuple[str, str | None]:
+    if _is_claude_cli_model(resolved_model):
+        # extra_body (LITELLM_EXTRA_BODY / the no-thinking rescue fallback)
+        # has no CLI equivalent -- silently unused for this backend, not an
+        # error, since Claude Code's own adaptive thinking already handles
+        # the failure mode that setting exists to work around for litellm
+        # backends.
+        cli_model = resolved_model[len(_CLAUDE_CLI_PREFIX) :] or "sonnet"
+        system_text, prompt_text = _render_cli_messages(messages)
+        result = complete_via_claude_cli(
+            prompt_text, system=system_text, model=cli_model, timeout=settings.litellm_timeout_seconds
+        )
+        _usage["calls"] += 1
+        _usage["prompt_tokens"] += result.prompt_tokens
+        _usage["completion_tokens"] += result.completion_tokens
+        _usage["cost_usd"] += result.cost_usd
+        return result.content, result.finish_reason
+
     import litellm
 
     response = litellm.completion(
@@ -337,6 +379,34 @@ def _complete(
     content: str = choice["message"]["content"] or ""
     finish_reason: str | None = choice.get("finish_reason")
     return content, finish_reason
+
+
+def _render_cli_messages(messages: list[dict[str, str]]) -> tuple[str | None, str]:
+    """Splits a litellm-style `messages` list into `(system_text, prompt_text)`
+    for `claude -p`. The system message, if present, is always `messages[0]`
+    (see `call_llm_json`'s construction) and goes to `--append-system-prompt`
+    — a stable prefix, byte-identical call to call, so it stays eligible for
+    Anthropic's server-side prompt cache (see this module's docstring).
+
+    Every remaining message is flattened into one prompt string: the normal
+    case is just the one user prompt, but `call_llm_json`'s JSON-repair path
+    appends an assistant turn (the bad reply) and a follow-up user turn (the
+    fix-it request) to the *same* `messages` list before calling this again
+    — `claude -p` is a fresh, stateless process each call with no
+    conversation of its own to append those to, so they're rendered into the
+    prompt text instead.
+    """
+    system_text = None
+    rest = messages
+    if messages and messages[0]["role"] == "system":
+        system_text = messages[0]["content"]
+        rest = messages[1:]
+    if len(rest) == 1:
+        return system_text, rest[0]["content"]
+    parts = [
+        f"Your previous reply:\n{msg['content']}" if msg["role"] == "assistant" else msg["content"] for msg in rest
+    ]
+    return system_text, "\n\n---\n\n".join(parts)
 
 
 def _default_extra_body(settings: Settings) -> dict[str, Any] | None:

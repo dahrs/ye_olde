@@ -25,7 +25,7 @@ def char_trigrams(token: str) -> set[str]:
     each side (the standard `pg_trgm`-style convention) so short tokens and
     word-boundary positions still produce a useful number of trigrams.
 
-    Must stay byte-identical to `ye_olde.ingest.index.char_trigrams` — this
+    Must stay byte-identical to `ye_olde.ingest.scorer.char_trigrams` — this
     is the query-time half of the same definition. The two services don't
     share a dependency tree by design (see `config.py`'s docstring), but
     postings built by one and queried by the other only match if the

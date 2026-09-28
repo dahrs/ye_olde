@@ -89,7 +89,7 @@ def cosine_similarities(query: np.ndarray, candidates: np.ndarray) -> np.ndarray
     return result
 
 
-def top1_top2(sims: np.ndarray) -> tuple[int, float, float]:
+def find_top1_top2(sims: np.ndarray) -> tuple[int, float, float]:
     """Returns `(local_argmax, top1_score, top2_score)` from a 1-D score
     array — `top2` is `-inf` if there was only one candidate to begin with
     (nothing to compare a margin against).

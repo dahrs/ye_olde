@@ -1,6 +1,9 @@
-"""Unit tests for llm_client's usage/cost tracking. `litellm` itself is
-faked out via sys.modules so these run with no network access and no real
-API key.
+"""Unit tests for llm_client's usage/cost tracking and backend selection.
+`litellm` itself is faked out via sys.modules, and the Claude Code CLI
+backend (`claude_cli_client.complete_via_claude_cli` — see
+test_claude_cli_client.py for its own tests) is monkeypatched at the
+dispatch boundary, so these run with no network access, no real API key,
+and no `claude` binary required.
 """
 
 from __future__ import annotations
@@ -461,3 +464,82 @@ def test_resolve_api_key_falls_back_to_litellm_api_key_for_unresolvable_model():
 
     settings = Settings(litellm_api_key="claude-key", aws_bearer_token_bedrock="bedrock-token")
     assert lc._resolve_api_key("", settings) == "claude-key"
+
+
+# --- Claude Code CLI backend (`LITELLM_MODEL=claude_code_cli/<alias>`) ---
+
+
+def test_is_claude_cli_model_true_only_for_the_prefix():
+    assert llm_client._is_claude_cli_model("claude_code_cli/sonnet") is True
+    assert llm_client._is_claude_cli_model("claude_code_cli/") is True
+    assert llm_client._is_claude_cli_model("anthropic/claude-sonnet-5") is False
+    assert llm_client._is_claude_cli_model("") is False
+
+
+def test_render_cli_messages_single_user_message_has_no_system():
+    system_text, prompt_text = llm_client._render_cli_messages([{"role": "user", "content": "clean this"}])
+    assert system_text is None
+    assert prompt_text == "clean this"
+
+
+def test_render_cli_messages_splits_leading_system_message():
+    system_text, prompt_text = llm_client._render_cli_messages(
+        [{"role": "system", "content": "you are a cleaner"}, {"role": "user", "content": "clean this"}]
+    )
+    assert system_text == "you are a cleaner"
+    assert prompt_text == "clean this"
+
+
+def test_render_cli_messages_flattens_repair_turns_into_one_prompt():
+    # Shape call_llm_json's repair path builds: system, user, assistant (bad
+    # reply), user (fix-it request) -- claude -p is stateless per call, so
+    # everything after the system message collapses into one prompt string.
+    system_text, prompt_text = llm_client._render_cli_messages(
+        [
+            {"role": "system", "content": "sys"},
+            {"role": "user", "content": "original prompt"},
+            {"role": "assistant", "content": "not json"},
+            {"role": "user", "content": "that was not valid JSON, fix it"},
+        ]
+    )
+    assert system_text == "sys"
+    assert "original prompt" in prompt_text
+    assert "Your previous reply:\nnot json" in prompt_text
+    assert "that was not valid JSON, fix it" in prompt_text
+
+
+def test_call_llm_json_dispatches_to_claude_cli_client_and_tracks_its_usage(monkeypatch):
+    """`_complete` routes a `claude_code_cli/...` model to
+    `claude_cli_client.complete_via_claude_cli` (tested on its own in
+    test_claude_cli_client.py) rather than litellm — this only checks the
+    dispatch: the right arguments reach it, and its `ClaudeCliCompletion`
+    result feeds the same `_usage` accumulator the litellm path uses.
+    """
+    from ye_olde.ingest.claude_cli_client import ClaudeCliCompletion
+
+    captured = {}
+
+    def fake_complete(prompt, *, system=None, model="sonnet", timeout=6000.0):
+        captured.update(prompt=prompt, system=system, model=model)
+        return ClaudeCliCompletion(
+            content='["a", "b"]', finish_reason=None, prompt_tokens=112, completion_tokens=8, cost_usd=0.05
+        )
+
+    monkeypatch.setattr(llm_client, "complete_via_claude_cli", fake_complete)
+
+    result = llm_client.call_llm_json("clean this", system="you are a cleaner", model="claude_code_cli/sonnet")
+
+    assert result == ["a", "b"]
+    assert captured == {"prompt": "clean this", "system": "you are a cleaner", "model": "sonnet"}
+    usage = llm_client.get_usage_summary()
+    assert usage == {"calls": 1, "prompt_tokens": 112, "completion_tokens": 8, "cost_usd": pytest.approx(0.05)}
+
+
+def test_call_llm_json_cli_backend_propagates_errors(monkeypatch):
+    def fake_complete(prompt, **kwargs):
+        raise llm_client.LLMEmptyResponseError("claude -p exited 1: boom")
+
+    monkeypatch.setattr(llm_client, "complete_via_claude_cli", fake_complete)
+
+    with pytest.raises(llm_client.LLMEmptyResponseError, match="boom"):
+        llm_client.call_llm_json("p", model="claude_code_cli/sonnet")

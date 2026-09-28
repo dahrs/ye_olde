@@ -60,8 +60,9 @@ def main(argv: list[str] | None = None) -> None:
         "--margin-threshold",
         type=float,
         default=0.05,
-        help="hybrid mode only: minimum winning margin (top match's cosine similarity minus the "
-        "runner-up's) for the embedding aligner to accept a sentence match outright (default: 0.05)",
+        help="minimum winning margin (top match's score minus the runner-up's) for a sentence match "
+        "to be accepted outright: hybrid mode gates on cosine similarity, algorithmic mode on "
+        "trigram Dice similarity — different scales, same default and same knob (default: 0.05)",
     )
     parser.add_argument(
         "--no-cache",

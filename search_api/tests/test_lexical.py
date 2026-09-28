@@ -11,7 +11,7 @@ def test_char_trigrams_pads_and_lowercases():
 
 
 def test_char_trigrams_matches_ingest_side_definition():
-    # Byte-identical to ye_olde.ingest.index.char_trigrams is load-bearing --
+    # Byte-identical to ye_olde.ingest.scorer.char_trigrams is load-bearing --
     # postings built by one and queried by the other only match if the
     # definition is the same. Hardcoded expected output here rather than
     # importing ye_olde (search_api never depends on it, spec §10) so this

@@ -37,14 +37,14 @@ def test_cosine_similarities_identical_vector_is_one():
 
 
 def test_top1_top2_single_candidate_has_no_runner_up():
-    idx, top1, top2 = scorer.top1_top2(np.array([0.5]))
+    idx, top1, top2 = scorer.find_top1_top2(np.array([0.5]))
     assert idx == 0
     assert top1 == pytest.approx(0.5)
     assert top2 == float("-inf")
 
 
 def test_top1_top2_orders_by_score_descending():
-    idx, top1, top2 = scorer.top1_top2(np.array([0.2, 0.9, 0.6]))
+    idx, top1, top2 = scorer.find_top1_top2(np.array([0.2, 0.9, 0.6]))
     assert idx == 1
     assert top1 == pytest.approx(0.9)
     assert top2 == pytest.approx(0.6)
