@@ -13,7 +13,7 @@ import types
 
 import pytest
 
-from ye_olde.ingest import llm_client
+from ye_olde.common import llm_client
 
 
 class _FakeUsage:
@@ -348,8 +348,8 @@ def test_truncated_content_raises_when_no_fallback_configured(monkeypatch):
 
 
 def test_is_local_model_true_for_known_local_providers(monkeypatch):
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     monkeypatch.setattr(lc, "get_settings", lambda: Settings())
     for model in ["ollama/llama3", "ollama_chat/llama3", "vllm/mistral", "lm_studio/model", "llamafile/model"]:
@@ -357,8 +357,8 @@ def test_is_local_model_true_for_known_local_providers(monkeypatch):
 
 
 def test_is_local_model_false_for_hosted_api(monkeypatch):
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     monkeypatch.setattr(lc, "get_settings", lambda: Settings(litellm_model="anthropic/claude-sonnet-5"))
     assert lc.is_local_model() is False
@@ -369,8 +369,8 @@ def test_is_local_model_false_for_hosted_api_behind_a_custom_base_url(monkeypatc
     """A custom LITELLM_API_BASE doesn't by itself mean local — e.g. a
     corporate proxy or gateway in front of a paid hosted API.
     """
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     monkeypatch.setattr(
         lc,
@@ -381,8 +381,8 @@ def test_is_local_model_false_for_hosted_api_behind_a_custom_base_url(monkeypatc
 
 
 def test_is_local_model_false_for_unresolvable_model(monkeypatch):
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     monkeypatch.setattr(lc, "get_settings", lambda: Settings(litellm_model=""))
     assert lc.is_local_model() is False
@@ -394,8 +394,8 @@ def test_is_local_model_true_for_llama_cpp_openai_compatible_setup(monkeypatch):
     "openai" — indistinguishable from the real hosted API by provider name
     alone. The loopback api_base is what makes this correctly local.
     """
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     monkeypatch.setattr(
         lc,
@@ -406,8 +406,8 @@ def test_is_local_model_true_for_llama_cpp_openai_compatible_setup(monkeypatch):
 
 
 def test_is_local_model_true_for_loopback_ip_and_private_network_base_url(monkeypatch):
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     monkeypatch.setattr(
         lc,
@@ -425,8 +425,8 @@ def test_is_local_model_true_for_loopback_ip_and_private_network_base_url(monkey
 
 
 def test_resolve_api_key_uses_litellm_api_key_when_bedrock_token_unset():
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     settings = Settings(
         litellm_model="bedrock_mantle/openai.gpt-6-sol", litellm_api_key="claude-key", aws_bearer_token_bedrock=""
@@ -435,8 +435,8 @@ def test_resolve_api_key_uses_litellm_api_key_when_bedrock_token_unset():
 
 
 def test_resolve_api_key_uses_bedrock_token_for_bedrock_mantle_provider():
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     settings = Settings(
         litellm_model="bedrock_mantle/openai.gpt-6-sol",
@@ -447,8 +447,8 @@ def test_resolve_api_key_uses_bedrock_token_for_bedrock_mantle_provider():
 
 
 def test_resolve_api_key_uses_litellm_api_key_for_non_bedrock_provider():
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     settings = Settings(
         litellm_model="anthropic/claude-sonnet-5",
@@ -459,8 +459,8 @@ def test_resolve_api_key_uses_litellm_api_key_for_non_bedrock_provider():
 
 
 def test_resolve_api_key_falls_back_to_litellm_api_key_for_unresolvable_model():
+    from ye_olde.common import llm_client as lc
     from ye_olde.config import Settings
-    from ye_olde.ingest import llm_client as lc
 
     settings = Settings(litellm_api_key="claude-key", aws_bearer_token_bedrock="bedrock-token")
     assert lc._resolve_api_key("", settings) == "claude-key"
@@ -515,7 +515,7 @@ def test_call_llm_json_dispatches_to_claude_cli_client_and_tracks_its_usage(monk
     dispatch: the right arguments reach it, and its `ClaudeCliCompletion`
     result feeds the same `_usage` accumulator the litellm path uses.
     """
-    from ye_olde.ingest.claude_cli_client import ClaudeCliCompletion
+    from ye_olde.common.claude_cli_client import ClaudeCliCompletion
 
     captured = {}
 

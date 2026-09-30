@@ -18,8 +18,11 @@ from __future__ import annotations
 import argparse
 import sys
 
+from ye_olde.common.llm_client import get_usage_summary
+from ye_olde.common.logging import get_logger
 from ye_olde.ingest.align import align_corpus_folder
-from ye_olde.ingest.llm_client import get_usage_summary
+
+_log = get_logger(__name__)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -85,6 +88,16 @@ def main(argv: list[str] | None = None) -> None:
             margin_threshold=args.margin_threshold,
             use_cache=not args.no_cache,
         )
+    except Exception:
+        # Boundary catch (CLAUDE.md "Error handling") — this path now does
+        # real file I/O and an embedding-model call inside align_block's/
+        # extract_links_batch's per-link loop (sense.resolve_sense_id),
+        # neither of which existed here before; a corrupt/missing
+        # sense-index file or an embedding-model load error now has to be
+        # caught and logged somewhere, or it prints a raw traceback and
+        # never reaches logs/ye_olde.log.
+        _log.exception("align_corpus_folder failed for %r", args.folder)
+        raise SystemExit(1) from None
     finally:
         # printed even on failure (e.g. a billing error mid-run) — that's
         # exactly when knowing what was already spent matters most, and

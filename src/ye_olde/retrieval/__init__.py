@@ -61,6 +61,66 @@ class RankedPassage(BaseModel):
     score: float  # similarity * exp(-λ * year_gap) — what results are sorted by
 
 
+class LookupHit(BaseModel):
+    """One `/lookup` result (spec §3c) — a Linguee-style aligned pair, with
+    the specific attested word/phrase highlighted where word-alignment
+    covered it. `highlighted_span` is the actual word-level attested form;
+    `target_sentence`/`source_sentence` are the surrounding sentence, for
+    context only — `fallback.resolve` (the reason this exists) must never
+    use a whole sentence as if it were a single word's attested form (an
+    earlier version of `fallback.resolve` did exactly that against
+    `/search`'s sentence-level results — this is why `/lookup`, not
+    `/search`, backs the native rung).
+    """
+
+    pair_id: str
+    target_sentence: str
+    highlighted_span: str | None  # None when word-alignment hasn't covered this pair yet (spec §6)
+    source_sentence: str
+    citation: str
+    confidence: float
+
+
+def lookup(text: str, lang: str, year: int, target_lang: str, target_year: int) -> list[LookupHit]:
+    """Linguee-style aligned-example lookup against the Search API (spec
+    §10's `/lookup`) — given `text` at `(lang, year)`, returns attested
+    pairs whose target side is `(target_lang, target_year)`, each carrying
+    the specific attested word/phrase highlighted (when word-alignment
+    covered it) rather than only the surrounding sentence. Results are
+    sorted by `confidence`, highest first — `/lookup` itself doesn't
+    guarantee an order. `/lookup` doesn't yet filter by year server-side
+    (only one shard exists today, spec §13e) — `year`/`target_year` are
+    still sent (the response echoes them) but aren't a real filter yet;
+    this is a known, existing limitation of `/lookup` itself, not
+    something this client works around.
+    """
+    settings = get_settings()
+    if not settings.search_api_url:
+        raise ValueError("SEARCH_API_URL is not set — see .env.example")
+
+    response = httpx.get(
+        f"{settings.search_api_url}/lookup",
+        params={"text": text, "lang": lang, "year": year, "target_lang": target_lang, "target_year": target_year},
+        timeout=settings.search_api_timeout_seconds,
+    )
+    response.raise_for_status()
+    hits: list[dict[str, Any]] = response.json()["results"]
+
+    parsed = [
+        LookupHit(
+            pair_id=hit["pair_id"],
+            target_sentence=hit["target_sentence"],
+            highlighted_span=(hit.get("highlighted_span") or {}).get("surface"),
+            source_sentence=hit["source_sentence"],
+            citation=hit["citation"],
+            confidence=hit["confidence"],
+        )
+        for hit in hits
+    ]
+    parsed.sort(key=lambda h: h.confidence, reverse=True)
+    return parsed
+
+
 def search(text: str, lang: str, year: int, *, top_k: int = 5) -> list[RankedPassage]:
     """Semantic search against the Search API (spec §10's `/search`),
     reranked by temporal proximity to `year` with an adaptively-chosen decay

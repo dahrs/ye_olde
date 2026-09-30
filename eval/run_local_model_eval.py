@@ -49,12 +49,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from make_baseline import make_baseline  # noqa: E402
 from metrics import compare_alignment, compare_cleaning, format_report, slugify  # noqa: E402
+from ye_olde.common.llm_client import get_usage_summary, is_local_model, reset_usage  # noqa: E402
 from ye_olde.config import get_settings  # noqa: E402
 from ye_olde.ingest.align import align_corpus_pair, write_jsonl  # noqa: E402
 from ye_olde.ingest.clean import CleanedDocument, clean_corpus_file  # noqa: E402
 from ye_olde.ingest.corpus_files import CorpusFile, discover_corpus_files  # noqa: E402
 from ye_olde.ingest.extract import extract_text, strip_boilerplate  # noqa: E402
-from ye_olde.ingest.llm_client import get_usage_summary, is_local_model, reset_usage  # noqa: E402
 
 _DROPPED_RE = re.compile(r"verification: dropped (\d+)/(\d+) pairs")
 

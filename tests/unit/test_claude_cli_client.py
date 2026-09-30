@@ -10,8 +10,8 @@ import types
 
 import pytest
 
-from ye_olde.ingest import claude_cli_client
-from ye_olde.ingest.claude_cli_client import ClaudeCliCompletion, complete_via_claude_cli
+from ye_olde.common import claude_cli_client
+from ye_olde.common.claude_cli_client import ClaudeCliCompletion, complete_via_claude_cli
 
 
 def _fake_result(stdout: str, returncode: int = 0, stderr: str = ""):

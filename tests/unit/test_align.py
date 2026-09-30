@@ -8,10 +8,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 
-from ye_olde.ingest import align
+from ye_olde.ingest import align, sense
 from ye_olde.ingest.corpus_files import CorpusFile
+
+
+@pytest.fixture(autouse=True)
+def _reset_sense_mint_counters():
+    # sense._mint_counters is process-lifetime module state (see sense.py's
+    # docstring) shared with test_sense.py's own tests in the same pytest
+    # session -- reset here too so a mint here never lands on a counter
+    # value left over from another test file.
+    sense._mint_counters.clear()
+    yield
+    sense._mint_counters.clear()
 
 
 def test_tokenize_splits_words_and_punctuation():
@@ -85,6 +97,101 @@ def test_align_block_resolves_links(monkeypatch):
     link = pair["alignment_links"][0]
     assert pair["source_tokens"][link["source_idx"][0]].lower() == "liyt"
     assert pair["target_tokens"][link["target_idx"][0]].lower() == "light"
+
+
+def test_align_block_resolves_link_annotation_and_sense_id(monkeypatch, tmp_path):
+    monkeypatch.setattr(sense, "DEFAULT_INDEX_ROOT", tmp_path)
+    cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
+    cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
+
+    fake_response = [
+        {
+            "source_text": "And God seide, Liyt be maad.",
+            "target_text": "Then God said, Let there be light.",
+            "citation": "Genesis 1:3",
+            "confidence": 0.9,
+            "links": [
+                {
+                    "source_span": "Liyt",
+                    "target_span": "light",
+                    "source_lemma": "light",
+                    "source_upos": "NOUN",
+                    "source_feats": "Number=Sing",
+                    "source_deprel": "nsubj:pass",
+                    "source_ner": "O",
+                    "target_lemma": "light",
+                    "target_upos": "NOUN",
+                    "target_feats": "Number=Sing",
+                    "target_deprel": "obj",
+                    "target_ner": "O",
+                    "sense_gloss": "the visual effect of illumination on objects",
+                }
+            ],
+        }
+    ]
+    monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: fake_response)
+    monkeypatch.setattr(sense, "_embed_gloss", lambda gloss, *, model_name: np.zeros(3))
+    monkeypatch.setattr(sense, "_load_wordnet_index", lambda model_name, root: None)  # index not built -> mint
+
+    resolved = align.align_block(["source unit"], ["target unit"], cf_a, cf_b)
+    link = resolved[0]["alignment_links"][0]
+    assert link["source_upos"] == "NOUN"
+    assert link["source_deprel"] == "nsubj:pass"
+    assert link["source_ner"] == "O"
+    assert link["target_lemma"] == "light"
+    # no WordNet index available in the fake -> a minted, not a guessed, id
+    assert link["sense_id"] == "ye_olde:light.n.01"
+    assert link["sense_definition"] == "the visual effect of illumination on objects"
+
+
+def test_build_link_matches_by_gloss_even_when_the_source_lemma_is_not_english(monkeypatch, tmp_path):
+    monkeypatch.setattr(sense, "DEFAULT_INDEX_ROOT", tmp_path)
+    # The bug this guards against: an earlier version only ever tried
+    # looking the *source*-language lemma up in WordNet directly ("liyt",
+    # an enm spelling WordNet has never heard of), so it could never match
+    # even though the gloss itself (always English, spec §3d) obviously
+    # describes a real WordNet sense. Matching by gloss embedding rather
+    # than lemma lookup sidesteps that regardless of which side's lemma
+    # ends up passed as the (now purely cosmetic) naming hint.
+    light_dir = np.array([1.0, 0.0, 0.0])
+    wordnet_index = (
+        np.stack([light_dir]),
+        ["light.n.01"],
+        ["the visual effect of illumination on objects"],
+        ["n"],
+    )
+    monkeypatch.setattr(sense, "_embed_gloss", lambda gloss, *, model_name: light_dir)
+    monkeypatch.setattr(sense, "_load_wordnet_index", lambda model_name, root: wordnet_index)
+
+    link = align._build_link(
+        {
+            "source_span": "Liyt",
+            "target_span": "light",
+            "source_lemma": "liyt",
+            "source_upos": "NOUN",
+            "target_lemma": "",  # simulate the LLM leaving target_lemma empty this time
+            "target_upos": "",
+            "sense_gloss": "the illumination that lets one see",
+        },
+        align.tokenize("Liyt be maad"),
+        align.tokenize("light be made"),
+    )
+    assert link is not None
+    assert link["sense_id"] == "en:light.n.01"
+
+
+def test_build_link_skips_sense_resolution_without_lemma_or_gloss():
+    source_tokens = align.tokenize("Liyt be maad")
+    target_tokens = align.tokenize("light be made")
+    link = align._build_link({"source_span": "Liyt", "target_span": "light"}, source_tokens, target_tokens)
+    assert link is not None
+    assert link["sense_id"] is None
+    assert link["source_lemma"] is None
+    assert link["source_ner"] == "O"
+
+
+def test_build_link_returns_none_for_unresolvable_span():
+    assert align._build_link({"source_span": "nope", "target_span": "light"}, ["a"], ["light"]) is None
 
 
 def test_align_corpus_pair_dedupes_overlapping_blocks(monkeypatch):

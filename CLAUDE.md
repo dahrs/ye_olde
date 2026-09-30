@@ -26,6 +26,32 @@ mypy app
 pytest tests -q
 ```
 
+**On this reference Pi 5, local dev for both codebases shares the root `.venv`** rather than
+`search_api` getting its own — the separation above is about *deployment* independence
+(`search_api` ships to Cloud Run from its own `requirements.txt`/`Dockerfile`, never anything
+installed here), not a claim that local dev needs two copies of largely-overlapping heavy
+dependencies (`torch`/`sentence-transformers`/`pyarrow` are needed by both). Root's `.venv` has
+the 3 packages `search_api` needs that the `ye_olde[ingest]` extra doesn't (`fastapi`, `uvicorn`,
+`huggingface_hub`) installed ad hoc via `uv pip install --python .venv/bin/python ...` — run
+`search_api`'s own test/lint/type-check commands above with `../.venv/bin/python -m <tool>` in
+place of a `search_api/.venv`. This is a local-only convenience, not documented in
+`search_api/README.md` (that file is for third-party deployers, who should follow its own
+separate-venv instructions rather than assume this shortcut). Not committed to code — a Claude
+Code session decision, revisit if it ever stops being convenient.
+
+**TEMPORARY, as of 2026-09-29 — remove this note once done**: `.venv` here is a symlink to
+`/media/dahrs/My_passport/ye_olde-venv` (moved off the SD card to free ~6GB — `torch`'s CUDA
+runtime deps alone were ~4GB, unusable dead weight on this aarch64/no-GPU Pi, and no CPU-only
+wheel exists for this Python version — see chat history around 2026-09-29 for the full
+investigation). This makes the project **dependent on that external drive staying connected and
+mounted** to run anything (`uv run ...` fails outright otherwise). **When this project is close
+to done, or before the drive might get disconnected/repurposed for something else, move `.venv`
+back**: `rsync -a /media/dahrs/My_passport/ye_olde-venv/ /home/dahrs/ye_olde/.venv_local/ && rm
+/home/dahrs/ye_olde/.venv && mv /home/dahrs/ye_olde/.venv_local /home/dahrs/ye_olde/.venv` (check
+`df -h /` has room first — this used ~5.9GB before the move). If a session reading this notices
+the project looks finished/stable, proactively flag this note to the user rather than assuming
+someone else will.
+
 `pre-commit install` wires the same `ruff`/`mypy` checks into `git commit`
 (see `.pre-commit-config.yaml`).
 
@@ -79,7 +105,7 @@ been fixed; don't do it.
   `unhandled_exception_handler`), a non-zero exit for a CLI script.
 - Inside domain code, use a **specific** exception type when you want
   documented fallback behavior for a known, expected condition (e.g.
-  `ye_olde.ingest.llm_client.is_local_model` catching a model-string
+  `ye_olde.common.llm_client.is_local_model` catching a model-string
   resolution failure) — never a bare `except Exception` to paper over
   something unexpected. Even a fully-handled fallback like this should log
   at `debug`/`info` (via `get_logger`) so it's visible in the log file
@@ -92,7 +118,7 @@ been fixed; don't do it.
   Reach for `ye_olde.common.errors.YeOldeError` (or a subclass) only when a
   boundary layer genuinely needs to distinguish this failure from an
   arbitrary bug — e.g. `LLMNotConfiguredError` vs. `LLMEmptyResponseError`,
-  both things `ingest.llm_client` callers branch on. Don't invent a new
+  both things `common.llm_client` callers branch on. Don't invent a new
   `YeOldeError` subclass for a one-off "this argument is malformed" check;
   that's what `ValueError` is for.
 - Never write `except Exception: pass` (or any bare catch with no logging).
@@ -199,7 +225,7 @@ adding `ye_olde` as a `search_api` dependency.
 
 ```
 src/ye_olde/
-  common/        exception hierarchy (errors.py), logging setup (logging.py)
+  common/        exception hierarchy (errors.py), logging setup (logging.py), LLM-calling helpers (llm_client.py, claude_cli_client.py)
   prompt/        <namespace>.yaml prompt files + loader.py
   ingest/        corpus acquisition/cleaning/alignment pipeline (spec §6)
   generation/, classify/, fallback/, resolver/, retrieval/   not yet implemented (spec §2)

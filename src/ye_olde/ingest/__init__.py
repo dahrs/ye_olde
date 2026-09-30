@@ -16,12 +16,14 @@ the full "why", including what deliberately stayed out of it.
 output: Parquet pairs shards + a FAISS semantic-search index per language
 pair, in the layout `search_api/` reads. See `scripts/build_index.py`.
 
-`llm_client.py` is the LLM-calling boundary `clean.py`/`align.py` both use
-(hosted API or local inference server, via litellm). `claude_cli_client.py`
-is a third, independent option alongside it — reuses a Claude Code
-subscription login instead of an API key — importable on its own by any
-script, not just through `llm_client.py`'s dispatch. See that module's
-docstring for what it is and why.
+`ye_olde.common.llm_client` (moved out of this package — `classify/` and
+`generation/` need the same LLM-calling boundary `clean.py`/`align.py` use,
+not just ingestion) is the shared entrypoint (hosted API or local inference
+server, via litellm). `ye_olde.common.claude_cli_client` is a third,
+independent option alongside it — reuses a Claude Code subscription login
+instead of an API key — importable on its own by any script, not just
+through `llm_client.py`'s dispatch. See that module's docstring for what it
+is and why.
 
 Turning validated community contributions (spec §3b format) into the §3a
 indexed schema (embedded + stored in the vector store, plus structured

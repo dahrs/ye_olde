@@ -62,7 +62,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from ..common.errors import LLMEmptyResponseError, LLMNotConfiguredError
+from .errors import LLMEmptyResponseError, LLMNotConfiguredError
 
 _DEFAULT_TIMEOUT_SECONDS = 6000.0
 

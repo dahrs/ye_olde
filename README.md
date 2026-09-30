@@ -61,7 +61,7 @@ AWS_BEARER_TOKEN_BEDROCK=ABSK...           # used automatically once LITELLM_MOD
 No `.env` edit is needed to switch — either change `LITELLM_MODEL` to
 `bedrock_mantle/openai.gpt-6-sol` (or another Mantle-hosted model), or pass
 `--model bedrock_mantle/openai.gpt-6-sol` on a one-off `scripts/*.py` call, and
-`ye_olde.ingest.llm_client._resolve_api_key` picks `AWS_BEARER_TOKEN_BEDROCK` automatically.
+`ye_olde.common.llm_client._resolve_api_key` picks `AWS_BEARER_TOKEN_BEDROCK` automatically.
 Unlike the "openai" provider name (ambiguous with a local llama-server's own OpenAI-compatible
 masquerade — see below), litellm's "bedrock_mantle" provider only ever means the real AWS-hosted
 endpoint, so no loopback/local disambiguation is needed for it.
@@ -74,11 +74,11 @@ the key, is missing.
 ## Using your Claude Code subscription instead of an API key
 
 A third, independent backend, alongside a hosted API key and Bedrock:
-`ye_olde.ingest.claude_cli_client.complete_via_claude_cli` shells out to the real `claude` CLI's
+`ye_olde.common.claude_cli_client.complete_via_claude_cli` shells out to the real `claude` CLI's
 `-p`/print mode instead of `litellm.completion` — see that module's docstring for exactly how and
 why. It's a standalone function any script can import and call directly; `LITELLM_MODEL=
 claude_code_cli/<alias>` (e.g. `claude_code_cli/sonnet`, `claude_code_cli/opus`) is just
-`ye_olde.ingest.llm_client`'s own convention for routing `call_llm_json` to it. The practical
+`ye_olde.common.llm_client`'s own convention for routing `call_llm_json` to it. The practical
 effect: if you're logged into Claude Code (`claude login`) with a Pro/Max subscription and don't
 set `ANTHROPIC_API_KEY`, calls draw on that subscription instead of a separate pay-per-token key —
 useful for a contributor's own small/dev-scale runs, since it needs no key of its own to get
@@ -103,7 +103,7 @@ llama.cpp's own server is one way to do this, not the only one — e.g. Ollama w
 own native `LITELLM_MODEL=ollama/<name>` prefix instead of an OpenAI-compatible endpoint (litellm
 resolves that prefix to a genuinely different code path, not just a naming choice). This section
 documents llama.cpp specifically because that's the setup actually built and benchmarked here;
-`ye_olde.ingest.llm_client.is_local_model()` recognizes both patterns (and others — see that
+`ye_olde.common.llm_client.is_local_model()` recognizes both patterns (and others — see that
 function's docstring) when deciding whether a call is free to re-check with a second pass.
 
 **1. Build `llama-server`** (llama.cpp's own OpenAI-compatible server), into a shared location
@@ -160,7 +160,7 @@ answers in ~1-2s; this setup is ~1.5-1.7 tok/s, so anything more than a couple w
 fact that a fake API key like `sk-local` works at all (the real API would reject it immediately).
 Leave `LITELLM_EXTRA_BODY` itself blank. Qwen3(.5)-family models default to emitting a
 "thinking" preamble before the real answer — left alone, deliberately, since reasoning can
-genuinely help `ingest/llm_client.py`'s close-reading/alignment judgment calls. The risk is a
+genuinely help `common/llm_client.py`'s close-reading/alignment judgment calls. The risk is a
 reasoning trace long enough to fill the whole context window before producing an answer, which
 comes back as empty `content`. `call_llm_json` handles that itself: one retry of the same call
 using `LITELLM_NO_THINKING_EXTRA_BODY` instead, then reasoning is back on for the next call

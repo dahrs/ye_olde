@@ -37,5 +37,5 @@ class LLMNotConfiguredError(LLMError):
 
 class LLMEmptyResponseError(LLMError):
     """The model returned no usable content, even after the configured
-    empty-reply retry (see ingest/llm_client.py).
+    empty-reply retry (see common/llm_client.py).
     """

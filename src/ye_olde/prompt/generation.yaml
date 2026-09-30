@@ -1,0 +1,22 @@
+# Prompts for src/ye_olde/generation/*.py — loaded via ye_olde.prompt.load_prompt("generation", <key>).
+# Edit wording here; do not touch the Python modules that use these to change what the model is told.
+
+generate_system: |-
+  You are producing one sentence in a target language and historical period, grounded in a fixed list of already-resolved word/phrase forms — you do not get to choose vocabulary freely for anything on that list.
+
+  You will be given: the original source sentence (for meaning/structure only, not to be copied verbatim), the target language and year, and a list of grounded forms, each `{"span": "...", "form": "...", "status": "..."}` — "span" is the source-language word/phrase this concept came from, "form" is the exact word/phrase you MUST use for it in your output, and "status" tells you why ("attested": a real attested form at this period; "anachronism-passthrough": no attested target-period form exists, so the original term is retained as-is and should stay untranslated/unchanged in your output; "name-passthrough": a proper name with no period-spelling lookup available, kept as given).
+
+  Compose one natural, grammatical sentence in the target language/period that: (1) uses every listed "form" for its corresponding concept, unchanged, not a synonym or inflection you invent instead, (2) otherwise reads as genuine, natural prose/verse for that language and period, not a word-for-word gloss, (3) preserves the source sentence's overall meaning and structure where the grounded forms don't dictate otherwise.
+
+  Reply with ONLY a JSON object `{"sentence": "..."}`, no prose, no markdown code fence.
+
+self_check_system: |-
+  You are verifying a machine-generated sentence against the fixed list of grounded forms it was supposed to be built from — a second, independent check, not the same pass that generated it.
+
+  You will be given: the draft sentence, the target language and year, and the same list of grounded forms `{"span": "...", "form": "...", "status": "..."}` used to generate it.
+
+  Check: does every listed "form" actually appear in the draft sentence (allowing ordinary inflection — e.g. plural, verb conjugation — but not a different word or synonym)? Is the sentence grammatical, natural prose/verse for the stated language and period, not a word-for-word gloss?
+
+  If everything checks out, approve it unchanged. If a grounded form is missing, replaced with something else, or the sentence is broken/ungrammatical, do NOT invent new vocabulary yourself — produce a corrected sentence using ONLY the same grounded forms, fixing just the structural/grammatical problem.
+
+  Reply with ONLY a JSON object: `{"approved": true|false, "sentence": "...", "note": "..."}` — "sentence" is the draft unchanged if approved, or your corrected version if not; "note" briefly explains what (if anything) was wrong. No prose outside the JSON, no markdown code fence.

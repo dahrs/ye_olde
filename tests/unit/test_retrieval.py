@@ -99,3 +99,72 @@ def test_search_truncates_to_top_k_after_reranking(monkeypatch):
     results = retrieval.search("gladly", "enm", 1400, top_k=2)
     assert len(results) == 2
     assert results[0].pair_id == "p9"  # highest raw similarity, all same year
+
+
+def _lookup_result(pair_id: str, confidence: float, span: str | None = "gladly", **overrides: object) -> dict:
+    base = {
+        "pair_id": pair_id,
+        "target_sentence": "Gladly I would see him",
+        "highlighted_span": {"token_idx": [0], "surface": span} if span else None,
+        "source_sentence": "gladly would I see him",
+        "citation": "",
+        "confidence": confidence,
+    }
+    base.update(overrides)
+    return base
+
+
+def test_lookup_raises_when_search_api_url_not_set(monkeypatch):
+    monkeypatch.setattr(retrieval, "get_settings", lambda: Settings(search_api_url=""))
+    with pytest.raises(ValueError, match="SEARCH_API_URL"):
+        retrieval.lookup("gladly", "enm", 1400, "eng", 1999)
+
+
+def test_lookup_sends_all_five_query_params(monkeypatch):
+    monkeypatch.setattr(retrieval, "get_settings", lambda: Settings(search_api_url="http://localhost:8000"))
+    captured = {}
+
+    def fake_get(url, params, timeout):
+        captured["url"] = url
+        captured["params"] = params
+        return _FakeResponse({"results": []})
+
+    monkeypatch.setattr(retrieval.httpx, "get", fake_get)
+    retrieval.lookup("gladly", "enm", 1400, "eng", 1999)
+
+    assert captured["url"] == "http://localhost:8000/lookup"
+    assert captured["params"] == {
+        "text": "gladly",
+        "lang": "enm",
+        "year": 1400,
+        "target_lang": "eng",
+        "target_year": 1999,
+    }
+
+
+def test_lookup_extracts_highlighted_span_surface(monkeypatch):
+    monkeypatch.setattr(retrieval, "get_settings", lambda: Settings(search_api_url="http://localhost:8000"))
+    monkeypatch.setattr(retrieval.httpx, "get", lambda *a, **k: _FakeResponse({"results": [_lookup_result("p1", 0.9)]}))
+
+    results = retrieval.lookup("gladly", "enm", 1400, "eng", 1999)
+    assert len(results) == 1
+    assert results[0].highlighted_span == "gladly"
+
+
+def test_lookup_preserves_none_when_no_highlighted_span(monkeypatch):
+    monkeypatch.setattr(retrieval, "get_settings", lambda: Settings(search_api_url="http://localhost:8000"))
+    monkeypatch.setattr(
+        retrieval.httpx, "get", lambda *a, **k: _FakeResponse({"results": [_lookup_result("p1", 0.9, span=None)]})
+    )
+
+    results = retrieval.lookup("gladly", "enm", 1400, "eng", 1999)
+    assert results[0].highlighted_span is None
+
+
+def test_lookup_sorts_by_confidence_descending(monkeypatch):
+    monkeypatch.setattr(retrieval, "get_settings", lambda: Settings(search_api_url="http://localhost:8000"))
+    payload = {"results": [_lookup_result("low", 0.3), _lookup_result("high", 0.95), _lookup_result("mid", 0.6)]}
+    monkeypatch.setattr(retrieval.httpx, "get", lambda *a, **k: _FakeResponse(payload))
+
+    results = retrieval.lookup("gladly", "enm", 1400, "eng", 1999)
+    assert [r.pair_id for r in results] == ["high", "mid", "low"]

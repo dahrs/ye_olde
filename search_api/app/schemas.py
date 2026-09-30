@@ -20,12 +20,20 @@ class AttestResult(BaseModel):
     first_borrowing_year: int | None = None
     register: str | None = None
     dialect: str | None = None
+    # NER tag from the closed CoNLL-2003 vocabulary (PER/LOC/ORG/MISC/O) —
+    # spec §3d/§4: a period name-form lookup is just this endpoint filtered
+    # to ner="PER", not a separate registry subsystem. None (not "O") means
+    # the ingesting contribution never set it, distinct from an explicit
+    # "confirmed not a name" — most rows today, since no §3b contribution
+    # carries this field yet.
+    ner: str | None = None
 
 
 class AttestQuery(BaseModel):
     lemma: str
     lang: str
     year: int
+    ner: str | None = None
 
 
 class AttestResponse(BaseModel):

@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     # reasoning-capable backend (Qwen3-family served locally, for instance)
     # means "thinking" stays on by default — deliberate: reasoning can
     # genuinely help this pipeline's close-reading/alignment judgment calls,
-    # so it isn't switched off just to be safe (see ingest/llm_client.py).
+    # so it isn't switched off just to be safe (see common/llm_client.py).
     litellm_extra_body: str = ""
 
     # Optional raw JSON object used only as a one-shot RETRY on a single
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     # around ~10 minutes into an uncapped local generation). Generous by
     # design: a deployer who explicitly wants reasoning enabled on slow
     # hardware has already accepted long calls as the cost of that (see
-    # ingest/llm_client.py); a timeout here should only fire on a genuinely
+    # common/llm_client.py); a timeout here should only fire on a genuinely
     # hung connection, not on a model that's still legitimately working.
     litellm_timeout_seconds: float = 6000.0
 

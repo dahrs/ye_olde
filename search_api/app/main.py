@@ -46,14 +46,30 @@ def health() -> HealthResponse:
 
 
 @app.get("/attest", response_model=AttestResponse)
-def attest(lemma: str, lang: str, year: int, window: int = 50) -> AttestResponse:
+def attest(lemma: str, lang: str, year: int, window: int = 50, ner: str | None = None) -> AttestResponse:
+    """Exact/relational lookup (spec §3a). `ner`, when given, additionally
+    filters to rows tagged that way — this is also how a period name-form
+    lookup works (spec §3d/§4: `ner=PER` finds attested spellings of a
+    given name the same way an untagged query finds a common word's
+    attested spelling; there's no separate name-registry endpoint or code
+    path).
+    """
     table = loader.load_relational(lang, year - window, year + window)
     results: list[AttestResult] = []
     if table.num_rows:
         for row in table.to_pylist():
-            if row.get("lemma") == lemma:
-                results.append(AttestResult(**row))
-    return AttestResponse(query=AttestQuery(lemma=lemma, lang=lang, year=year), results=results)
+            if row.get("lemma") != lemma:
+                continue
+            # `ner` truthy, not just "is not None": a client sending
+            # `?ner=` (empty string) means "no filter", the same as
+            # omitting the param entirely -- treating "" as a literal
+            # value to match against would silently return zero results,
+            # since no row's ner is ever the empty string (None, "O", or a
+            # real tag, never "").
+            if ner and row.get("ner") != ner:
+                continue
+            results.append(AttestResult(**row))
+    return AttestResponse(query=AttestQuery(lemma=lemma, lang=lang, year=year, ner=ner), results=results)
 
 
 @app.get("/lookup", response_model=LookupResponse)

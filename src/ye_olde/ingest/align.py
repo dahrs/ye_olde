@@ -81,15 +81,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypeAlias
 
+from ..common.llm_client import call_llm_json, is_local_model
+from ..common.tokenize import tokenize
+from ..common.ud_tags import normalize_ner
 from ..prompt import load_prompt
 from .checkpoint import Checkpoint
 from .clean import clean_corpus_file
 from .corpus_files import CorpusFile, discover_corpus_files
 from .extract import extract_text, strip_boilerplate
-from .llm_client import call_llm_json, is_local_model
+from .sense import resolve_sense_id
 from .sentence_align import SentenceMatch, lexical_align, mutual_nearest_neighbor_align
-
-_TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 
 # A §3c aligned-pair record in its working (pre-output) shape: heterogeneous
 # values (str, list[str], nested alignment_links dicts, float, None) that
@@ -99,10 +100,6 @@ _TOKEN_RE = re.compile(r"\w+|[^\w\s]", re.UNICODE)
 PairRecord: TypeAlias = dict[str, Any]
 
 _ALIGN_SYSTEM_PROMPT = load_prompt("ingest", "align_system")
-
-
-def tokenize(text: str) -> list[str]:
-    return _TOKEN_RE.findall(text)
 
 
 def _normalize(text: str) -> str:
@@ -170,6 +167,77 @@ def _format_units(units: list[str]) -> str:
     return "\n".join(f"{i}. {u}" for i, u in enumerate(units))
 
 
+def _build_link(link: dict[str, Any], source_tokens: list[str], target_tokens: list[str]) -> PairRecord | None:
+    """Resolves one raw LLM-proposed link into token indices plus its
+    per-side lemma/UPOS/FEATS/DEPREL/NER (spec §3d) and a WordNet-anchored
+    `sense_id` (spec §9) — returns None if the span can't be located
+    verbatim in its own side's tokens (dropped, same as before this
+    function existed).
+
+    Restricted to the link's own head word, not every token in the
+    sentence — a deliberate, smaller scope than spec §3d's full per-token
+    `annotation[]` array: `sense_id` (the concrete, previously-missing gap
+    this closes) only ever applies to a linked span anyway, so annotating
+    unlinked function words that participate in no cross-lingual
+    correspondence adds cost without adding anything this pipeline
+    currently uses.
+
+    Never trusts the LLM's own sense-number guess directly — the same
+    reasoning as `_verify_pairs_against_source`'s deterministic check: the
+    LLM proposes a lemma and an English gloss, `sense.resolve_sense_id`
+    matches that gloss by embedding similarity against real WordNet synset
+    definitions (or an already-minted sense) rather than taking a
+    `light.n.02`-style claim on faith. `lemma_hint`/`upos` passed to it are
+    cosmetic only now (naming a freshly-minted id, and the coarse POS
+    filter) — matching itself is gloss-only, so which side's lemma is
+    passed no longer changes *correctness* the way it used to (see
+    `sense.resolve_sense_id`'s module docstring for why lemma-based lookup
+    was replaced). Still prefers the TARGET side's lemma/UPOS when present,
+    purely for a more-readable minted id — `target` is this pipeline's
+    always-more-modern side (`align_corpus_folder`: `cf_a.year <= cf_b.year`
+    always).
+    """
+    if not isinstance(link, dict):
+        return None
+    s_idx = find_span_token_indices(source_tokens, str(link.get("source_span") or ""))
+    t_idx = find_span_token_indices(target_tokens, str(link.get("target_span") or ""))
+    if not s_idx or not t_idx:
+        return None
+
+    source_lemma = str(link.get("source_lemma") or "").strip()
+    source_upos = str(link.get("source_upos") or "").strip()
+    target_lemma = str(link.get("target_lemma") or "").strip()
+    target_upos = str(link.get("target_upos") or "").strip()
+    gloss = str(link.get("sense_gloss") or "").strip()
+    # Both lemma AND upos must come from the same side -- a target_lemma
+    # with no target_upos (upos_hint="") would otherwise silently look like
+    # a closed-class tag to resolve_sense_id (empty string maps to no
+    # WordNet POS, the same code path as a genuine DET/ADP), forcing an
+    # unnecessary mint instead of a real WordNet/minted-index match.
+    lemma_hint, upos_hint = (target_lemma, target_upos) if target_lemma and target_upos else (source_lemma, source_upos)
+    sense_id: str | None = None
+    sense_definition: str | None = None
+    if lemma_hint and gloss:
+        sense_id, sense_definition = resolve_sense_id(lemma_hint, upos_hint, gloss)
+
+    return {
+        "source_idx": s_idx,
+        "target_idx": t_idx,
+        "sense_id": sense_id,
+        "sense_definition": sense_definition,
+        "source_lemma": source_lemma or None,
+        "source_upos": source_upos or None,
+        "source_feats": str(link.get("source_feats") or "").strip() or None,
+        "source_deprel": str(link.get("source_deprel") or "").strip() or None,
+        "source_ner": normalize_ner(str(link.get("source_ner") or "")),
+        "target_lemma": target_lemma or None,
+        "target_upos": target_upos or None,
+        "target_feats": str(link.get("target_feats") or "").strip() or None,
+        "target_deprel": str(link.get("target_deprel") or "").strip() or None,
+        "target_ner": normalize_ner(str(link.get("target_ner") or "")),
+    }
+
+
 def align_block(
     block_a: list[str],
     block_b: list[str],
@@ -203,14 +271,11 @@ def align_block(
             continue
         source_tokens = tokenize(source_text)
         target_tokens = tokenize(target_text)
-        alignment_links = []
-        for link in rp.get("links") or []:
-            if not isinstance(link, dict):
-                continue
-            s_idx = find_span_token_indices(source_tokens, str(link.get("source_span") or ""))
-            t_idx = find_span_token_indices(target_tokens, str(link.get("target_span") or ""))
-            if s_idx and t_idx:
-                alignment_links.append({"source_idx": s_idx, "target_idx": t_idx, "sense_id": None})
+        alignment_links = [
+            resolved_link
+            for link in rp.get("links") or []
+            if (resolved_link := _build_link(link, source_tokens, target_tokens)) is not None
+        ]
         try:
             confidence = float(rp.get("confidence", 0.0) or 0.0)
         except (TypeError, ValueError):
@@ -270,15 +335,11 @@ def extract_links_batch(
             continue
         for k, pair in enumerate(batch):
             links_raw = raw[k] if k < len(raw) and isinstance(raw[k], list) else []
-            resolved_links = []
-            for link in links_raw:
-                if not isinstance(link, dict):
-                    continue
-                s_idx = find_span_token_indices(pair["source_tokens"], str(link.get("source_span") or ""))
-                t_idx = find_span_token_indices(pair["target_tokens"], str(link.get("target_span") or ""))
-                if s_idx and t_idx:
-                    resolved_links.append({"source_idx": s_idx, "target_idx": t_idx, "sense_id": None})
-            pair["alignment_links"] = resolved_links
+            pair["alignment_links"] = [
+                resolved_link
+                for link in links_raw
+                if (resolved_link := _build_link(link, pair["source_tokens"], pair["target_tokens"])) is not None
+            ]
 
 
 def _discover_pairs_llm(

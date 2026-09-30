@@ -19,10 +19,10 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from ..common.llm_client import call_llm_json, is_local_model
 from ..prompt import load_prompt
 from .checkpoint import Checkpoint
 from .corpus_files import CorpusFile
-from .llm_client import call_llm_json, is_local_model
 
 
 class CleanedDocument(BaseModel):
