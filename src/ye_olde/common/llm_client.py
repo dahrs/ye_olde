@@ -36,7 +36,11 @@ standalone sibling module that shells out to the real `claude` CLI so calls
 can draw on a Claude Pro/Max subscription instead of a separate
 `ANTHROPIC_API_KEY` — see that module's docstring for what it is and why.
 This module only adapts it to fit here: `LITELLM_MODEL=claude_code_cli/
-<alias>` (e.g. `claude_code_cli/sonnet`) is this module's own convention for
+<alias-or-full-name>` (e.g. `claude_code_cli/claude-sonnet-5` — a full model
+name pins it exactly, the same guarantee `anthropic/claude-sonnet-5` gives
+the hosted-API backend; a bare alias like `claude_code_cli/sonnet` tracks
+whatever Claude Code currently calls "sonnet" instead, which can shift
+later without anything here changing) is this module's own convention for
 picking that backend, recognized by `_is_claude_cli_model`/`_complete`
 before anything litellm-specific (provider resolution, API-key lookup) runs
 — none of that applies to a CLI invocation. `_render_cli_messages` is the
@@ -353,7 +357,7 @@ def _complete(
         # error, since Claude Code's own adaptive thinking already handles
         # the failure mode that setting exists to work around for litellm
         # backends.
-        cli_model = resolved_model[len(_CLAUDE_CLI_PREFIX) :] or "sonnet"
+        cli_model = resolved_model[len(_CLAUDE_CLI_PREFIX) :] or "claude-sonnet-5"
         system_text, prompt_text = _render_cli_messages(messages)
         result = complete_via_claude_cli(
             prompt_text, system=system_text, model=cli_model, timeout=settings.litellm_timeout_seconds

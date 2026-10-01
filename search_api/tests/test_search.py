@@ -47,7 +47,9 @@ def test_search_shapes_loader_results_into_response(monkeypatch) -> None:
             "other_work": "Sir Gawayne",
             "other_text": "Gladly, sir, for sooth",
             "citation": "",
-            "tag_matched": False,
+            "matched_upos": None,
+            "matched_ner": None,
+            "matched_lemma": None,
         }
     ]
     assert captured == {
@@ -220,11 +222,11 @@ def test_search_passages_upos_ner_boost_a_tagged_match_past_a_slightly_closer_un
 
     unboosted = loader.search_passages("enm", "robin shot the arrow", top_k=2)
     assert unboosted[0].pair_id == "untagged"
-    assert unboosted[0].tag_matched is False
+    assert unboosted[0].matched_ner is None
 
     boosted = loader.search_passages("enm", "robin shot the arrow", top_k=2, ner="PER")
     assert boosted[0].pair_id == "tagged"
-    assert boosted[0].tag_matched is True
+    assert boosted[0].matched_ner == "PER"
     assert len(boosted) == 2  # a non-matching candidate is still returned, just ranked lower -- a boost, not a filter
 
     # An empty-string upos alongside a real ner must not cancel the ner
@@ -233,4 +235,4 @@ def test_search_passages_upos_ner_boost_a_tagged_match_past_a_slightly_closer_un
     # literal empty string" (which no real tag ever is).
     boosted_with_empty_upos = loader.search_passages("enm", "robin shot the arrow", top_k=2, upos="", ner="PER")
     assert boosted_with_empty_upos[0].pair_id == "tagged"
-    assert boosted_with_empty_upos[0].tag_matched is True
+    assert boosted_with_empty_upos[0].matched_ner == "PER"

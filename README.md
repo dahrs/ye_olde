@@ -77,16 +77,22 @@ A third, independent backend, alongside a hosted API key and Bedrock:
 `ye_olde.common.claude_cli_client.complete_via_claude_cli` shells out to the real `claude` CLI's
 `-p`/print mode instead of `litellm.completion` — see that module's docstring for exactly how and
 why. It's a standalone function any script can import and call directly; `LITELLM_MODEL=
-claude_code_cli/<alias>` (e.g. `claude_code_cli/sonnet`, `claude_code_cli/opus`) is just
-`ye_olde.common.llm_client`'s own convention for routing `call_llm_json` to it. The practical
-effect: if you're logged into Claude Code (`claude login`) with a Pro/Max subscription and don't
-set `ANTHROPIC_API_KEY`, calls draw on that subscription instead of a separate pay-per-token key —
-useful for a contributor's own small/dev-scale runs, since it needs no key of its own to get
-started.
+claude_code_cli/<alias-or-full-name>` is just `ye_olde.common.llm_client`'s own convention for
+routing `call_llm_json` to it. The practical effect: if you're logged into Claude Code
+(`claude login`) with a Pro/Max subscription and don't set `ANTHROPIC_API_KEY`, calls draw on that
+subscription instead of a separate pay-per-token key — useful for a contributor's own
+small/dev-scale runs, since it needs no key of its own to get started.
 
 ```
-LITELLM_MODEL=claude_code_cli/sonnet   # no LITELLM_API_KEY needed — uses `claude login`'s session
+LITELLM_MODEL=claude_code_cli/claude-sonnet-5   # no LITELLM_API_KEY needed — uses `claude login`'s session
 ```
+
+Use a full model name (`claude-sonnet-5`, `claude-opus-5-5`, ...), not a bare alias like `sonnet`
+or `opus` — the CLI accepts both (`claude -p --model <alias-or-full-name>`), but an alias tracks
+whatever Claude Code currently calls "sonnet," which can silently point at a different model later;
+a full name pins it exactly, the same guarantee `anthropic/claude-sonnet-5` gives the hosted-API
+backend. `complete_via_claude_cli`'s own default (used only if `LITELLM_MODEL` is the bare
+`claude_code_cli/` prefix with nothing after it) is `claude-sonnet-5` for the same reason.
 
 This is a genuine tradeoff, not a strictly-better option — see `claude_cli_client.py`'s docstring
 for the full list, but the headline one: it draws on the *same* usage quota as your interactive

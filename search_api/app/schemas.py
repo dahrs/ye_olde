@@ -115,7 +115,7 @@ class SearchQuery(BaseModel):
     lang: str
     year: int | None = None
     # Echo of the caller's own classify()-produced tag for `text` (spec
-    # §3d/§9), same as `LookupQuery.upos`/`.ner` — see `SearchResult.tag_matched`
+    # §3d/§9), same as `LookupQuery.upos`/`.ner` — see `SearchResult.matched_upos`
     # for how it affects ranking.
     upos: str | None = None
     ner: str | None = None
@@ -136,14 +136,18 @@ class SearchResult(BaseModel):
     other_work: str | None = None
     other_text: str
     citation: str
-    # True when the query's `upos`/`ner` (spec §3d/§9) matched some
-    # alignment_link's tag on this passage's query-side — a small ranking
-    # boost (`loader._TAG_MATCH_BOOST`), not a filter: /search is
-    # passage-level, and most tokens in a passage have no tag to check at
-    # all (only a link's head word does, see `LookupResult.matched_upos`),
-    # so excluding untagged passages would throw away real matches for no
-    # reason. Always False when neither param was given.
-    tag_matched: bool = False
+    # The query-side alignment_link tag that satisfied the query's `upos`/
+    # `ner` (spec §3d/§9), same shape as `LookupResult.matched_upos` et al.
+    # — None whenever neither param was given, or no link on this passage
+    # matched (most tokens have no tag at all; only a link's head word
+    # does). Drives a small ranking boost (`loader._TAG_MATCH_BOOST`), not
+    # a filter: /search is passage-level, so excluding every untagged
+    # passage would throw away real matches for no reason. A client that
+    # only wants a plain yes/no can check `matched_upos is not None or
+    # matched_ner is not None`.
+    matched_upos: str | None = None
+    matched_ner: str | None = None
+    matched_lemma: str | None = None
 
 
 class SearchResponse(BaseModel):

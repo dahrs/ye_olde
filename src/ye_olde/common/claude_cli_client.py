@@ -84,7 +84,7 @@ def complete_via_claude_cli(
     prompt: str,
     *,
     system: str | None = None,
-    model: str = "sonnet",
+    model: str = "claude-sonnet-5",
     timeout: float = _DEFAULT_TIMEOUT_SECONDS,
 ) -> ClaudeCliCompletion:
     """Runs `claude -p --output-format json` once and returns the parsed
