@@ -1,0 +1,37 @@
+# Prompt fragments shared across more than one namespace file (ingest.yaml,
+# classify.yaml, ...), for instruction text that means the same thing
+# everywhere it's used rather than being specific to one module's prompt.
+# Not concatenated automatically -- a namespace module loads its own system
+# prompt AND the fragment(s) it needs, then joins them itself (see
+# align.py's/classify/__init__.py's _*_SYSTEM_PROMPT constants). A true YAML
+# alias only resolves within a single block scalar, not across separate
+# ones or across files (see ingest.yaml's own header comment) -- explicit
+# Python-side concatenation of two `load_prompt()` results is the actual
+# working way to reuse wording without retyping it, and keeps the wording
+# itself still 100% in YAML (only the decision of which fragments a given
+# system prompt needs is code, same as ingest.yaml's align_system/
+# links_system already being distinct, separately-assembled prompts).
+
+confidence_calibration: |-
+  ## Confidence scoring
+
+  Wherever a field above asks for a confidence number, it means: your own
+  probability that this exact value is what a trained linguist annotating
+  this text by hand would also write down -- not how fluent or certain your
+  answer reads, and not relative to the other tags in this same reply.
+
+  Calibrate it against these bands, don't just estimate a vibe:
+  - 0.9-1.0: unambiguous -- a dictionary/grammar reference would give the
+    same tag, with no real alternative reading.
+  - 0.6-0.89: a clear best answer, but the text is worn, fragmentary,
+    genuinely polysemous, or from a language/period you have less training
+    exposure to -- a specialist might reasonably want to double-check it.
+  - 0.3-0.59: you chose between two or more plausible readings mostly by
+    guesswork -- context didn't clearly settle it, or the form itself is
+    unfamiliar.
+  - 0.0-0.29: essentially a guess -- you would not be surprised to learn
+    this tag is wrong.
+
+  Do not default to one value (e.g. always 0.9) regardless of the above --
+  a field where every rating clusters at the same number is as uninformative
+  as not rating at all.

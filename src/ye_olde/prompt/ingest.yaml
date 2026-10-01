@@ -45,6 +45,7 @@ align_system: |-
   - "source_ner"/"target_ner": exactly one of PER (person name), LOC (place name), ORG (organization/institution), MISC (other proper name — deity, work title, ...), or O (not a named entity).
   - "source_lemma"/"target_lemma": the word's dictionary citation form, in its own language (do not translate or modernize it).
   - "sense_gloss": for a content-word link only (upos NOUN/PROPN/VERB/ADJ/ADV), a short English definition of the shared concept both spans express — written the way a dictionary entry would define it, in English regardless of which language the link is in, e.g. "the visual effect of illumination on objects" for a "light" link. Omit for function-word links (DET, ADP, AUX, ...).
+  - "source_lemma_confidence"/"source_upos_confidence"/"source_feats_confidence"/"source_deprel_confidence" (and the matching "target_..." fields): your confidence in each of the four tags above, one number per tag, per the "Confidence scoring" definition below. Omit a field's confidence entirely if you omitted that field itself (e.g. no "source_feats_confidence" when "source_feats" is "").
 
   Skip content you cannot confidently align rather than forcing a low-quality match — a smaller correct bitext is more useful than a larger noisy one. Reply with ONLY a JSON array of pair objects (can be empty if nothing in these two blocks matches), no prose, no markdown code fence.
 
@@ -60,6 +61,7 @@ links_system: |-
   - "source_ner"/"target_ner": exactly one of PER (person name), LOC (place name), ORG (organization/institution), MISC (other proper name — deity, work title, ...), or O (not a named entity).
   - "source_lemma"/"target_lemma": the word's dictionary citation form, in its own language (do not translate or modernize it).
   - "sense_gloss": for a content-word link only (upos NOUN/PROPN/VERB/ADJ/ADV), a short English definition of the shared concept both spans express — written the way a dictionary entry would define it, in English regardless of which language the link is in, e.g. "the visual effect of illumination on objects" for a "light" link. Omit for function-word links (DET, ADP, AUX, ...).
+  - "source_lemma_confidence"/"source_upos_confidence"/"source_feats_confidence"/"source_deprel_confidence" (and the matching "target_..." fields): your confidence in each of the four tags above, one number per tag, per the "Confidence scoring" definition below. Omit a field's confidence entirely if you omitted that field itself (e.g. no "source_feats_confidence" when "source_feats" is "").
 
   Reply with ONLY a JSON array, the same length and in the same order as the numbered input pairs, where item k is the list of links for pair k (an empty list is fine for a pair with no confident links). Every span must be an exact verbatim substring of that pair's own source/target text — no prose, no markdown code fence.
 

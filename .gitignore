@@ -61,6 +61,17 @@ local_settings.py
 
 # ye_olde runtime logs (rotating file handler, see src/ye_olde/common/logging.py)
 logs/
+
+# ye_olde WordNet-embedding sense_id index (spec §9) -- large (~500MB+),
+# machine-regenerable via `scripts/build_wordnet_sense_index.py`, see
+# src/ye_olde/ingest/sense.py. Never commit this. Matched without a
+# trailing slash too: on this machine data/sense_index is itself a symlink
+# to the external drive it's actually stored on (see CLAUDE.md), and a
+# slash-only pattern doesn't match a symlink even when it points at a
+# directory -- both forms are listed so this stays ignored however it's
+# materialized on a given machine.
+data/sense_index
+data/sense_index/
 db.sqlite3
 db.sqlite3-journal
 

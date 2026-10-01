@@ -129,9 +129,8 @@ been fixed; don't do it.
 
 Every LLM prompt (system prompt or prompt template) lives in
 `src/ye_olde/prompt/<namespace>.yaml`, one YAML file per top-level package
-that prompts an LLM — `ingest.yaml` today; `generation.yaml`/`classify.yaml`
-etc. as those packages get implemented. Load with
-`ye_olde.prompt.load_prompt(namespace, key)`.
+that prompts an LLM — `ingest.yaml`, `classify.yaml`, `generation.yaml`
+today. Load with `ye_olde.prompt.load_prompt(namespace, key)`.
 
 - Prompts are data, not code: this keeps wording reviewable/diffable without
   touching control flow, and keeps every prompt in the project discoverable
@@ -142,6 +141,16 @@ etc. as those packages get implemented. Load with
 - `load_prompt` raises `PromptNotFoundError` (not a silent empty string) if
   the namespace file or key doesn't exist — an LLM call should never run
   with a missing prompt it didn't notice was missing.
+- Instruction text needed verbatim in more than one namespace's system
+  prompt (not just twice within the *same* file, like `ingest.yaml`'s own
+  `align_system`/`links_system` duplication — see that file's header
+  comment for why a YAML alias can't do this within one block scalar,
+  let alone across files) goes in `prompt/common.yaml` instead of being
+  retyped per namespace — e.g. `confidence_calibration`, appended in Python
+  onto whichever `_*_SYSTEM_PROMPT` constants need it (see `ingest/align.py`,
+  `classify/__init__.py`). The wording still lives entirely in YAML; only
+  the choice of which fragments a given system prompt is assembled from is
+  code.
 - `search_api` has no LLM calls and no `prompt/` package of its own; this
   section only applies to `ye_olde.*`.
 

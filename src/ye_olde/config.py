@@ -90,6 +90,20 @@ class Settings(BaseSettings):
     # regardless of this setting.
     search_api_timeout_seconds: float = 120.0
 
+    # The Hugging Face Dataset repo search_api serves from (spec §10/§13d)
+    # -- read by scripts/push_index_to_hf.py to push scripts/build_index.py's
+    # local output there. Same repo search_api/app/config.py's own
+    # hf_dataset_repo_id points at in production; kept as a separate .env
+    # value here rather than shared, same reasoning as everywhere else this
+    # project keeps the two deployables' config independent (search_api/app/
+    # config.py's docstring).
+    hf_dataset_repo_id: str = ""
+
+    # A write-scoped HF token -- needed to push, unlike search_api's own
+    # hf_token (read-only access is enough to serve). Never committed;
+    # .env only, same as every other credential in this file.
+    hf_token: str = ""
+
 
 def get_settings() -> Settings:
     return Settings()

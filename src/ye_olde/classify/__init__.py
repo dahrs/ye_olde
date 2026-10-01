@@ -48,10 +48,12 @@ from pydantic import BaseModel
 from ..common import function_words
 from ..common.llm_client import call_llm_json
 from ..common.tokenize import tokenize
-from ..common.ud_tags import normalize_ner
+from ..common.ud_tags import normalize_deprel, normalize_ner, normalize_upos, parse_confidence
 from ..prompt import load_prompt
 
-_CLASSIFY_SYSTEM_PROMPT = load_prompt("classify", "classify_system")
+_CLASSIFY_SYSTEM_PROMPT = (
+    load_prompt("classify", "classify_system") + "\n\n" + load_prompt("common", "confidence_calibration")
+)
 
 
 class TokenTag(BaseModel):
@@ -66,6 +68,10 @@ class TokenTag(BaseModel):
     feats: str | None
     deprel: str | None
     ner: str
+    lemma_confidence: float | None = None
+    upos_confidence: float | None = None
+    feats_confidence: float | None = None
+    deprel_confidence: float | None = None
 
     @property
     def is_name(self) -> bool:
@@ -122,14 +128,26 @@ def _resolve_tags(tokens: list[str], raw: object) -> list[TokenTag]:
             tags.append(TokenTag(text=token, lemma=None, upos="X", feats=None, deprel=None, ner="O"))
             continue
         ner = normalize_ner(str(entry.get("ner") or ""))
+        raw_lemma = str(entry.get("lemma") or "").strip()
+        raw_upos = str(entry.get("upos") or "").strip()
+        raw_feats = str(entry.get("feats") or "").strip()
+        raw_deprel = str(entry.get("deprel") or "").strip()
         tags.append(
             TokenTag(
                 text=token,
-                lemma=str(entry.get("lemma") or "").strip() or None,
-                upos=str(entry.get("upos") or "").strip() or "X",
-                feats=str(entry.get("feats") or "").strip() or None,
-                deprel=str(entry.get("deprel") or "").strip() or None,
+                lemma=raw_lemma or None,
+                upos=normalize_upos(raw_upos) if raw_upos else "X",
+                feats=raw_feats or None,
+                deprel=normalize_deprel(raw_deprel) if raw_deprel else None,
                 ner=ner,
+                # Gated on the raw field being present, not the normalized
+                # output: a confidence score for a field the model didn't
+                # actually provide would misrepresent an absent field as a
+                # low-confidence one (same rule as ingest.align._annotate_side).
+                lemma_confidence=parse_confidence(entry.get("lemma_confidence")) if raw_lemma else None,
+                upos_confidence=parse_confidence(entry.get("upos_confidence")) if raw_upos else None,
+                feats_confidence=parse_confidence(entry.get("feats_confidence")) if raw_feats else None,
+                deprel_confidence=parse_confidence(entry.get("deprel_confidence")) if raw_deprel else None,
             )
         )
     return tags

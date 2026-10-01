@@ -175,6 +175,10 @@ def test_build_link_matches_by_gloss_even_when_the_source_lemma_is_not_english(m
         },
         align.tokenize("Liyt be maad"),
         align.tokenize("light be made"),
+        source_lang="enm",  # no registered tool for either side -- LLM proposal is used as-is
+        target_lang="eng",
+        source_text="Liyt be maad",
+        target_text="light be made",
     )
     assert link is not None
     assert link["sense_id"] == "en:light.n.01"
@@ -183,7 +187,15 @@ def test_build_link_matches_by_gloss_even_when_the_source_lemma_is_not_english(m
 def test_build_link_skips_sense_resolution_without_lemma_or_gloss():
     source_tokens = align.tokenize("Liyt be maad")
     target_tokens = align.tokenize("light be made")
-    link = align._build_link({"source_span": "Liyt", "target_span": "light"}, source_tokens, target_tokens)
+    link = align._build_link(
+        {"source_span": "Liyt", "target_span": "light"},
+        source_tokens,
+        target_tokens,
+        source_lang="enm",
+        target_lang="eng",
+        source_text="Liyt be maad",
+        target_text="light be made",
+    )
     assert link is not None
     assert link["sense_id"] is None
     assert link["source_lemma"] is None
@@ -191,7 +203,189 @@ def test_build_link_skips_sense_resolution_without_lemma_or_gloss():
 
 
 def test_build_link_returns_none_for_unresolvable_span():
-    assert align._build_link({"source_span": "nope", "target_span": "light"}, ["a"], ["light"]) is None
+    assert (
+        align._build_link(
+            {"source_span": "nope", "target_span": "light"},
+            ["a"],
+            ["light"],
+            source_lang="enm",
+            target_lang="eng",
+            source_text="a",
+            target_text="light",
+        )
+        is None
+    )
+
+
+def test_build_link_prefers_a_registered_tools_tag_over_the_llms_own_guess(monkeypatch):
+    # Stanza (or any registered tool) wins over the LLM's proposal for a
+    # language it covers -- real treebank output beats an LLM guess.
+    from ye_olde.ingest import annotators
+
+    tool_tag = annotators.ToolTokenTag(text="Gallia", lemma="Gallia", upos="PROPN", feats="Case=Nom", deprel="nsubj")
+    monkeypatch.setattr(annotators, "has_tool", lambda lang: lang == "lat")
+    monkeypatch.setattr(annotators, "annotate_span", lambda lang, text, span: tool_tag if lang == "lat" else None)
+
+    link = align._build_link(
+        {
+            "source_span": "Gallia",
+            "target_span": "Gaul",
+            "source_lemma": "wrong-lemma-from-llm",
+            "source_upos": "NOUN",  # LLM's (wrong) guess -- the tool's PROPN should win instead
+        },
+        align.tokenize("Gallia est omnis"),
+        align.tokenize("Gaul is all"),
+        source_lang="lat",
+        target_lang="eng",
+        source_text="Gallia est omnis",
+        target_text="Gaul is all",
+    )
+    assert link is not None
+    assert link["source_lemma"] == "Gallia"
+    assert link["source_upos"] == "PROPN"
+    assert link["source_feats"] == "Case=Nom"
+    assert link["source_deprel"] == "nsubj"
+
+
+def test_build_link_falls_back_to_llm_when_tool_cannot_resolve_the_span(monkeypatch):
+    from ye_olde.ingest import annotators
+
+    monkeypatch.setattr(annotators, "has_tool", lambda lang: lang == "lat")
+    monkeypatch.setattr(annotators, "annotate_span", lambda lang, text, span: None)  # ambiguous/multi-word/not found
+
+    link = align._build_link(
+        {"source_span": "Gallia", "target_span": "Gaul", "source_lemma": "Gallia", "source_upos": "propn"},
+        align.tokenize("Gallia est omnis"),
+        align.tokenize("Gaul is all"),
+        source_lang="lat",
+        target_lang="eng",
+        source_text="Gallia est omnis",
+        target_text="Gaul is all",
+    )
+    assert link is not None
+    assert link["source_lemma"] == "Gallia"
+    assert link["source_upos"] == "PROPN"  # LLM's lowercase "propn" normalized, same as any other UPOS value
+
+
+def test_build_link_same_latin_word_via_tool_or_via_llm_lands_on_identical_notation(monkeypatch):
+    """The exact guarantee spec §3d requires, at the actual `_build_link`
+    call site rather than just the normalizer functions in isolation
+    (see test_ud_tags.py for that half): the same conceptual Latin tag
+    ("Gallia", proper noun, passive subject), resolved once via a
+    registered tool and once via the LLM's own (differently-cased,
+    unvalidated) proposal, must produce byte-identical upos/deprel in the
+    final link record either way.
+    """
+    from ye_olde.ingest import annotators
+
+    tool_tag = annotators.ToolTokenTag(text="Gallia", lemma="Gallia", upos="PROPN", feats=None, deprel="nsubj:pass")
+
+    monkeypatch.setattr(annotators, "has_tool", lambda lang: lang == "lat")
+    monkeypatch.setattr(annotators, "annotate_span", lambda lang, text, span: tool_tag)
+    via_tool = align._build_link(
+        {"source_span": "Gallia", "target_span": "Gaul"},
+        align.tokenize("Gallia est omnis"),
+        align.tokenize("Gaul is all"),
+        source_lang="lat",
+        target_lang="eng",
+        source_text="Gallia est omnis",
+        target_text="Gaul is all",
+    )
+
+    monkeypatch.setattr(annotators, "annotate_span", lambda lang, text, span: None)  # force the LLM fallback path
+    via_llm = align._build_link(
+        {
+            "source_span": "Gallia",
+            "target_span": "Gaul",
+            "source_lemma": "Gallia",
+            "source_upos": "propn",
+            "source_deprel": "NSUBJ:PASS",
+        },
+        align.tokenize("Gallia est omnis"),
+        align.tokenize("Gaul is all"),
+        source_lang="lat",
+        target_lang="eng",
+        source_text="Gallia est omnis",
+        target_text="Gaul is all",
+    )
+
+    assert via_tool is not None and via_llm is not None
+    assert via_tool["source_upos"] == via_llm["source_upos"] == "PROPN"
+    assert via_tool["source_deprel"] == via_llm["source_deprel"] == "nsubj:pass"
+
+
+def test_build_link_tool_path_gets_fixed_tool_confidence_on_all_four_fields(monkeypatch):
+    from ye_olde.common.ud_tags import TOOL_CONFIDENCE
+    from ye_olde.ingest import annotators
+
+    tool_tag = annotators.ToolTokenTag(text="Gallia", lemma="Gallia", upos="PROPN", feats="Case=Nom", deprel="nsubj")
+    monkeypatch.setattr(annotators, "has_tool", lambda lang: lang == "lat")
+    monkeypatch.setattr(annotators, "annotate_span", lambda lang, text, span: tool_tag if lang == "lat" else None)
+
+    link = align._build_link(
+        {"source_span": "Gallia", "target_span": "Gaul"},
+        align.tokenize("Gallia est omnis"),
+        align.tokenize("Gaul is all"),
+        source_lang="lat",
+        target_lang="eng",
+        source_text="Gallia est omnis",
+        target_text="Gaul is all",
+    )
+    assert link is not None
+    assert link["source_lemma_confidence"] == TOOL_CONFIDENCE
+    assert link["source_upos_confidence"] == TOOL_CONFIDENCE
+    assert link["source_feats_confidence"] == TOOL_CONFIDENCE
+    assert link["source_deprel_confidence"] == TOOL_CONFIDENCE
+
+
+def test_build_link_llm_path_parses_each_fields_own_self_reported_confidence(monkeypatch):
+    from ye_olde.ingest import annotators
+
+    monkeypatch.setattr(annotators, "has_tool", lambda lang: False)
+    monkeypatch.setattr(annotators, "annotate_span", lambda lang, text, span: None)
+
+    link = align._build_link(
+        {
+            "source_span": "Liyt",
+            "target_span": "light",
+            "source_lemma": "light",
+            "source_lemma_confidence": 0.9,
+            "source_upos": "NOUN",
+            "source_upos_confidence": "0.8",  # numeric string, same as a real LLM JSON reply can send
+            "source_feats": "Number=Sing",
+            "source_feats_confidence": 1.4,  # out of range -> clamped
+            # source_deprel intentionally omitted -> deprel stays None, and
+            # its confidence must stay None too even if the model sent one.
+            "source_deprel_confidence": 0.5,
+        },
+        align.tokenize("Liyt be maad"),
+        align.tokenize("light be made"),
+        source_lang="enm",
+        target_lang="eng",
+        source_text="Liyt be maad",
+        target_text="light be made",
+    )
+    assert link is not None
+    assert link["source_lemma_confidence"] == 0.9
+    assert link["source_upos_confidence"] == 0.8
+    assert link["source_feats_confidence"] == 1.0
+    assert link["source_deprel"] is None
+    assert link["source_deprel_confidence"] is None
+
+
+def test_build_link_llm_path_confidence_is_none_when_not_reported():
+    link = align._build_link(
+        {"source_span": "Liyt", "target_span": "light", "source_lemma": "light", "source_upos": "NOUN"},
+        align.tokenize("Liyt be maad"),
+        align.tokenize("light be made"),
+        source_lang="enm",
+        target_lang="eng",
+        source_text="Liyt be maad",
+        target_text="light be made",
+    )
+    assert link is not None
+    assert link["source_lemma_confidence"] is None
+    assert link["source_upos_confidence"] is None
 
 
 def test_align_corpus_pair_dedupes_overlapping_blocks(monkeypatch):
@@ -304,6 +498,7 @@ def test_align_corpus_folder_cleans_up_checkpoint_on_success(tmp_path, monkeypat
 
     monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
     monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [])
+    monkeypatch.setattr(align, "ensure_wordnet_index_ready", lambda **k: None)
 
     output_dir = tmp_path / "processed"
     align.align_corpus_folder(raw_dir, output_dir=output_dir, mode="llm", use_cache=False)
@@ -325,6 +520,7 @@ def test_align_corpus_folder_orders_pairs_chronologically(tmp_path, monkeypatch)
     # get paired into which output filenames, not alignment quality.
     monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
     monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [])
+    monkeypatch.setattr(align, "ensure_wordnet_index_ready", lambda **k: None)
 
     output_dir = tmp_path / "processed"
     written = align.align_corpus_folder(raw_dir, output_dir=output_dir, mode="llm", use_cache=False)
@@ -423,6 +619,7 @@ def test_align_corpus_folder_writes_one_jsonl_file_per_pair(tmp_path, monkeypatc
 
     monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
     monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [])
+    monkeypatch.setattr(align, "ensure_wordnet_index_ready", lambda **k: None)
 
     written = align.align_corpus_folder(raw_dir, output_dir=tmp_path / "processed", mode="llm", use_cache=False)
 
@@ -597,3 +794,36 @@ def test_align_corpus_pair_invalid_mode_raises():
     cf_b = CorpusFile(Path("b.txt"), "eng", 1999, "Work", "Author", "Src")
     with pytest.raises(ValueError, match="mode must be"):
         align.align_corpus_pair(cf_a, cf_b, ["a"], ["b"], mode="bogus")
+
+
+def test_align_corpus_folder_ensures_wordnet_index_for_hybrid_and_llm(tmp_path, monkeypatch):
+    raw_dir = tmp_path / "eng-1810-Work-Author-Source"
+    raw_dir.mkdir()
+    (raw_dir / "eng-1810-Work-Author-Source.txt").write_text("Old content.")
+    (raw_dir / "eng-2026-Work-Author-Source.txt").write_text("New content.")
+
+    monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
+    monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [])
+    calls = []
+    monkeypatch.setattr(align, "ensure_wordnet_index_ready", lambda **k: calls.append(k))
+
+    for mode in ["hybrid", "llm"]:
+        calls.clear()
+        align.align_corpus_folder(raw_dir, output_dir=tmp_path / f"processed_{mode}", mode=mode, use_cache=False)
+        assert len(calls) == 1, mode
+
+
+def test_align_corpus_folder_skips_wordnet_index_check_for_algorithmic(tmp_path, monkeypatch):
+    raw_dir = tmp_path / "eng-1810-Work-Author-Source"
+    raw_dir.mkdir()
+    (raw_dir / "eng-1810-Work-Author-Source.txt").write_text("Old content.")
+    (raw_dir / "eng-2026-Work-Author-Source.txt").write_text("New content.")
+
+    monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
+
+    def fail_if_called(**k):
+        raise AssertionError("algorithmic mode never needs the WordNet index")
+
+    monkeypatch.setattr(align, "ensure_wordnet_index_ready", fail_if_called)
+
+    align.align_corpus_folder(raw_dir, output_dir=tmp_path / "processed", mode="algorithmic", use_cache=False)

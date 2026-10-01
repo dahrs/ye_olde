@@ -55,6 +55,52 @@ def test_classify_falls_back_when_claimed_text_does_not_match_real_token(monkeyp
     assert tags == [classify.TokenTag(text="Robin", lemma=None, upos="X", feats=None, deprel=None, ner="O")]
 
 
+def test_classify_parses_self_reported_confidence_per_field(monkeypatch, tmp_path):
+    monkeypatch.setattr(function_words, "DEFAULT_ROOT", tmp_path)
+    fake_response = [
+        {
+            "text": "walks",
+            "lemma": "walk",
+            "lemma_confidence": 0.95,
+            "upos": "VERB",
+            "upos_confidence": "0.7",  # numeric string, same as a real LLM JSON reply can send
+            "feats": "Tense=Pres",
+            "feats_confidence": -0.2,  # out of range -> clamped
+            # deprel intentionally omitted -> deprel stays None, confidence must too.
+            "deprel_confidence": 0.5,
+            "ner": "O",
+        }
+    ]
+    monkeypatch.setattr(classify, "call_llm_json", lambda *a, **k: fake_response)
+
+    tags = classify.classify("walks", "eng", 2000)
+    assert tags[0].lemma_confidence == 0.95
+    assert tags[0].upos_confidence == 0.7
+    assert tags[0].feats_confidence == 0.0
+    assert tags[0].deprel is None
+    assert tags[0].deprel_confidence is None
+
+
+def test_classify_confidence_is_none_when_not_reported(monkeypatch, tmp_path):
+    monkeypatch.setattr(function_words, "DEFAULT_ROOT", tmp_path)
+    fake_response = [{"text": "Robin", "lemma": "Robin", "upos": "PROPN", "feats": "", "deprel": "nsubj", "ner": "PER"}]
+    monkeypatch.setattr(classify, "call_llm_json", lambda *a, **k: fake_response)
+
+    tags = classify.classify("Robin", "eng", 2000)
+    assert tags[0].lemma_confidence is None
+    assert tags[0].upos_confidence is None
+
+
+def test_classify_fallback_tag_has_no_confidence(monkeypatch, tmp_path):
+    monkeypatch.setattr(function_words, "DEFAULT_ROOT", tmp_path)
+    fake_response = [{"text": "Bob", "lemma": "Bob", "upos": "PROPN", "feats": "", "deprel": "nsubj", "ner": "PER"}]
+    monkeypatch.setattr(classify, "call_llm_json", lambda *a, **k: fake_response)
+
+    tags = classify.classify("Robin", "eng", 2000)
+    assert tags[0].lemma_confidence is None
+    assert tags[0].upos_confidence is None
+
+
 def test_classify_rejects_invalid_ner_tag(monkeypatch, tmp_path):
     monkeypatch.setattr(function_words, "DEFAULT_ROOT", tmp_path)
     fake_response = [

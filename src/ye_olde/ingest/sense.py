@@ -19,11 +19,22 @@ cosmetically now (naming a minted id), not for matching.
 
 **Two indices, searched together, same embedding space:**
 - The WordNet index (`data/sense_index/wordnet_synsets.<model-slug>.{npy,json}`)
-  — every open-class synset's definition, embedded once by
-  `scripts/build_wordnet_sense_index.py` and loaded read-only here. Not
-  built automatically by this module — a real precompute over ~100k+
-  definitions, run deliberately, not as a side effect of the first
-  `resolve_sense_id` call.
+  — every open-class synset's definition, embedded once (`build_wordnet_index`,
+  ~100k+ definitions) and loaded read-only here. `align.align_corpus_folder`
+  checks the index is present *and complete* before a real "hybrid"/"llm"
+  mode run starts resolving senses (`ensure_wordnet_index_ready`), building
+  or resuming it first if not — this used to be a separately-run,
+  easy-to-forget prerequisite (`scripts/build_wordnet_sense_index.py`,
+  still usable standalone e.g. to run it ahead of time overnight instead of
+  blocking a pipeline run's first real invocation), which meant a run
+  starting before the precompute finished silently minted a fresh
+  `ye_olde:` id for every sense whose real WordNet synset just hadn't been
+  embedded yet — the exact failure this check exists to prevent.
+  `resolve_sense_id` itself still soft-fails to mint-only (no auto-build)
+  when called directly with no index present — deliberately: triggering a
+  many-hour precompute as a side effect of a low-level function a unit
+  test calls directly would make testing this module require a full
+  WordNet embed first, which defeats the point of a unit test.
 - The minted index (`data/sense_index/minted.<model-slug>.json`) — every
   `ye_olde:`-namespaced sense minted so far, growing as this module runs.
   **This is what makes minted ids reusable rather than one-off**: without
@@ -43,6 +54,8 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import sys
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -70,6 +83,8 @@ _SSLUG_RE = re.compile(r"[^a-z0-9]+")
 # query examples exist.
 SIMILARITY_THRESHOLD = 0.80
 
+# WordNet-embedding + minted-sense data, gitignored (large, machine-
+# regenerable) -- see `scripts/build_wordnet_sense_index.py` to (re)build it.
 DEFAULT_INDEX_ROOT = Path("data/sense_index")
 
 # Per-(lemma, pos) minted-id counters -- a fallback only, for the
@@ -115,6 +130,167 @@ def _load_wordnet_index(model_name: str, root: Path) -> tuple[np.ndarray, list[s
     embeddings = np.load(npy_path)
     meta = json.loads(json_path.read_text(encoding="utf-8"))
     return embeddings, meta["names"], meta["definitions"], meta["pos"]
+
+
+def _index_paths(model_name: str, root: Path) -> tuple[Path, Path, Path]:
+    slug = model_slug(model_name)
+    return (
+        root / f"wordnet_synsets.{slug}.npy",
+        root / f"wordnet_synsets.{slug}.json",
+        root / f"wordnet_synsets.{slug}.progress.json",
+    )
+
+
+def _index_is_complete(model_name: str, root: Path) -> bool:
+    """True only once every synset is embedded — `build_wordnet_index`
+    deletes the `.progress.json` sidecar as its very last step (see that
+    function), so that file's mere existence means "still in progress or
+    was interrupted partway," regardless of how far it got. A partial
+    index still has real npy/json files (`_load_wordnet_index` happily
+    reads them for the soft-fail/direct-call path above) — this check is
+    stricter on purpose, for `ensure_wordnet_index_ready`'s use only.
+    """
+    npy_path, json_path, progress_path = _index_paths(model_name, root)
+    return npy_path.is_file() and json_path.is_file() and not progress_path.is_file()
+
+
+def build_wordnet_index(
+    *,
+    model_name: str | None = None,
+    root: Path | None = None,
+    batch_size: int = 256,
+    min_free_gb: float = 2.0,
+) -> None:
+    """Embeds every open-class WordNet synset's own definition and writes
+    the result to `root` (default `DEFAULT_INDEX_ROOT`) for
+    `_load_wordnet_index`/`resolve_sense_id` to read — the one
+    implementation of this precompute, called both by
+    `scripts/build_wordnet_sense_index.py` (a thin CLI wrapper, for running
+    it standalone/ahead of time) and by `ensure_wordnet_index_ready` below
+    (automatically, from a real pipeline run that finds the index missing
+    or incomplete).
+
+    **Incremental, resumable, disk-aware**: the embedding matrix is written
+    to a pre-sized `.npy` file via `numpy.lib.format.open_memmap` and
+    flushed to disk after every batch (not accumulated in RAM and written
+    once at the end) — the `.progress.json` sidecar records how many rows
+    are done, so a killed/interrupted/`min_free_gb`-stopped run resumes
+    from the next uncompleted batch on a later call with the same
+    `model_name`/`root`, rather than starting over. `min_free_gb` stops the
+    run cleanly *before* the destination volume actually fills, leaving
+    already-written rows intact and resumable, rather than crashing
+    mid-write.
+
+    Prints its own progress; how long a full run actually takes depends
+    entirely on the host's hardware (~100k+ definitions to embed) — no
+    number is promised here.
+    """
+    import nltk
+
+    try:
+        nltk.data.find("corpora/wordnet")
+    except LookupError:
+        print("[sense] downloading nltk 'wordnet' corpus...", file=sys.stderr)
+        nltk.download("wordnet", quiet=True)
+    from nltk.corpus import wordnet
+
+    resolved_model = model_name or get_settings().embedding_model
+    resolved_root = _resolve_root(root)
+    resolved_root.mkdir(parents=True, exist_ok=True)
+    min_free_bytes = min_free_gb * (1024**3)
+
+    # Gathering names/definitions/POS is fast and cheap (plain in-memory
+    # WordNet corpus reads, no embedding calls) -- always redone in full
+    # even on a resume, so it never itself needs incremental saving.
+    names: list[str] = []
+    definitions: list[str] = []
+    pos_tags: list[str] = []
+    for wn_pos in WN_POS_TAGS:
+        for syn in wordnet.all_synsets(pos=wn_pos):
+            names.append(syn.name())
+            definitions.append(syn.definition())
+            pos_tags.append(wn_pos)
+    total = len(definitions)
+
+    npy_path, json_path, progress_path = _index_paths(resolved_model, resolved_root)
+
+    # Metadata is small (a few MB of text at most for ~120k short
+    # definitions) -- written in full up front, not incrementally; the
+    # embedding matrix below is the part that's actually large.
+    json_path.write_text(
+        json.dumps({"names": names, "definitions": definitions, "pos": pos_tags}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    dim = int(embed_units([definitions[0]], model_name=resolved_model).shape[1])
+
+    resume_from = 0
+    if npy_path.is_file() and progress_path.is_file():
+        prev = json.loads(progress_path.read_text(encoding="utf-8"))
+        if prev.get("total") == total and prev.get("dim") == dim:
+            resume_from = int(prev.get("completed", 0))
+
+    if resume_from > 0:
+        print(f"[sense] resuming WordNet index build from row {resume_from}/{total}", file=sys.stderr)
+        matrix = np.lib.format.open_memmap(npy_path, mode="r+")
+    else:
+        matrix = np.lib.format.open_memmap(npy_path, mode="w+", dtype=np.float32, shape=(total, dim))
+
+    print(f"[sense] embedding {total} synset definitions with {resolved_model}...", file=sys.stderr)
+    for i in range(resume_from, total, batch_size):
+        batch = definitions[i : i + batch_size]
+        matrix[i : i + len(batch)] = embed_units(batch, model_name=resolved_model)
+        matrix.flush()  # on disk now -- a kill/crash right after this line loses nothing already done
+        completed = i + len(batch)
+        progress_path.write_text(json.dumps({"total": total, "dim": dim, "completed": completed}), encoding="utf-8")
+        print(f"[sense] {completed}/{total} ({100 * completed / total:.1f}%)", file=sys.stderr, flush=True)
+
+        free_bytes = shutil.disk_usage(resolved_root).free
+        if free_bytes < min_free_bytes and completed < total:
+            print(
+                f"[sense] only {free_bytes / 1024**3:.2f}GB free on {resolved_root} (below "
+                f"min_free_gb={min_free_gb}) -- stopping at {completed}/{total}, safe to resume "
+                "later by calling this again with the same model_name/root",
+                file=sys.stderr,
+            )
+            return
+
+    progress_path.unlink(missing_ok=True)  # done -- no resume marker needed
+    print(f"[sense] wrote {total} synsets -> {resolved_root}", file=sys.stderr)
+
+
+def ensure_wordnet_index_ready(
+    *,
+    model_name: str | None = None,
+    root: Path | None = None,
+    batch_size: int = 256,
+    min_free_gb: float = 2.0,
+) -> None:
+    """Guarantees the WordNet index is present and complete before a real
+    pipeline run starts resolving senses with it — building or resuming it
+    first (`build_wordnet_index`) if it's missing or was left incomplete by
+    an interrupted earlier run (`_index_is_complete`). Called from
+    `align.align_corpus_folder` for `mode="hybrid"`/`"llm"` (the two modes
+    that ever call `resolve_sense_id`) — never from `resolve_sense_id`
+    itself, nor from `align_corpus_pair` directly, so a unit test or a
+    direct low-level call keeps today's soft-fail/mint-only behavior
+    instead of silently kicking off a many-hour precompute.
+
+    Clears `_load_wordnet_index`'s cache after building, in case something
+    in this same process already called it (and got `None`, or a stale
+    partial read) before the index was actually complete.
+    """
+    resolved_model = model_name or get_settings().embedding_model
+    resolved_root = _resolve_root(root)
+    if _index_is_complete(resolved_model, resolved_root):
+        return
+    print(
+        f"[sense] WordNet index for {resolved_model!r} at {resolved_root} is missing or incomplete -- "
+        "building it now before continuing (this can take hours the first time; see build_wordnet_index)",
+        file=sys.stderr,
+    )
+    build_wordnet_index(model_name=resolved_model, root=resolved_root, batch_size=batch_size, min_free_gb=min_free_gb)
+    _load_wordnet_index.cache_clear()
 
 
 def _minted_index_path(model_name: str, root: Path) -> Path:

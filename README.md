@@ -186,6 +186,83 @@ with a stronger machine (more free RAM, an SSD instead of a spinning disk, more 
 should expect meaningfully better throughput. Benchmark your own setup before assuming either
 way.
 
+## Corpus ingestion & indexing scripts
+
+Three CLI scripts, run in this order to go from raw texts in `data/raw/<work>/` to what
+`search_api/` serves. All three are plain `argparse` scripts — `--help` on any of them lists the
+full flag set; this section covers the common path.
+
+**1. Align a corpus (`scripts/align_corpus.py`)** — cleans and sentence/word-aligns a
+`data/raw/<work>/` folder of 2+ parallel-translation files into one `.jsonl` bitext file per
+language pair under `data/processed/<work>/`:
+```
+python scripts/align_corpus.py data/raw/enm-1400-Sir_Gawayne_and_the_Green_Knight-Richard_Morris-Project_Gutenberg
+```
+Prints total LLM cost/token usage to stderr on exit (even on failure). Resumable by default —
+re-running after an interrupted run (e.g. an API billing error) only pays for calls it hadn't
+already made; `--no-cache` starts fresh. `--mode llm|hybrid|algorithmic` trades cost/speed for how
+much the LLM is involved — see `align.py`'s own module docstring for the full tradeoff. Also
+builds the WordNet sense-id index first (step 3 below) if it's missing or incomplete, before any
+real alignment work starts — no separate manual step needed, though running step 3 standalone
+ahead of time (e.g. overnight) avoids that wait blocking your first real run.
+
+**Per-language tagging: tool-first (Stanza), LLM elsewhere (spec §3d)** — for a language with a
+real Universal Dependencies treebank model registered in `ye_olde.ingest.annotators` (today:
+`lat`, `grc` — Latin and Ancient Greek; add a language there only after confirming it has a real
+Stanza package, never assumed from its ISO code), `align_corpus.py` uses that model's own
+lemma/UPOS/FEATS/DEPREL for a linked span instead of trusting the LLM's guess for it — real
+treebank output beats an LLM guess where one exists. Every language without a registered tool
+(including this project's own `ang`/`enm` v1 focus — no tool covers those) falls back to the LLM's
+proposal exactly as before. Either source's tags are normalized through the same closed UD
+vocabularies (`ye_olde.common.ud_tags`) before being used anywhere, so a `lat` link's UPOS and an
+`enm` link's UPOS are guaranteed the same notation, never two different standards for the two
+languages just because they came from different sources. Stanza models auto-download to
+`~/.cache/stanza` on first use of a registered language (~150-200MB per language) — redirect that
+cache the same way `.venv` was moved in this reference setup if disk is tight (symlink
+`~/.cache/stanza` elsewhere).
+
+**2. Build the Search API index (`scripts/build_index.py`)** — reads every
+`data/processed/<work>/*.bitext.jsonl` and writes the Parquet/FAISS/n-gram/BM25 shards
+`search_api/` reads, under `data/index/`:
+```
+python scripts/build_index.py
+```
+This is a local build only — see step 4 to push the result to where `search_api` actually reads
+from.
+
+**3. Build (or rebuild) the WordNet sense-id index (`scripts/build_wordnet_sense_index.py`)** —
+a one-time (or rerun-when-`EMBEDDING_MODEL`-changes) precompute that embeds every open-class
+WordNet synset's own definition, so `ye_olde.ingest.sense.resolve_sense_id` (used by
+`align_corpus.py`, step 1) can match an LLM-proposed gloss against real WordNet senses by meaning
+instead of by lemma spelling — see that module's docstring for why. Output goes to
+`data/sense_index/` by default (gitignored — large, ~500MB+, and fully regenerable from this
+script, never committed). Not a required manual step anymore (step 1 builds it automatically if
+missing) — running it standalone is still worthwhile to avoid that wait blocking a real run's
+first invocation:
+```
+python scripts/build_wordnet_sense_index.py
+python scripts/build_wordnet_sense_index.py --output-dir /path/to/external/drive/ye_olde-sense-index
+```
+This embeds ~118,000 WordNet definitions — genuinely slow on constrained hardware (took on the
+order of half a day on the reference Pi 5; benchmark your own setup, no number is promised here).
+**Safe to interrupt and resume**: progress is flushed to disk after every batch (a
+`.progress.json` sidecar tracks how far it got), and `--min-free-gb` (default 2) stops it cleanly
+before the destination volume actually fills rather than crashing mid-write — just rerun the same
+command later and it picks up where it left off.
+
+**4. Push the index to Hugging Face (`scripts/push_index_to_hf.py`)** — uploads everything under
+`data/index/` (step 2's output) to the Dataset repo `search_api` serves from:
+```
+python scripts/push_index_to_hf.py --dry-run   # see what would be pushed first
+python scripts/push_index_to_hf.py
+```
+Needs `HF_DATASET_REPO_ID`/`HF_TOKEN` (write-scoped) in `.env`. **Deliberately a separate, manual
+step, not run automatically at the end of step 1/2** — this pushes straight to a live, public
+dataset a real deployed service reads from; a bad local build reaching production with no human
+check in between is the exact failure mode keeping this manual avoids. `search_api` won't see a
+push until its next cold start or a manual redeploy (spec §13c/§13d) — its file listing is cached
+per-process with no live-refresh endpoint.
+
 ## Search API (spec §10)
 
 ```

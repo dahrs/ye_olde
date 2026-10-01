@@ -61,6 +61,16 @@ Two more safeguards, applied to every pair regardless of mode:
     boundaries, but may never alter the words themselves or their order.
     A pair that fails this is dropped, catching what either step got wrong.
 
+`align_corpus_folder` also calls `sense.ensure_wordnet_index_ready` up
+front for "hybrid"/"llm" modes, before any real work starts — every
+word/phrase link's `sense_id` (spec §3d/§9) is resolved by matching an
+LLM-proposed gloss against a precomputed WordNet embedding index
+(`ingest.sense`), and starting a real run before that index exists (or
+while an earlier build of it is still incomplete) used to mean every sense
+silently minted a fresh id instead of matching its real WordNet synset —
+exactly the class of problem `_verify_pairs_against_source` above exists to
+catch for pair text, now closed for sense resolution too.
+
 Output rows are flattened to match what `search_api/app/main.py`'s
 `/lookup` and `/attest` handlers already expect to read off a Parquet pairs
 shard (`pair_id`, `source_text`, `target_text`, `source_tokens`,
@@ -77,19 +87,21 @@ import json
 import re
 import sys
 import unicodedata
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, TypeAlias
 
 from ..common.llm_client import call_llm_json, is_local_model
 from ..common.tokenize import tokenize
-from ..common.ud_tags import normalize_ner
+from ..common.ud_tags import TOOL_CONFIDENCE, normalize_deprel, normalize_ner, normalize_upos, parse_confidence
 from ..prompt import load_prompt
+from . import annotators
 from .checkpoint import Checkpoint
 from .clean import clean_corpus_file
 from .corpus_files import CorpusFile, discover_corpus_files
 from .extract import extract_text, strip_boilerplate
-from .sense import resolve_sense_id
+from .sense import ensure_wordnet_index_ready, resolve_sense_id
 from .sentence_align import SentenceMatch, lexical_align, mutual_nearest_neighbor_align
 
 # A §3c aligned-pair record in its working (pre-output) shape: heterogeneous
@@ -99,7 +111,8 @@ from .sentence_align import SentenceMatch, lexical_align, mutual_nearest_neighbo
 # start — this alias just names what a bare `dict[str, Any]` here *means*.
 PairRecord: TypeAlias = dict[str, Any]
 
-_ALIGN_SYSTEM_PROMPT = load_prompt("ingest", "align_system")
+_CONFIDENCE_CALIBRATION = load_prompt("common", "confidence_calibration")
+_ALIGN_SYSTEM_PROMPT = load_prompt("ingest", "align_system") + "\n\n" + _CONFIDENCE_CALIBRATION
 
 
 def _normalize(text: str) -> str:
@@ -167,12 +180,85 @@ def _format_units(units: list[str]) -> str:
     return "\n".join(f"{i}. {u}" for i, u in enumerate(units))
 
 
-def _build_link(link: dict[str, Any], source_tokens: list[str], target_tokens: list[str]) -> PairRecord | None:
+@dataclass(frozen=True)
+class _SideAnnotation:
+    lemma: str | None
+    upos: str | None
+    feats: str | None
+    deprel: str | None
+    lemma_confidence: float | None
+    upos_confidence: float | None
+    feats_confidence: float | None
+    deprel_confidence: float | None
+
+
+def _annotate_side(lang: str, text: str, span: str, link: dict[str, Any], prefix: str) -> _SideAnnotation:
+    """Resolves one side's `(lemma, upos, feats, deprel)` for `span`, plus a
+    confidence value for each of those four fields — prefers a registered
+    tool's own tag (`ingest.annotators`, spec §3d: Stanza, for a language
+    with a real treebank model) over the LLM's proposal for the same span,
+    since real treebank-trained output beats an LLM guess where one exists.
+    Falls back to the LLM's proposal otherwise, normalized through the same
+    closed vocabularies (`common.ud_tags`) a tool's output is checked
+    against too — so a caller downstream never sees two different notations
+    depending on which of the two produced a given tag (an empty raw value
+    from either source stays `None`, not a normalized-empty placeholder).
+
+    A tool tag's four confidence fields are all `TOOL_CONFIDENCE` — a real
+    treebank-trained model's deterministic prediction is unconditionally
+    trusted over the LLM's own proposal already, so its confidence is fixed
+    rather than field-by-field. The LLM path parses each field's own
+    `<prefix>_<field>_confidence` independently via `parse_confidence`, and
+    only when that field itself resolved to a non-`None` value — a
+    confidence score for a tag the model didn't actually provide would
+    misrepresent an absent field as a low-confidence one.
+    """
+    tool_tag = annotators.annotate_span(lang, text, span)
+    if tool_tag is not None:
+        return _SideAnnotation(
+            lemma=tool_tag.lemma,
+            upos=tool_tag.upos,
+            feats=tool_tag.feats,
+            deprel=tool_tag.deprel,
+            lemma_confidence=TOOL_CONFIDENCE,
+            upos_confidence=TOOL_CONFIDENCE,
+            feats_confidence=TOOL_CONFIDENCE,
+            deprel_confidence=TOOL_CONFIDENCE,
+        )
+    llm_upos = str(link.get(f"{prefix}_upos") or "").strip()
+    llm_deprel = str(link.get(f"{prefix}_deprel") or "").strip()
+    lemma = str(link.get(f"{prefix}_lemma") or "").strip() or None
+    upos = normalize_upos(llm_upos) if llm_upos else None
+    feats = str(link.get(f"{prefix}_feats") or "").strip() or None
+    deprel = normalize_deprel(llm_deprel) if llm_deprel else None
+    return _SideAnnotation(
+        lemma=lemma,
+        upos=upos,
+        feats=feats,
+        deprel=deprel,
+        lemma_confidence=parse_confidence(link.get(f"{prefix}_lemma_confidence")) if lemma is not None else None,
+        upos_confidence=parse_confidence(link.get(f"{prefix}_upos_confidence")) if upos is not None else None,
+        feats_confidence=parse_confidence(link.get(f"{prefix}_feats_confidence")) if feats is not None else None,
+        deprel_confidence=parse_confidence(link.get(f"{prefix}_deprel_confidence")) if deprel is not None else None,
+    )
+
+
+def _build_link(
+    link: dict[str, Any],
+    source_tokens: list[str],
+    target_tokens: list[str],
+    *,
+    source_lang: str,
+    target_lang: str,
+    source_text: str,
+    target_text: str,
+) -> PairRecord | None:
     """Resolves one raw LLM-proposed link into token indices plus its
-    per-side lemma/UPOS/FEATS/DEPREL/NER (spec §3d) and a WordNet-anchored
-    `sense_id` (spec §9) — returns None if the span can't be located
-    verbatim in its own side's tokens (dropped, same as before this
-    function existed).
+    per-side lemma/UPOS/FEATS/DEPREL/NER (spec §3d, tool-preferred over the
+    LLM's own guess when a tool is registered for that side's language —
+    see `_annotate_side`) and a WordNet-anchored `sense_id` (spec §9) —
+    returns None if the span can't be located verbatim in its own side's
+    tokens (dropped, same as before this function existed).
 
     Restricted to the link's own head word, not every token in the
     sentence — a deliberate, smaller scope than spec §3d's full per-token
@@ -187,37 +273,35 @@ def _build_link(link: dict[str, Any], source_tokens: list[str], target_tokens: l
     LLM proposes a lemma and an English gloss, `sense.resolve_sense_id`
     matches that gloss by embedding similarity against real WordNet synset
     definitions (or an already-minted sense) rather than taking a
-    `light.n.02`-style claim on faith. `lemma_hint`/`upos` passed to it are
-    cosmetic only now (naming a freshly-minted id, and the coarse POS
-    filter) — matching itself is gloss-only, so which side's lemma is
-    passed no longer changes *correctness* the way it used to (see
-    `sense.resolve_sense_id`'s module docstring for why lemma-based lookup
-    was replaced). Still prefers the TARGET side's lemma/UPOS when present,
-    purely for a more-readable minted id — `target` is this pipeline's
-    always-more-modern side (`align_corpus_folder`: `cf_a.year <= cf_b.year`
-    always).
+    `light.n.02`-style claim on faith. `lemma_hint`/`upos_hint` passed to
+    it are the *resolved* (tool-preferred, normalized) values above, so a
+    real tool tag also improves the POS filter `resolve_sense_id` searches
+    with, not just the LLM's own guess. Still prefers the TARGET side's
+    lemma/UPOS when both sides have one, purely for a more-readable minted
+    id — `target` is this pipeline's always-more-modern side
+    (`align_corpus_folder`: `cf_a.year <= cf_b.year` always).
     """
     if not isinstance(link, dict):
         return None
-    s_idx = find_span_token_indices(source_tokens, str(link.get("source_span") or ""))
-    t_idx = find_span_token_indices(target_tokens, str(link.get("target_span") or ""))
+    source_span = str(link.get("source_span") or "")
+    target_span = str(link.get("target_span") or "")
+    s_idx = find_span_token_indices(source_tokens, source_span)
+    t_idx = find_span_token_indices(target_tokens, target_span)
     if not s_idx or not t_idx:
         return None
 
-    source_lemma = str(link.get("source_lemma") or "").strip()
-    source_upos = str(link.get("source_upos") or "").strip()
-    target_lemma = str(link.get("target_lemma") or "").strip()
-    target_upos = str(link.get("target_upos") or "").strip()
+    source = _annotate_side(source_lang, source_text, source_span, link, "source")
+    target = _annotate_side(target_lang, target_text, target_span, link, "target")
     gloss = str(link.get("sense_gloss") or "").strip()
     # Both lemma AND upos must come from the same side -- a target_lemma
-    # with no target_upos (upos_hint="") would otherwise silently look like
-    # a closed-class tag to resolve_sense_id (empty string maps to no
-    # WordNet POS, the same code path as a genuine DET/ADP), forcing an
-    # unnecessary mint instead of a real WordNet/minted-index match.
-    lemma_hint, upos_hint = (target_lemma, target_upos) if target_lemma and target_upos else (source_lemma, source_upos)
+    # with no target_upos would otherwise silently look like a closed-class
+    # tag to resolve_sense_id (None maps to no WordNet POS, the same code
+    # path as a genuine DET/ADP), forcing an unnecessary mint instead of a
+    # real WordNet/minted-index match.
+    lemma_hint, upos_hint = (target.lemma, target.upos) if target.lemma and target.upos else (source.lemma, source.upos)
     sense_id: str | None = None
     sense_definition: str | None = None
-    if lemma_hint and gloss:
+    if lemma_hint and upos_hint and gloss:
         sense_id, sense_definition = resolve_sense_id(lemma_hint, upos_hint, gloss)
 
     return {
@@ -225,16 +309,24 @@ def _build_link(link: dict[str, Any], source_tokens: list[str], target_tokens: l
         "target_idx": t_idx,
         "sense_id": sense_id,
         "sense_definition": sense_definition,
-        "source_lemma": source_lemma or None,
-        "source_upos": source_upos or None,
-        "source_feats": str(link.get("source_feats") or "").strip() or None,
-        "source_deprel": str(link.get("source_deprel") or "").strip() or None,
+        "source_lemma": source.lemma,
+        "source_upos": source.upos,
+        "source_feats": source.feats,
+        "source_deprel": source.deprel,
         "source_ner": normalize_ner(str(link.get("source_ner") or "")),
-        "target_lemma": target_lemma or None,
-        "target_upos": target_upos or None,
-        "target_feats": str(link.get("target_feats") or "").strip() or None,
-        "target_deprel": str(link.get("target_deprel") or "").strip() or None,
+        "source_lemma_confidence": source.lemma_confidence,
+        "source_upos_confidence": source.upos_confidence,
+        "source_feats_confidence": source.feats_confidence,
+        "source_deprel_confidence": source.deprel_confidence,
+        "target_lemma": target.lemma,
+        "target_upos": target.upos,
+        "target_feats": target.feats,
+        "target_deprel": target.deprel,
         "target_ner": normalize_ner(str(link.get("target_ner") or "")),
+        "target_lemma_confidence": target.lemma_confidence,
+        "target_upos_confidence": target.upos_confidence,
+        "target_feats_confidence": target.feats_confidence,
+        "target_deprel_confidence": target.deprel_confidence,
     }
 
 
@@ -274,7 +366,18 @@ def align_block(
         alignment_links = [
             resolved_link
             for link in rp.get("links") or []
-            if (resolved_link := _build_link(link, source_tokens, target_tokens)) is not None
+            if (
+                resolved_link := _build_link(
+                    link,
+                    source_tokens,
+                    target_tokens,
+                    source_lang=cf_a.lang_code,
+                    target_lang=cf_b.lang_code,
+                    source_text=source_text,
+                    target_text=target_text,
+                )
+            )
+            is not None
         ]
         try:
             confidence = float(rp.get("confidence", 0.0) or 0.0)
@@ -295,7 +398,7 @@ def align_block(
     return resolved
 
 
-_LINKS_SYSTEM_PROMPT = load_prompt("ingest", "links_system")
+_LINKS_SYSTEM_PROMPT = load_prompt("ingest", "links_system") + "\n\n" + _CONFIDENCE_CALIBRATION
 
 
 def extract_links_batch(
@@ -338,7 +441,18 @@ def extract_links_batch(
             pair["alignment_links"] = [
                 resolved_link
                 for link in links_raw
-                if (resolved_link := _build_link(link, pair["source_tokens"], pair["target_tokens"])) is not None
+                if (
+                    resolved_link := _build_link(
+                        link,
+                        pair["source_tokens"],
+                        pair["target_tokens"],
+                        source_lang=cf_a.lang_code,
+                        target_lang=cf_b.lang_code,
+                        source_text=pair["source_text"],
+                        target_text=pair["target_text"],
+                    )
+                )
+                is not None
             ]
 
 
@@ -774,6 +888,15 @@ def align_corpus_folder(
 
     Returns the list of bitext file paths written.
     """
+    if mode in ("hybrid", "llm"):
+        # Both modes eventually call resolve_sense_id (via _build_link) for
+        # every word/phrase link -- checked/built here, once, up front,
+        # rather than discovering only pair-by-pair that the WordNet index
+        # is missing or incomplete. Not passed `model_name=embedding_model`:
+        # resolve_sense_id's own calls below never pass one either (they use
+        # get_settings().embedding_model), so checking against that same
+        # default is what actually matches what gets queried at runtime.
+        ensure_wordnet_index_ready()
     folder = Path(folder)
     # discover_corpus_files() already returns files sorted oldest-year-first;
     # re-sorting here makes that an explicit, local guarantee rather than an
