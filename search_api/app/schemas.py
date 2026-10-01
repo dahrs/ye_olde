@@ -66,12 +66,32 @@ class LookupResult(BaseModel):
     # the scales is a real design decision (normalize at index time? expose
     # method alongside confidence and let clients weight it?), not a bug fix.
     confidence: float
+    # The matched query-side token's own UD-style tag (spec §3d/§9), straight
+    # off the alignment_link whose head word this match landed on — None
+    # whenever the match isn't a link's head word, which is most tokens:
+    # `ingest.align._build_link` only tags a link's own span, not every
+    # token in the sentence (spec §9's "no point extending the index for a
+    # signal nothing populates or queries yet" is finally closed here, but
+    # only for linked spans). A caller that tagged its own query with
+    # `ye_olde.classify.classify` compares that tag against these to tell a
+    # genuine same-tag match (e.g. a name matching a name) from a match that
+    # only shares spelling — see `/lookup`'s `upos`/`ner` params.
+    matched_upos: str | None = None
+    matched_ner: str | None = None
+    matched_lemma: str | None = None
 
 
 class LookupQuery(BaseModel):
     text: str
     lang: str
     year: int
+    # Echo of the caller's own classify()-produced tag for `text` (spec
+    # §3d/§9) — not used to filter results (a query-time tag can be wrong,
+    # and most indexed tokens have no tag to compare against at all, see
+    # `LookupResult.matched_upos`), only to rank same-tagged matches ahead of
+    # untagged ones and untagged ones ahead of actively-disagreeing ones.
+    upos: str | None = None
+    ner: str | None = None
 
 
 class LookupTarget(BaseModel):
@@ -94,6 +114,11 @@ class SearchQuery(BaseModel):
     text: str
     lang: str
     year: int | None = None
+    # Echo of the caller's own classify()-produced tag for `text` (spec
+    # §3d/§9), same as `LookupQuery.upos`/`.ner` — see `SearchResult.tag_matched`
+    # for how it affects ranking.
+    upos: str | None = None
+    ner: str | None = None
 
 
 class SearchResult(BaseModel):
@@ -111,6 +136,14 @@ class SearchResult(BaseModel):
     other_work: str | None = None
     other_text: str
     citation: str
+    # True when the query's `upos`/`ner` (spec §3d/§9) matched some
+    # alignment_link's tag on this passage's query-side — a small ranking
+    # boost (`loader._TAG_MATCH_BOOST`), not a filter: /search is
+    # passage-level, and most tokens in a passage have no tag to check at
+    # all (only a link's head word does, see `LookupResult.matched_upos`),
+    # so excluding untagged passages would throw away real matches for no
+    # reason. Always False when neither param was given.
+    tag_matched: bool = False
 
 
 class SearchResponse(BaseModel):

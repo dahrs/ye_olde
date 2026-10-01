@@ -73,23 +73,47 @@ def attest(lemma: str, lang: str, year: int, window: int = 50, ner: str | None =
 
 
 @app.get("/lookup", response_model=LookupResponse)
-def lookup(text: str, lang: str, year: int, target_lang: str, target_year: int) -> LookupResponse:
-    results = loader.lookup_passages(text, lang, target_lang)
+def lookup(
+    text: str,
+    lang: str,
+    year: int,
+    target_lang: str,
+    target_year: int,
+    upos: str | None = None,
+    ner: str | None = None,
+) -> LookupResponse:
+    """`upos`/`ner`, when given (spec §3d/§9 — typically the caller's own
+    `ye_olde.classify.classify` tag for `text`), rank a result whose
+    matched token carries the same tag ahead of an untagged or
+    disagreeing one; see `loader.lookup_passages`/`loader._tag_preference_rank`.
+    They never filter — most indexed tokens have no tag to compare at all.
+    """
+    results = loader.lookup_passages(text, lang, target_lang, upos=upos, ner=ner)
     return LookupResponse(
-        query=LookupQuery(text=text, lang=lang, year=year),
+        query=LookupQuery(text=text, lang=lang, year=year, upos=upos, ner=ner),
         target=LookupTarget(lang=target_lang, year=target_year),
         results=results,
     )
 
 
 @app.get("/search", response_model=SearchResponse)
-def search(text: str, lang: str, year: int | None = None, window: int | None = None, top_k: int = 5) -> SearchResponse:
+def search(
+    text: str,
+    lang: str,
+    year: int | None = None,
+    window: int | None = None,
+    top_k: int = 5,
+    upos: str | None = None,
+    ner: str | None = None,
+) -> SearchResponse:
     """Semantic + lexical hybrid passage search (spec §10's "Hybrid
     retrieval scoring") — the RAG-style "find a sentence, not just an exact
     word" lookup /lookup can't do. `year` (without `window`) weights the
     blend by how far that era is from the present; `year`+`window` together
-    also hard-filter results outside that range, same as before. See
-    `loader.search_passages` for the full scoring logic.
+    also hard-filter results outside that range, same as before. `upos`/
+    `ner` (spec §3d/§9) add a small ranking boost to a passage with a
+    matching tagged token, never a filter — see `loader.search_passages`
+    for the full scoring logic.
     """
-    results = loader.search_passages(lang, text, year=year, window=window, top_k=top_k)
-    return SearchResponse(query=SearchQuery(text=text, lang=lang, year=year), results=results)
+    results = loader.search_passages(lang, text, year=year, window=window, top_k=top_k, upos=upos, ner=ner)
+    return SearchResponse(query=SearchQuery(text=text, lang=lang, year=year, upos=upos, ner=ner), results=results)

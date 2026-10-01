@@ -12,32 +12,9 @@ and `search_api/app/`, unless a rule explicitly says otherwise.
 
 ## Running the checks locally
 
-```
-uv sync --extra dev --extra ingest      # root package
-uv run ruff check .
-uv run ruff format --check .
-uv run mypy src
-uv run pytest tests -q
-
-cd search_api
-pip install -r requirements-dev.txt     # separate environment, see above
-ruff check .   ruff format --check .    # (run from repo root to share config; or from here)
-mypy app
-pytest tests -q
-```
-
-**On this reference Pi 5, local dev for both codebases shares the root `.venv`** rather than
-`search_api` getting its own — the separation above is about *deployment* independence
-(`search_api` ships to Cloud Run from its own `requirements.txt`/`Dockerfile`, never anything
-installed here), not a claim that local dev needs two copies of largely-overlapping heavy
-dependencies (`torch`/`sentence-transformers`/`pyarrow` are needed by both). Root's `.venv` has
-the 3 packages `search_api` needs that the `ye_olde[ingest]` extra doesn't (`fastapi`, `uvicorn`,
-`huggingface_hub`) installed ad hoc via `uv pip install --python .venv/bin/python ...` — run
-`search_api`'s own test/lint/type-check commands above with `../.venv/bin/python -m <tool>` in
-place of a `search_api/.venv`. This is a local-only convenience, not documented in
-`search_api/README.md` (that file is for third-party deployers, who should follow its own
-separate-venv instructions rather than assume this shortcut). Not committed to code — a Claude
-Code session decision, revisit if it ever stops being convenient.
+See the `run-checks` skill for the exact commands (root package, `search_api`'s separate
+environment, and the pre-commit setup) — not repeated here since it's only needed when actually
+running checks, not on every turn.
 
 **TEMPORARY, as of 2026-09-29 — remove this note once done**: `.venv` here is a symlink to
 `/media/dahrs/My_passport/ye_olde-venv` (moved off the SD card to free ~6GB — `torch`'s CUDA
@@ -51,9 +28,6 @@ back**: `rsync -a /media/dahrs/My_passport/ye_olde-venv/ /home/dahrs/ye_olde/.ve
 `df -h /` has room first — this used ~5.9GB before the move). If a session reading this notices
 the project looks finished/stable, proactively flag this note to the user rather than assuming
 someone else will.
-
-`pre-commit install` wires the same `ruff`/`mypy` checks into `git commit`
-(see `.pre-commit-config.yaml`).
 
 ## Typing
 
@@ -127,32 +101,10 @@ been fixed; don't do it.
 
 ## Prompts
 
-Every LLM prompt (system prompt or prompt template) lives in
-`src/ye_olde/prompt/<namespace>.yaml`, one YAML file per top-level package
-that prompts an LLM — `ingest.yaml`, `classify.yaml`, `generation.yaml`
-today. Load with `ye_olde.prompt.load_prompt(namespace, key)`.
-
-- Prompts are data, not code: this keeps wording reviewable/diffable without
-  touching control flow, and keeps every prompt in the project discoverable
-  in one place instead of buried in whichever module happens to call the LLM.
-- A module-level constant (e.g. `_SYSTEM_PROMPT` in `ingest/clean.py`) is
-  still the right way to bind a loaded prompt for use within that module —
-  only the *literal text* moves to YAML, not the reference to it.
-- `load_prompt` raises `PromptNotFoundError` (not a silent empty string) if
-  the namespace file or key doesn't exist — an LLM call should never run
-  with a missing prompt it didn't notice was missing.
-- Instruction text needed verbatim in more than one namespace's system
-  prompt (not just twice within the *same* file, like `ingest.yaml`'s own
-  `align_system`/`links_system` duplication — see that file's header
-  comment for why a YAML alias can't do this within one block scalar,
-  let alone across files) goes in `prompt/common.yaml` instead of being
-  retyped per namespace — e.g. `confidence_calibration`, appended in Python
-  onto whichever `_*_SYSTEM_PROMPT` constants need it (see `ingest/align.py`,
-  `classify/__init__.py`). The wording still lives entirely in YAML; only
-  the choice of which fragments a given system prompt is assembled from is
-  code.
-- `search_api` has no LLM calls and no `prompt/` package of its own; this
-  section only applies to `ye_olde.*`.
+See the `add-llm-prompt` skill before writing or editing any system prompt/prompt template in
+`ye_olde.*` — the YAML-not-code convention, how to load/bind one, and the shared-fragment reuse
+pattern. Not needed for ordinary code changes that don't touch an LLM call. `search_api` has no
+LLM calls and no `prompt/` package of its own; doesn't apply there regardless.
 
 ## PEP 8 / formatting
 

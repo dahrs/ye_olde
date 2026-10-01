@@ -232,6 +232,140 @@ def test_lookup_thorn_th_short_words_are_an_accepted_loss(monkeypatch) -> None:
     assert response.json()["results"] == []
 
 
+def test_lookup_upos_ner_params_rank_matching_tag_ahead_of_disagreeing_tag(monkeypatch) -> None:
+    # Two rows both match the query "robin" on the source side. r1's link
+    # tags it a plain NOUN/non-entity; r2's tags it PROPN/PER — a name, spec
+    # §3d/§9's motivating case ("a query for a tagged name should
+    # preferentially retrieve identically-tagged indexed tokens"). Without
+    # upos/ner params, order follows plain iteration (r1 before r2, same as
+    # today); passing upos=PROPN&ner=PER should move r2 to the front without
+    # dropping r1 — this is a preference ordering, not a filter.
+    rows = [
+        {
+            "pair_id": "r1",
+            "source": {"lang_code": "enm", "year": 1400},
+            "target": {"lang_code": "eng", "year": 1999},
+            "source_text": "robin the archer",
+            "target_text": "robin archer",
+            "source_tokens": ["robin", "the", "archer"],
+            "target_tokens": ["robin", "archer"],
+            "citation": None,
+            "sentence_confidence": 0.9,
+            "alignment_links": [
+                {
+                    "source_idx": [0],
+                    "target_idx": [0],
+                    "sense_id": None,
+                    "source_upos": "NOUN",
+                    "source_ner": "O",
+                }
+            ],
+        },
+        {
+            "pair_id": "r2",
+            "source": {"lang_code": "enm", "year": 1400},
+            "target": {"lang_code": "eng", "year": 1999},
+            "source_text": "robin shot the arrow",
+            "target_text": "robin shot it",
+            "source_tokens": ["robin", "shot", "the", "arrow"],
+            "target_tokens": ["robin", "shot", "it"],
+            "citation": None,
+            "sentence_confidence": 0.9,
+            "alignment_links": [
+                {
+                    "source_idx": [0],
+                    "target_idx": [0],
+                    "sense_id": None,
+                    "source_upos": "PROPN",
+                    "source_ner": "PER",
+                }
+            ],
+        },
+    ]
+    _patch_shards(monkeypatch, rows=rows)
+
+    no_tag_response = client.get(
+        "/lookup",
+        params={"text": "robin", "lang": "enm", "year": 1400, "target_lang": "eng", "target_year": 1999},
+    )
+    assert [r["pair_id"] for r in no_tag_response.json()["results"]] == ["r1", "r2"]
+
+    tagged_response = client.get(
+        "/lookup",
+        params={
+            "text": "robin",
+            "lang": "enm",
+            "year": 1400,
+            "target_lang": "eng",
+            "target_year": 1999,
+            "upos": "PROPN",
+            "ner": "PER",
+        },
+    )
+    results = tagged_response.json()["results"]
+    assert [r["pair_id"] for r in results] == ["r2", "r1"]
+    r2 = next(r for r in results if r["pair_id"] == "r2")
+    assert r2["matched_upos"] == "PROPN"
+    assert r2["matched_ner"] == "PER"
+
+
+def test_lookup_empty_string_upos_means_not_queried_same_as_attest_convention(monkeypatch) -> None:
+    # A client that always serializes every form field can send `upos=`
+    # (empty string) alongside a real `ner=PER` -- main.attest's own `ner`
+    # param already documents and enforces that convention ("a client
+    # sending `?ner=` means 'no filter'"), and /lookup must honor it the
+    # same way: treating "" as a literal value to match against would mean
+    # no real tag (never the empty string) can ever satisfy it, so r2's
+    # genuine NER agreement must not get cancelled out by the empty upos.
+    rows = [
+        {
+            "pair_id": "r1",
+            "source": {"lang_code": "enm", "year": 1400},
+            "target": {"lang_code": "eng", "year": 1999},
+            "source_text": "robin the archer",
+            "target_text": "robin archer",
+            "source_tokens": ["robin", "the", "archer"],
+            "target_tokens": ["robin", "archer"],
+            "citation": None,
+            "sentence_confidence": 0.9,
+            "alignment_links": [
+                {"source_idx": [0], "target_idx": [0], "sense_id": None, "source_upos": "NOUN", "source_ner": "O"}
+            ],
+        },
+        {
+            "pair_id": "r2",
+            "source": {"lang_code": "enm", "year": 1400},
+            "target": {"lang_code": "eng", "year": 1999},
+            "source_text": "robin shot the arrow",
+            "target_text": "robin shot it",
+            "source_tokens": ["robin", "shot", "the", "arrow"],
+            "target_tokens": ["robin", "shot", "it"],
+            "citation": None,
+            "sentence_confidence": 0.9,
+            "alignment_links": [
+                {"source_idx": [0], "target_idx": [0], "sense_id": None, "source_upos": "PROPN", "source_ner": "PER"}
+            ],
+        },
+    ]
+    _patch_shards(monkeypatch, rows=rows)
+
+    response = client.get(
+        "/lookup",
+        params={
+            "text": "robin",
+            "lang": "enm",
+            "year": 1400,
+            "target_lang": "eng",
+            "target_year": 1999,
+            "upos": "",
+            "ner": "PER",
+        },
+    )
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert [r["pair_id"] for r in results] == ["r2", "r1"]
+
+
 def test_lookup_no_match_returns_empty_results(monkeypatch) -> None:
     _patch_shards(monkeypatch)
 

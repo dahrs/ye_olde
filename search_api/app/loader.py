@@ -28,6 +28,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Any
 
 import faiss
 import pyarrow as pa
@@ -53,6 +54,24 @@ _FETCH_K = 100
 # comes from n-gram similarity vs. BM25 — open, unvalidated (spec §9),
 # starting even.
 _NGRAM_BM25_WEIGHT = 0.5
+
+# Flat bonus added to a hit's final score when the caller's `upos`/`ner`
+# (spec §3d/§9 — typically ye_olde.classify.classify's tag for the query
+# text) matches some alignment_link's tag on this hit's own query side.
+# Additive on top of the already-normalized [0, 1]-ish hybrid score, not a
+# re-blended component of it: unlike the ngram/BM25 signals, this is exact
+# structured agreement rather than another continuously-varying similarity
+# measure, so it doesn't belong inside the same min-max normalization pool.
+# Open, unvalidated constant, same category as _NGRAM_BM25_WEIGHT/
+# SEMANTIC_SCALE_YEARS — needs empirical tuning once real tagged queries
+# exist to tune against.
+_TAG_MATCH_BOOST = 0.1
+
+# /lookup's _tag_preference_rank: how much worse an unknown tag ranks vs.
+# one actively disagreeing with the query — see that function for why
+# "no tag to compare" must still outrank a confirmed mismatch.
+_RANK_UNTAGGED = 1
+_RANK_MISMATCH = 2
 
 # /lookup: both the minimum n-gram Dice similarity to enter the
 # edit-distance-refinement shortlist, and the maximum edit distance still
@@ -228,6 +247,29 @@ def _lang_pair_dirs_containing(lang: str) -> list[tuple[str, str]]:
     return sorted(found)
 
 
+def _side_prefix(side: int) -> str:
+    """Maps this module's `side` convention (0=source, 1=target — a pairs
+    row's own `source`/`target` nesting, and the matching prefix on every
+    `source_*`/`target_*` column and alignment_link field) to the column
+    prefix it names. The one place that mapping is spelled out: every site
+    below that used to rederive `"source" if side == 0 else "target"` (or
+    its inverse) with its own ternary now calls this instead, so a future
+    third `side` value only has to be taught here.
+    """
+    return "source" if side == 0 else "target"
+
+
+def _link_tags(link: dict[str, Any], prefix: str) -> tuple[str | None, str | None, str | None]:
+    """The `(upos, ner, lemma)` triple `ingest.align._build_link` stored on
+    `link` for its `prefix` side (spec §3d/§9) — the one place both
+    `/lookup` (which picks a link by matched token position, below) and
+    `/search` (which picks one by tag agreement, `_matching_link_tags`)
+    pull these three fields out of a raw alignment_link dict, so a change
+    to that field-naming convention only has to be made once.
+    """
+    return link.get(f"{prefix}_upos"), link.get(f"{prefix}_ner"), link.get(f"{prefix}_lemma")
+
+
 @dataclass
 class _Hit:
     """One FAISS candidate's raw score plus everything needed to build a
@@ -251,6 +293,14 @@ class _Hit:
     other_work: str | None
     other_text: str
     citation: str
+    # The query-side alignment_link tag that satisfied the caller's `upos`/
+    # `ner` (spec §3d/§9), or all-None when neither was queried or no link
+    # matched — the same `(upos, ner, lemma)` shape `LookupResult` surfaces
+    # per matched token, not a bare `tag_matched` bool, so a caller gets
+    # back *which* tag matched, not just whether one did.
+    matched_upos: str | None
+    matched_ner: str | None
+    matched_lemma: str | None
 
 
 def _to_search_result(hit: _Hit, score: float) -> SearchResult:
@@ -266,7 +316,51 @@ def _to_search_result(hit: _Hit, score: float) -> SearchResult:
         other_work=hit.other_work,
         other_text=hit.other_text,
         citation=hit.citation,
+        matched_upos=hit.matched_upos,
+        matched_ner=hit.matched_ner,
+        matched_lemma=hit.matched_lemma,
     )
+
+
+def _apply_tag_boost(score: float, hit: _Hit) -> float:
+    """Adds `_TAG_MATCH_BOOST` on top of `score` when `hit`'s query side
+    matched the caller's queried `upos`/`ner` (`_matching_link_tags`) — one
+    shared application site for both of `search_passages`'s scoring paths
+    below (pure-FAISS and hybrid-blended), rather than the same bolt-on
+    spelled out twice in two slightly different shapes.
+    """
+    matched = hit.matched_upos is not None or hit.matched_ner is not None
+    return score + (_TAG_MATCH_BOOST if matched else 0.0)
+
+
+def _matching_link_tags(
+    row: dict[str, Any], prefix: str, *, upos: str | None, ner: str | None
+) -> tuple[str | None, str | None, str | None] | None:
+    """Finds the first alignment_link on `row`'s query side (named by
+    `prefix` — see `_side_prefix`) whose own tags satisfy every constraint
+    the caller actually queried, and returns that link's full `(upos, ner,
+    lemma)` triple (`_link_tags`) — spec §3d/§9. `None` when neither `upos`
+    nor `ner` was given (an opted-out caller never pays for this check or
+    sees it affect scoring) or no link satisfies the query.
+
+    Checked by truthiness, not `is None`: a client that always serializes
+    every form field can send `upos=` (empty string) meaning "no filter on
+    this one," the same convention `main.attest`'s own `ner` param already
+    documents and enforces — treating `""` as a literal value to match
+    against would require a link whose own tag is the empty string, which
+    never happens, silently zeroing out a caller's real `ner`/`upos`
+    constraint instead of just ignoring the empty one.
+    """
+    if not upos and not ner:
+        return None
+    for link in row.get("alignment_links") or []:
+        link_upos, link_ner, link_lemma = _link_tags(link, prefix)
+        if upos and link_upos != upos:
+            continue
+        if ner and link_ner != ner:
+            continue
+        return link_upos, link_ner, link_lemma
+    return None
 
 
 def search_passages(
@@ -276,6 +370,8 @@ def search_passages(
     year: int | None = None,
     window: int | None = None,
     top_k: int = 5,
+    upos: str | None = None,
+    ner: str | None = None,
 ) -> list[SearchResult]:
     """Semantic + lexical hybrid passage search (spec §10's "Hybrid
     retrieval scoring"). Embeds `text` with the same model the indexed
@@ -303,6 +399,14 @@ def search_passages(
     passing an untyped dict up keeps this typed end to end. Soft-fails to []
     wherever a shard, vector, n-gram, or BM25 file doesn't exist yet, same
     as the rest of this module.
+
+    `upos`/`ner` (spec §3d/§9), when given, add `_TAG_MATCH_BOOST` to a
+    hit's final score (`_apply_tag_boost`) whenever some alignment_link on
+    its query side carries that tag (`_matching_link_tags`) — a small
+    nudge, not a filter or a re-blended hybrid component, since most
+    tokens in a passage have no tag to check at all (only a link's head
+    word does). `None` for both (the default) leaves scoring identical to
+    before this parameter existed.
     """
     settings = get_settings()
     query_vector = embed_query(text, model_name=settings.embedding_model, hf_token=settings.hf_token)
@@ -330,14 +434,15 @@ def search_passages(
                 if row_idx >= len(rows):
                     continue
                 row = rows[row_idx]
-                query_side = row["source"] if side == 0 else row["target"]
-                other_side = row["target"] if side == 0 else row["source"]
+                query_prefix, other_prefix = _side_prefix(side), _side_prefix(1 - side)
+                query_side = row[query_prefix]
+                other_side = row[other_prefix]
                 if query_side["lang_code"] != lang:
                     continue  # defensive: shard's own tag disagrees with the folder name
                 if year is not None and window is not None and abs(query_side["year"] - year) > window:
                     continue
-                query_text_key = "source_text" if side == 0 else "target_text"
-                other_text_key = "target_text" if side == 0 else "source_text"
+                matched_tags = _matching_link_tags(row, query_prefix, upos=upos, ner=ner)
+                matched_upos, matched_ner, matched_lemma = matched_tags or (None, None, None)
                 shard_hits.append(
                     _Hit(
                         row_idx=row_idx,
@@ -347,12 +452,15 @@ def search_passages(
                         lang=query_side["lang_code"],
                         year=query_side["year"],
                         work=query_side.get("work"),
-                        text=row[query_text_key],
+                        text=row[f"{query_prefix}_text"],
                         other_lang=other_side["lang_code"],
                         other_year=other_side["year"],
                         other_work=other_side.get("work"),
-                        other_text=row[other_text_key],
+                        other_text=row[f"{other_prefix}_text"],
                         citation=row.get("citation") or "",
+                        matched_upos=matched_upos,
+                        matched_ner=matched_ner,
+                        matched_lemma=matched_lemma,
                     )
                 )
 
@@ -379,7 +487,7 @@ def search_passages(
             # derivable from the small FAISS-narrowed set alone, so this is
             # the one signal that does need the persisted postings index.
             side = shard_hits[0].side  # constant across a shard for a fixed lang, see this module's docstring
-            tokens_key = "source_tokens" if side == 0 else "target_tokens"
+            tokens_key = f"{_side_prefix(side)}_tokens"
             doc_lens = [len(r.get(tokens_key) or []) for r in rows]
             avg_doc_len = (sum(doc_lens) / len(doc_lens)) if doc_lens else 0.0
             corpus_size = len(rows)
@@ -413,7 +521,7 @@ def search_passages(
     candidates: list[SearchResult] = []
     if year is None:
         for hit, _, _ in raw:
-            candidates.append(_to_search_result(hit, hit.faiss_score))
+            candidates.append(_to_search_result(hit, _apply_tag_boost(hit.faiss_score, hit)))
     else:
         faiss_norm = lexical.normalize([hit.faiss_score for hit, _, _ in raw])
         ngram_norm = lexical.normalize([n for _, n, _ in raw])
@@ -422,13 +530,47 @@ def search_passages(
         for i, (hit, _, _) in enumerate(raw):
             lexical_component = _NGRAM_BM25_WEIGHT * ngram_norm[i] + (1 - _NGRAM_BM25_WEIGHT) * bm25_norm[i]
             hybrid = sw * faiss_norm[i] + (1 - sw) * lexical_component
-            candidates.append(_to_search_result(hit, hybrid))
+            candidates.append(_to_search_result(hit, _apply_tag_boost(hybrid, hit)))
 
     candidates.sort(key=lambda c: c.score, reverse=True)
     return candidates[:top_k]
 
 
-def lookup_passages(text: str, lang: str, target_lang: str) -> list[LookupResult]:
+def _tag_preference_rank(result: LookupResult, *, upos: str | None, ner: str | None) -> int:
+    """Lower ranks sort first. A result whose matched token's own tag
+    agrees with the caller's queried `upos`/`ner` (spec §3d/§9 — typically
+    `ye_olde.classify.classify`'s tag for the query text) outranks one with
+    no tag to compare at all (the common case: `ingest.align._build_link`
+    only tags a link's head word, not every token), which in turn outranks
+    one whose known tag actively disagrees. "Preferentially retrieve
+    identically-tagged tokens rather than falling back to a plain lexical
+    match" (spec §9) means exactly this — a preference ordering, not a
+    filter, since excluding every untagged result would throw away most of
+    what `/lookup` already finds correctly today.
+
+    Checked by truthiness, not `is None` — same `main.attest`-established
+    convention as `_row_tag_matches`: an empty-string `upos`/`ner` (a client
+    that always serializes every form field) means "not queried," not "find
+    a result whose tag is literally empty." Treating `""` as a real queried
+    value would make `matched is None` (unknown, rank 1) score *better*
+    than `matched == "NOUN"` (a genuine, known tag, rank 2 since
+    `"NOUN" != ""`) — inverting the whole preference this function exists
+    to express.
+    """
+    rank = 0
+    for queried, matched in ((upos, result.matched_upos), (ner, result.matched_ner)):
+        if not queried:
+            continue
+        if matched is None:
+            rank += _RANK_UNTAGGED
+        elif matched != queried:
+            rank += _RANK_MISMATCH
+    return rank
+
+
+def lookup_passages(
+    text: str, lang: str, target_lang: str, *, upos: str | None = None, ner: str | None = None
+) -> list[LookupResult]:
     """Linguee-style aligned lookup (spec §3c): given a word/phrase in
     `lang`, find attested sentences in `target_lang` with the corresponding
     span highlighted. Matching is a character-trigram index (candidate
@@ -444,6 +586,11 @@ def lookup_passages(text: str, lang: str, target_lang: str) -> list[LookupResult
     never *which word within it* to highlight, and highlighting is this
     endpoint's entire job. Matching is character-only, uniformly across
     every era, for that reason.
+
+    `upos`/`ner`, when given, don't change which candidates are found
+    (spec §9's UD-tag wiring is additive, never a filter here) — only their
+    order, via `_tag_preference_rank`, and `None` leaves today's iteration
+    order untouched exactly as before this parameter existed.
     """
     query_trigrams = lexical.char_trigrams(text)
     results: list[LookupResult] = []
@@ -458,16 +605,14 @@ def lookup_passages(text: str, lang: str, target_lang: str) -> list[LookupResult
         first = rows[0]
         if (first.get("source") or {}).get("lang_code") == lang:
             query_side = 0
-            query_text_key, other_text_key = "source_text", "target_text"
-            query_tokens_key, other_tokens_key = "source_tokens", "target_tokens"
-            link_query_key, link_other_key = "source_idx", "target_idx"
         elif (first.get("target") or {}).get("lang_code") == lang:
             query_side = 1
-            query_text_key, other_text_key = "target_text", "source_text"
-            query_tokens_key, other_tokens_key = "target_tokens", "source_tokens"
-            link_query_key, link_other_key = "target_idx", "source_idx"
         else:
             continue  # shouldn't happen — load_pair_shards already scoped this to (lang, target_lang)
+        query_prefix, other_prefix = _side_prefix(query_side), _side_prefix(1 - query_side)
+        query_text_key, other_text_key = f"{query_prefix}_text", f"{other_prefix}_text"
+        query_tokens_key, other_tokens_key = f"{query_prefix}_tokens", f"{other_prefix}_tokens"
+        link_query_key, link_other_key = f"{query_prefix}_idx", f"{other_prefix}_idx"
 
         # Candidate generation: which (row, token) share at least one
         # trigram with the query at all — the inverted-index step. Filtered
@@ -522,10 +667,12 @@ def lookup_passages(text: str, lang: str, target_lang: str) -> list[LookupResult
 
             other_tokens = row.get(other_tokens_key) or []
             span = None
+            matched_upos = matched_ner = matched_lemma = None
             for link in row.get("alignment_links") or []:
                 if match_idx & set(link[link_query_key]):
                     span_idx = link[link_other_key]
                     span = HighlightedSpan(token_idx=span_idx, surface=" ".join(other_tokens[i] for i in span_idx))
+                    matched_upos, matched_ner, matched_lemma = _link_tags(link, query_prefix)
                     break
             results.append(
                 LookupResult(
@@ -535,6 +682,11 @@ def lookup_passages(text: str, lang: str, target_lang: str) -> list[LookupResult
                     source_sentence=row[query_text_key],
                     citation=row.get("citation") or "",
                     confidence=row.get("sentence_confidence") or 0.0,
+                    matched_upos=matched_upos,
+                    matched_ner=matched_ner,
+                    matched_lemma=matched_lemma,
                 )
             )
+    if upos or ner:
+        results.sort(key=lambda r: _tag_preference_rank(r, upos=upos, ner=ner))
     return results
