@@ -182,25 +182,29 @@ def is_local_model(model: str | None = None) -> bool:
 
 def _resolve_api_key(resolved_model: str, settings: Settings) -> str | None:
     """The credential to send for `resolved_model` — `settings.aws_bearer_token_bedrock`
-    when (and only when) this call is going to AWS Bedrock's Mantle
-    endpoint (`LITELLM_MODEL=bedrock_mantle/openai.<model>`, e.g. GPT-6
-    Sol), `settings.litellm_api_key` (today's default backend's
-    credential, e.g. Anthropic's) otherwise. This is what lets both keys
-    stay configured side by side in `.env` and be switched between purely
-    via which provider `LITELLM_MODEL`/`--model` resolves to. Unlike the
+    when this call is going to AWS Bedrock's Mantle endpoint
+    (`LITELLM_MODEL=bedrock_mantle/openai.<model>`, e.g. GPT-6 Sol),
+    `settings.gemini_api_key` when it's going to Google's Gemini API
+    (`LITELLM_MODEL=gemini/<model>`, e.g. `gemini/gemini-3.8-flash`), or
+    `settings.litellm_api_key` (today's default backend's credential, e.g.
+    Anthropic's) otherwise. This is what lets all three keys stay
+    configured side by side in `.env` and be switched between purely via
+    which provider `LITELLM_MODEL`/`--model` resolves to. Unlike the
     "openai" provider name (which is ambiguous with a local llama-server's
-    own OpenAI-compatible masquerade — see `is_local_model`), litellm's
-    "bedrock_mantle" provider only ever means the real AWS-hosted
-    endpoint, so no loopback/local check is needed here.
+    own OpenAI-compatible masquerade — see `is_local_model`), neither
+    "bedrock_mantle" nor "gemini" is ever ambiguous with a local/self-hosted
+    endpoint, so no loopback/local check is needed for either here.
     """
-    if not settings.aws_bearer_token_bedrock:
+    if not settings.aws_bearer_token_bedrock and not settings.gemini_api_key:
         return settings.litellm_api_key or None
     resolved = _resolve_provider(resolved_model, settings)
     if resolved is None:
         return settings.litellm_api_key or None
     provider, _resolved_api_base = resolved
-    if provider == "bedrock_mantle":
+    if provider == "bedrock_mantle" and settings.aws_bearer_token_bedrock:
         return settings.aws_bearer_token_bedrock
+    if provider == "gemini" and settings.gemini_api_key:
+        return settings.gemini_api_key
     return settings.litellm_api_key or None
 
 

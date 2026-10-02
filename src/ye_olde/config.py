@@ -40,6 +40,18 @@ class Settings(BaseSettings):
     # going to provider "bedrock_mantle".
     aws_bearer_token_bedrock: str = ""
 
+    # A third, independent credential, for Google's Gemini models via
+    # litellm's "gemini" provider (LITELLM_MODEL="gemini/<model>", e.g.
+    # "gemini/gemini-3.8-flash") -- kept side by side with litellm_api_key
+    # and aws_bearer_token_bedrock rather than replacing either, so all
+    # three stay configured at once and switching backends is purely a
+    # LITELLM_MODEL (or --model) change. litellm itself would otherwise
+    # read this from a GEMINI_API_KEY/GOOGLE_API_KEY process env var, but
+    # this project passes api_key explicitly on every call instead (see
+    # llm_client._resolve_api_key) for the same multi-credential reason
+    # aws_bearer_token_bedrock exists.
+    gemini_api_key: str = ""
+
     # Optional raw JSON object merged into every litellm.completion() call as
     # extra_body — for whatever provider-specific parameter your chosen
     # backend always needs. Left blank, nothing extra is sent, which for a

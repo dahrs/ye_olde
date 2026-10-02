@@ -71,6 +71,25 @@ for the target model in the Bedrock console (per-model, per-region) — a valid 
 doesn't grant that; an `AccessDenied`-style error on first use almost always means this step, not
 the key, is missing.
 
+## Using Google's Gemini API
+
+A third, independent credential, alongside the hosted Anthropic key and Bedrock's: litellm's
+"gemini" provider talks to Google's own hosted API directly (not Vertex AI — no GCP project/service
+account involved). `GEMINI_API_KEY` sits in `.env` next to `LITELLM_API_KEY`/
+`AWS_BEARER_TOKEN_BEDROCK`, and `ye_olde.common.llm_client._resolve_api_key` picks it automatically
+once `LITELLM_MODEL` (or a `--model` override) resolves to the `gemini/` provider — no other `.env`
+edit needed to switch:
+
+```
+LITELLM_MODEL=gemini/gemini-3.8-flash
+GEMINI_API_KEY=...                       # from aistudio.google.com/apikey, not a Vertex AI service account
+```
+
+Use the full model name, same reasoning as the Claude CLI backend above — litellm resolves
+`gemini/<anything>` to provider "gemini" without validating the model name against Google's actual
+catalog, so a typo'd or since-renamed model surfaces as a runtime error on first call, not at
+startup.
+
 ## Using your Claude Code subscription instead of an API key
 
 A third, independent backend, alongside a hosted API key and Bedrock:

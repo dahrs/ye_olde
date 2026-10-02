@@ -118,3 +118,75 @@ def test_complete_via_claude_cli_raises_on_timeout(monkeypatch):
 
     with pytest.raises(claude_cli_client.LLMEmptyResponseError):
         complete_via_claude_cli("p", model="sonnet", timeout=1.0)
+
+
+# --- Usage-limit/overload retry (never raised, slept and retried forever) ---
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Claude AI usage limit reached|1696161600",
+        "Error: credit balance too low",
+        "429 rate limited, please retry later",
+        "Overloaded (529): the API is temporarily overloaded",
+        "upstream connect error ... 529",
+    ],
+)
+def test_is_usage_limit_message_matches_known_markers(message):
+    assert claude_cli_client._is_usage_limit_message(message) is True
+
+
+@pytest.mark.parametrize("message", ["permission denied", "boom", "401 Invalid API key", "Please run /login"])
+def test_is_usage_limit_message_rejects_unrelated_or_auth_errors(message):
+    assert claude_cli_client._is_usage_limit_message(message) is False
+
+
+def test_complete_via_claude_cli_retries_nonzero_exit_usage_limit_then_succeeds(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(claude_cli_client.time, "sleep", lambda s: sleeps.append(s))
+
+    attempts = [
+        _fake_result("", returncode=1, stderr="Claude AI usage limit reached|1696161600"),
+        _fake_result(json.dumps({"is_error": False, "result": "ok", "usage": {}})),
+    ]
+    monkeypatch.setattr(claude_cli_client.subprocess, "run", lambda cmd, **kwargs: attempts.pop(0))
+
+    result = complete_via_claude_cli("p", model="sonnet", usage_limit_retry_seconds=3600.0)
+
+    assert result.content == "ok"
+    assert sleeps == [3600.0]
+
+
+def test_complete_via_claude_cli_retries_is_error_usage_limit_then_succeeds(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(claude_cli_client.time, "sleep", lambda s: sleeps.append(s))
+
+    attempts = [
+        _fake_result(json.dumps({"is_error": True, "result": "credit balance too low"})),
+        _fake_result(json.dumps({"is_error": False, "result": "ok", "usage": {}})),
+    ]
+    monkeypatch.setattr(claude_cli_client.subprocess, "run", lambda cmd, **kwargs: attempts.pop(0))
+
+    result = complete_via_claude_cli("p", model="sonnet")
+
+    assert result.content == "ok"
+    assert len(sleeps) == 1
+
+
+def test_complete_via_claude_cli_keeps_retrying_across_multiple_usage_limit_hits(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(claude_cli_client.time, "sleep", lambda s: sleeps.append(s))
+
+    attempts = [
+        _fake_result("", returncode=1, stderr="usage limit reached"),
+        _fake_result("", returncode=1, stderr="usage limit reached"),
+        _fake_result("", returncode=1, stderr="529 overloaded"),
+        _fake_result(json.dumps({"is_error": False, "result": "ok", "usage": {}})),
+    ]
+    monkeypatch.setattr(claude_cli_client.subprocess, "run", lambda cmd, **kwargs: attempts.pop(0))
+
+    result = complete_via_claude_cli("p", model="sonnet")
+
+    assert result.content == "ok"
+    assert len(sleeps) == 3

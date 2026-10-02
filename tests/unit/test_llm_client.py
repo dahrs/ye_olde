@@ -466,6 +466,48 @@ def test_resolve_api_key_falls_back_to_litellm_api_key_for_unresolvable_model():
     assert lc._resolve_api_key("", settings) == "claude-key"
 
 
+def test_resolve_api_key_uses_litellm_api_key_when_gemini_key_unset():
+    from ye_olde.common import llm_client as lc
+    from ye_olde.config import Settings
+
+    settings = Settings(litellm_model="gemini/gemini-3.8-flash", litellm_api_key="claude-key", gemini_api_key="")
+    assert lc._resolve_api_key("gemini/gemini-3.8-flash", settings) == "claude-key"
+
+
+def test_resolve_api_key_uses_gemini_key_for_gemini_provider():
+    from ye_olde.common import llm_client as lc
+    from ye_olde.config import Settings
+
+    settings = Settings(
+        litellm_model="gemini/gemini-3.8-flash", litellm_api_key="claude-key", gemini_api_key="gemini-key"
+    )
+    assert lc._resolve_api_key("gemini/gemini-3.8-flash", settings) == "gemini-key"
+
+
+def test_resolve_api_key_uses_litellm_api_key_for_non_gemini_provider_when_gemini_key_set():
+    from ye_olde.common import llm_client as lc
+    from ye_olde.config import Settings
+
+    settings = Settings(
+        litellm_model="anthropic/claude-sonnet-5", litellm_api_key="claude-key", gemini_api_key="gemini-key"
+    )
+    assert lc._resolve_api_key("anthropic/claude-sonnet-5", settings) == "claude-key"
+
+
+def test_resolve_api_key_keeps_bedrock_and_gemini_credentials_independent():
+    from ye_olde.common import llm_client as lc
+    from ye_olde.config import Settings
+
+    settings = Settings(
+        litellm_api_key="claude-key",
+        aws_bearer_token_bedrock="bedrock-token",
+        gemini_api_key="gemini-key",
+    )
+    assert lc._resolve_api_key("bedrock_mantle/openai.gpt-6-sol", settings) == "bedrock-token"
+    assert lc._resolve_api_key("gemini/gemini-3.8-flash", settings) == "gemini-key"
+    assert lc._resolve_api_key("anthropic/claude-sonnet-5", settings) == "claude-key"
+
+
 # --- Claude Code CLI backend (`LITELLM_MODEL=claude_code_cli/<alias>`) ---
 
 
