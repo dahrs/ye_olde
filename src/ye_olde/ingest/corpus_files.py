@@ -11,10 +11,23 @@ A folder groups two or more files that are translations of one another —
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..common.logging import get_logger
+
+_log = get_logger(__name__)
+
 SUPPORTED_EXTENSIONS = (".txt", ".pdf")
+
+# Matches any run of characters that are neither a unicode letter/digit nor
+# `_` -- this deliberately also catches `-` itself, so a sanitized field can
+# never introduce an extra top-level `-` for parse_corpus_filename to trip
+# over. `re.UNICODE` (the default for `\w` on a `str` pattern) keeps
+# diacritics meaningful to this project's actual target languages (Old
+# English æ/þ, Latin macrons, ...) rather than stripping them.
+_UNSAFE_CHARS_RE = re.compile(r"[^\w]+", re.UNICODE)
 
 
 @dataclass(frozen=True)
@@ -59,6 +72,74 @@ def parse_corpus_filename(path: Path) -> CorpusFile:
         author=author.replace("_", " "),
         source=source.replace("_", " "),
     )
+
+
+def sanitize_name_field(value: str) -> str:
+    """Turns an arbitrary human-readable string (a title, author, or source
+    name) into something safe to use as one `-`-separated field of a
+    `data/raw/` filename: every run of whitespace or other non-word
+    character (including a literal `-`, so it can never be mistaken for the
+    field separator) becomes a single `_`, matching this project's own
+    existing convention (e.g. "Chaucer's" -> "Chaucer_s").
+    """
+    sanitized = _UNSAFE_CHARS_RE.sub("_", value).strip("_")
+    if not sanitized:
+        raise ValueError(f"{value!r} has no usable characters left after sanitizing")
+    return sanitized
+
+
+def build_corpus_filename(*, lang_code: str, year: str | int, title: str, author: str, source: str, ext: str) -> str:
+    """Assembles a `data/raw/`-ready filename from its five semantic parts
+    (as `ye_olde.ingest.acquire.propose_metadata` infers them from scraped
+    content), sanitizing each field with `sanitize_name_field` first.
+
+    Round-trips the result through `parse_corpus_filename` before returning
+    it -- the one guarantee that every filename this project writes is also
+    one `discover_corpus_files`/`align_corpus.py` can read back later.
+    """
+    year_str = str(year).strip()
+    if not year_str.isdigit():
+        raise ValueError(f"year {year!r} is not a valid 4-digit numeral")
+    stem = "-".join(
+        [
+            sanitize_name_field(lang_code),
+            year_str,
+            sanitize_name_field(title),
+            sanitize_name_field(author),
+            sanitize_name_field(source),
+        ]
+    )
+    filename = f"{stem}{ext}"
+    parse_corpus_filename(Path(filename))
+    return filename
+
+
+def oldest_parseable_file(folder: Path) -> CorpusFile | None:
+    """The file with the smallest `year` among every supported (`.txt`/
+    `.pdf`) file directly inside `folder` — this is what a `data/raw/<work>/`
+    folder's own name should match (see the existing `lat-523-...`/
+    `enm-1400-...` folders: each is named after its oldest file). Unlike
+    `discover_corpus_files`, doesn't require 2+ files (a work can have just
+    one source text while awaiting its first translation) and skips a file
+    that fails `parse_corpus_filename` instead of raising — a folder can
+    have an unrelated, not-yet-fixed non-conformant file in it and this
+    should still find the true oldest *conformant* one. Returns `None` if
+    `folder` doesn't exist or has no parseable file at all.
+    """
+    folder = Path(folder)
+    if not folder.is_dir():
+        return None
+    parsed: list[CorpusFile] = []
+    for p in sorted(folder.iterdir()):
+        if not (p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS):
+            continue
+        try:
+            parsed.append(parse_corpus_filename(p))
+        except ValueError as exc:
+            _log.debug("skipping unparseable file %s while looking for folder %s's oldest file: %s", p, folder, exc)
+    if not parsed:
+        return None
+    return min(parsed, key=lambda cf: cf.year)
 
 
 def discover_corpus_files(folder: Path) -> list[CorpusFile]:

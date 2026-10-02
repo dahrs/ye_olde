@@ -1,9 +1,18 @@
 """Corpus ingestion into the queryable index — spec §3a, §5, §6.
 
+`acquire.py` implements §6's data *acquisition* step, previously entirely
+manual: given a URL (a Project Gutenberg `.txt` file, a PDF, or an HTML
+"read online" page) from the worklist in `data/sources.yaml`, it fetches
+the content, infers the five `data/raw/` naming fields from an LLM reading
+it, and saves it with a filename `corpus_files.build_corpus_filename`
+guarantees the rest of this pipeline can read back. See
+`scripts/acquire_corpus.py` for the CLI.
+
 `align.py` (+ `clean.py`, `extract.py`, `corpus_files.py`) implements §6's
-data acquisition & alignment pipeline: given a `data/raw/<work>/` folder of
-2+ parallel-translation files, it produces §3c aligned example-pair bitext
-files, one per language pair. See `scripts/align_corpus.py` for the CLI.
+alignment pipeline: given a `data/raw/<work>/` folder of 2+ parallel-
+translation files (built up by `acquire.py` above, one file at a time), it
+produces §3c aligned example-pair bitext files, one per language pair. See
+`scripts/align_corpus.py` for the CLI.
 
 `scorer.py` holds the similarity/scoring metrics the cleaning-and-alignment
 stage measures matches by (embedding cosine similarity, character-trigram

@@ -32,6 +32,8 @@ ingest = [
     "nltk>=3.8",
     "stanza>=1.8",
     "huggingface_hub>=0.25",
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
 ]
 dev = [
     "pytest>=8",
@@ -39,6 +41,7 @@ dev = [
     "mypy>=1.11",
     "types-PyYAML>=6",
     "types-jsonschema>=4",
+    "types-beautifulsoup4>=4.12",
 ]
 
 [build-system]

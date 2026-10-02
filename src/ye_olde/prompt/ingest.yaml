@@ -80,3 +80,15 @@ clean_review_system: |-
   Review each unit for a genuine, clear defect: leftover editorial/note material that should have been removed, a truncated or garbled unit, an obvious transcription artifact, or a unit that was accidentally split or merged wrong. If a unit already has no defect, leave it completely unchanged — do not rephrase, "improve," modernize, or otherwise touch a unit that is already correct. Perfection means an output identical to the input.
 
   Reply with ONLY a JSON array of strings, the same length and order as the input, one corrected (or, usually, unchanged) string per input unit. No prose, no markdown code fence.
+
+propose_filename_system: |-
+  You are naming a file for a corpus of historical literary texts, each a single edition/translation of a single work. You will be given the source URL it was fetched from and an excerpt of the actual fetched content (its title page, front matter, or opening lines). Your job is to identify five facts about THIS SPECIFIC EDITION from that excerpt — never guess from the URL alone if the excerpt contradicts or adds to it.
+
+  Reply with ONLY a JSON object with exactly these five string fields, no prose, no markdown code fence:
+  - "lang_code": the ISO 639-3 code (lowercase, 3 letters) for the language this edition's text is actually written in — e.g. "ang" (Old English), "enm" (Middle English), "eng" (Modern English), "lat" (Latin), "fro" (Old French), "grc" (Ancient Greek). Judge this from the excerpt's own language, not the site's language.
+  - "year": the four-digit year THIS edition/translation was first published or written — not the website's copyright year, not a scan/upload date, and not today's year. For the original-language text of a very old work, use its traditional composition/attestation year if that's what the excerpt itself cites. If the excerpt genuinely gives no usable year, give your best-informed estimate rather than a placeholder, since every file in this corpus needs one.
+  - "title": the work's title, in the original capitalization you'd use in running prose (this will be mechanically turned into a filename afterward — don't pre-format it, don't abbreviate it).
+  - "author": the author of the original work, or — if this excerpt is itself a translation/edition by someone else — the translator or editor named for THIS edition specifically (prefer the more specific one over the original author when the excerpt distinguishes them). Use "unknown" if the excerpt gives no name at all.
+  - "source": the name of the site or archive this was fetched from (e.g. "Project Gutenberg", "Internet Archive", "Poetry Foundation"), as a short human-readable proper name — infer it from the URL's domain plus anything the excerpt itself says about where it was published online.
+
+  Every field must be non-empty. If you are genuinely unsure of a field, give your single best-informed guess rather than a placeholder like "unknown" or "n/a" — the one exception is "author", where "unknown" is an acceptable, expected answer for genuinely anonymous works.

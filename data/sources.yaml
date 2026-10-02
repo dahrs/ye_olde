@@ -1,0 +1,30 @@
+# Worklist for scripts/acquire_corpus.py — edit this file to queue up new
+# books, then run:
+#
+#   python scripts/acquire_corpus.py
+#
+# Each entry:
+#   url:    a direct link to a Project Gutenberg .txt file, a PDF on some
+#           other site, or an HTML "read online" page. Fetched, read by the
+#           configured LLM to infer lang_code/year/title/author/source, and
+#           saved under data/raw/ with a filename that matches the project's
+#           <lang>-<year>-<Title>-<Author>-<Source>.{txt,pdf} convention.
+#   folder: omit (or leave null) when this is the FIRST file for a brand-new
+#           work — it becomes that work's anchor, and the folder is named
+#           after it. To add another translation of a work that already has
+#           a data/raw/ folder, set this to that folder's exact name (copy-
+#           pasted from data/raw/). If the file you're adding turns out to
+#           be older than everything already in that folder, the folder is
+#           automatically renamed to match it (a data/raw/<work>/ folder is
+#           always named after its oldest file) — existing files inside it
+#           are never touched or overwritten, only the folder itself moves.
+#   hints:  optional per-field overrides (any of lang_code/year/title/
+#           author/source) when you already know a field and don't want the
+#           LLM guessing it, e.g. {year: "1897"}. Everything not hinted is
+#           still inferred from the actual fetched content.
+#
+# Example (commented out — uncomment and edit to use):
+#
+# - url: "https://www.gutenberg.org/cache/epub/NNNNN/pgNNNNN.txt"
+#   folder: null
+#   hints: {}

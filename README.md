@@ -194,9 +194,31 @@ way.
 
 ## Corpus ingestion & indexing scripts
 
-Three CLI scripts, run in this order to go from raw texts in `data/raw/<work>/` to what
-`search_api/` serves. All three are plain `argparse` scripts — `--help` on any of them lists the
-full flag set; this section covers the common path.
+Four CLI scripts, run in this order to go from a URL to what `search_api/` serves. All four are
+plain `argparse` scripts — `--help` on any of them lists the full flag set; this section covers
+the common path.
+
+**Acquire source texts (`scripts/acquire_corpus.py`)** — fetches every URL listed in
+`data/sources.yaml` (a Project Gutenberg `.txt` link, a PDF, or an HTML "read online" page),
+infers its `data/raw/` filename (`lang_code`/`year`/`title`/`author`/`source`) from the actual
+fetched content via the configured LLM, and saves it:
+```
+python scripts/acquire_corpus.py
+```
+Edit `data/sources.yaml` to queue up new books — see that file's own comments for its format.
+Each entry is independent: one bad URL is reported (and logged to `logs/ye_olde.log`) without
+stopping the rest of the batch. Resumable by default, same as step 1 below — re-running only
+(re-)fetches entries that aren't already saved; `--no-cache` forces every entry to be redone.
+
+Adding a work's **first** file (no sibling translations yet) needs nothing beyond its URL in
+`data/sources.yaml` — it becomes that work's folder, named after itself. Adding **another**
+translation of a work that already has a `data/raw/` folder needs that entry's `folder:` field
+set to the existing folder's exact name (a `data/raw/<work>/` folder is always named after its
+*oldest* file — copy the name from `data/raw/`, or bootstrap-then-check-then-add-the-sibling in
+two runs if you're starting a brand-new multi-translation work from scratch). If the new file
+turns out to be older than everything already there, the folder is renamed to match it
+automatically — existing files inside are never overwritten or touched, only the folder moves.
+Never overwrites an existing file on a filename collision either; it refuses and reports it.
 
 **1. Align a corpus (`scripts/align_corpus.py`)** — cleans and sentence/word-aligns a
 `data/raw/<work>/` folder of 2+ parallel-translation files into one `.jsonl` bitext file per
