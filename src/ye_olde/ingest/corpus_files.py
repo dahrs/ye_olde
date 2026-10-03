@@ -142,6 +142,32 @@ def oldest_parseable_file(folder: Path) -> CorpusFile | None:
     return min(parsed, key=lambda cf: cf.year)
 
 
+def rename_folder_to_match_oldest(folder_path: Path, new_file: CorpusFile, *, raw_dir: Path) -> Path:
+    """A `data/raw/<work>/` folder is named after its oldest file (see
+    `oldest_parseable_file`). When `folder_path` already has files in it and
+    `new_file` (about to be added) is older than every one of them, the
+    folder's name is stale -- rename it to match this new, now-oldest file
+    rather than leaving folder and content mismatched. A brand-new folder
+    (nothing in it yet) has nothing to compare against and is left as-is.
+    Shared by `acquire.py` (one file at a time) and `split_mixed.py` (several
+    files from one source at once, any of which could be the new anchor).
+    """
+    anchor = oldest_parseable_file(folder_path)
+    if anchor is None or new_file.year >= anchor.year:
+        return folder_path
+    renamed = Path(raw_dir) / new_file.path.stem
+    if renamed == folder_path:
+        return folder_path
+    if renamed.exists():
+        raise FileExistsError(
+            f"{folder_path} should be renamed to {renamed} ({new_file.path.name} is now the oldest file "
+            f"in this work) but that folder name is already taken"
+        )
+    folder_path.rename(renamed)
+    _log.info("renamed %s -> %s (%s is now the oldest file in this work)", folder_path, renamed, new_file.path.name)
+    return renamed
+
+
 def discover_corpus_files(folder: Path) -> list[CorpusFile]:
     """Finds every supported (`.txt`/`.pdf`) file directly inside `folder`,
     parses each filename, and returns them sorted by year (oldest first —

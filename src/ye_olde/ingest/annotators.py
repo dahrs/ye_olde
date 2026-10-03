@@ -80,10 +80,13 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from ..common.logging import get_logger
 from ..common.ud_tags import normalize_deprel, normalize_upos
 
 if TYPE_CHECKING:
     import stanza
+
+_log = get_logger(__name__)
 
 # {this project's ISO 639-3 code: Stanza's own language code} -- see module
 # docstring for exactly how this was generated (Stanza's own resource
@@ -109,6 +112,15 @@ _REGISTRY: dict[str, str] = {
 }  # fmt: skip
 
 _PROCESSORS = "tokenize,mwt,pos,lemma,depparse"
+# mwt (multi-word-token expansion -- splitting one orthographic token into
+# several syntactic words, e.g. French "du" -> "de"+"le") isn't needed by
+# every language and Stanza ships no mwt model at all for one that doesn't
+# need it (confirmed for "ang"/Old English: no `mwt/` resource directory).
+# Requesting it anyway doesn't download-and-skip -- it raises
+# UnsupportedProcessorError out of `stanza.Pipeline.__init__` itself, so
+# this is _pipeline's fallback request, not a second per-language registry
+# to hand-maintain alongside _REGISTRY.
+_PROCESSORS_NO_MWT = "tokenize,pos,lemma,depparse"
 
 
 class ToolTokenTag(BaseModel):
@@ -138,10 +150,25 @@ def _pipeline(lang: str) -> stanza.Pipeline:
     index), so no separate setup step is required before this runs. No
     `package=` argument (see module docstring) — Stanza picks its own
     documented default treebank for `lang`.
+
+    Tries the full `_PROCESSORS` list first; if `lang` turns out to have no
+    `mwt` model (`UnsupportedProcessorError` naming exactly that processor
+    — see `_PROCESSORS_NO_MWT`'s comment), retries once without it. This is
+    a specific, expected, documented fallback (CLAUDE.md "Error handling"),
+    not a broad catch: any other `UnsupportedProcessorError` (a genuinely
+    missing, unexpected processor) is not this case and propagates.
     """
     import stanza
+    from stanza.pipeline.core import UnsupportedProcessorError
 
-    return stanza.Pipeline(_REGISTRY[lang], processors=_PROCESSORS, verbose=False)
+    stanza_lang = _REGISTRY[lang]
+    try:
+        return stanza.Pipeline(stanza_lang, processors=_PROCESSORS, verbose=False)
+    except UnsupportedProcessorError as exc:
+        if exc.processor != "mwt":
+            raise
+        _log.debug("stanza has no mwt model for %r (%s) -- building its pipeline without mwt", lang, stanza_lang)
+        return stanza.Pipeline(stanza_lang, processors=_PROCESSORS_NO_MWT, verbose=False)
 
 
 @lru_cache(maxsize=256)

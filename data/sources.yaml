@@ -28,3 +28,7 @@
 # - url: "https://www.gutenberg.org/cache/epub/NNNNN/pgNNNNN.txt"
 #   folder: null
 #   hints: {}
+
+- url: "https://www.gutenberg.org/cache/epub/14529/pg14529.txt"
+  folder: null
+  hints: {}

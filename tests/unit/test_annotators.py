@@ -15,8 +15,10 @@ from ye_olde.ingest.annotators import ToolTokenTag
 @pytest.fixture(autouse=True)
 def _clear_caches():
     annotators._annotate_text.cache_clear()
+    annotators._pipeline.cache_clear()
     yield
     annotators._annotate_text.cache_clear()
+    annotators._pipeline.cache_clear()
 
 
 def test_has_tool_true_for_registered_language():
@@ -94,3 +96,32 @@ def test_annotate_span_never_matches_a_multi_word_span(monkeypatch):
     # No single tool token's surface form equals "in partes" -- correctly
     # unmatched rather than guessed at from the two adjacent tokens.
     assert annotators.annotate_span("lat", "divisa in partes", "in partes") is None
+
+
+def test_pipeline_retries_without_mwt_when_language_has_no_mwt_model(monkeypatch):
+    import stanza
+    from stanza.pipeline.core import UnsupportedProcessorError
+
+    calls = []
+
+    def fake_pipeline(stanza_lang, processors, verbose):
+        calls.append(processors)
+        if "mwt" in processors:
+            raise UnsupportedProcessorError("mwt", stanza_lang)
+        return "pipeline-built-without-mwt"
+
+    monkeypatch.setattr(stanza, "Pipeline", fake_pipeline)
+    assert annotators._pipeline("ang") == "pipeline-built-without-mwt"
+    assert calls == ["tokenize,mwt,pos,lemma,depparse", "tokenize,pos,lemma,depparse"]
+
+
+def test_pipeline_reraises_unsupported_processor_error_for_other_processors(monkeypatch):
+    import stanza
+    from stanza.pipeline.core import UnsupportedProcessorError
+
+    def fake_pipeline(stanza_lang, processors, verbose):
+        raise UnsupportedProcessorError("depparse", stanza_lang)  # not the mwt case -- not this fallback's job
+
+    monkeypatch.setattr(stanza, "Pipeline", fake_pipeline)
+    with pytest.raises(UnsupportedProcessorError):
+        annotators._pipeline("lat")

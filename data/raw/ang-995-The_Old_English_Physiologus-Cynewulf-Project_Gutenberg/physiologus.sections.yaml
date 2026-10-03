@@ -1,0 +1,15 @@
+title: The Old English Physiologus
+source: Project Gutenberg
+sections:
+  - name: Cynewulf
+    year: 995
+    lang_code: ang
+    clues: ["Old English", "original", "alliterative verse"]
+  - name: Albert Stanburrough Cook
+    year: 1921
+    lang_code: eng
+    clues: ["Modern English", "prose translation"]
+  - name: James Hall Pitman
+    year: 2004
+    lang_code: eng
+    clues: ["Modern English", "verse translation"]

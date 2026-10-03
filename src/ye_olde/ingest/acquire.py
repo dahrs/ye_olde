@@ -19,7 +19,6 @@ handling").
 from __future__ import annotations
 
 import io
-import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -35,7 +34,7 @@ from ..common.llm_client import call_llm_json
 from ..common.logging import get_logger
 from ..prompt import load_prompt
 from .checkpoint import Checkpoint
-from .corpus_files import CorpusFile, build_corpus_filename, oldest_parseable_file, parse_corpus_filename
+from .corpus_files import build_corpus_filename, parse_corpus_filename, rename_folder_to_match_oldest
 
 _log = get_logger(__name__)
 
@@ -220,32 +219,6 @@ def acquire_source(
     return Path(result)
 
 
-def _rename_folder_if_this_is_now_oldest(folder_path: Path, new_file: CorpusFile, *, raw_dir: Path) -> Path:
-    """A `data/raw/<work>/` folder is named after its oldest file (see the
-    existing `lat-523-...`/`enm-1400-...` folders). When `entry.folder`
-    points at a folder that already has files in it, and the file being
-    acquired now is older than every one of them, the folder's name is
-    stale -- rename it to match this new, now-oldest file, rather than
-    leaving folder and content mismatched. A brand-new folder (nothing in
-    it yet) has nothing to compare against and is left as-is.
-    """
-    anchor = oldest_parseable_file(folder_path)
-    if anchor is None or new_file.year >= anchor.year:
-        return folder_path
-    renamed = raw_dir / new_file.path.stem
-    if renamed == folder_path:
-        return folder_path
-    if renamed.exists():
-        raise FileExistsError(
-            f"{folder_path} should be renamed to {renamed} ({new_file.path.name} is now the oldest file "
-            f"in this work) but that folder name is already taken"
-        )
-    folder_path.rename(renamed)
-    _log.info("renamed %s -> %s (%s is now the oldest file in this work)", folder_path, renamed, new_file.path.name)
-    print(f"[renamed folder] {folder_path} -> {renamed}", file=sys.stderr)
-    return renamed
-
-
 def _acquire_source_uncached(entry: SourceEntry, *, raw_dir: Path, model: str | None) -> Path:
     fetched = fetch_source(entry.url)
     kind = classify_content(fetched.content_type, fetched.final_url)
@@ -266,7 +239,7 @@ def _acquire_source_uncached(entry: SourceEntry, *, raw_dir: Path, model: str | 
 
     folder_name = entry.folder or Path(filename).stem
     folder_path = Path(raw_dir) / folder_name
-    folder_path = _rename_folder_if_this_is_now_oldest(folder_path, new_file, raw_dir=Path(raw_dir))
+    folder_path = rename_folder_to_match_oldest(folder_path, new_file, raw_dir=Path(raw_dir))
     target = folder_path / filename
     if target.exists():
         raise FileExistsError(f"refusing to overwrite existing file {target}")

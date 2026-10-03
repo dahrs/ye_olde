@@ -8,6 +8,14 @@ it, and saves it with a filename `corpus_files.build_corpus_filename`
 guarantees the rest of this pipeline can read back. See
 `scripts/acquire_corpus.py` for the CLI.
 
+`split_mixed.py` handles the case `acquire.py` doesn't: a single acquired
+file that bundles several distinct editions of one work together (e.g. a
+Gutenberg compilation containing the original-language text plus one or
+more later translations in one `.txt`). Given a small human-written
+manifest describing each bundled edition, it asks an LLM to assign each
+paragraph-chunk to the edition it belongs to and writes out one real
+`data/raw/` file per edition. See `scripts/split_mixed_source.py`.
+
 `align.py` (+ `clean.py`, `extract.py`, `corpus_files.py`) implements §6's
 alignment pipeline: given a `data/raw/<work>/` folder of 2+ parallel-
 translation files (built up by `acquire.py` above, one file at a time), it

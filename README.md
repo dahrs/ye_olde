@@ -213,9 +213,11 @@ way.
 
 ## Corpus ingestion & indexing scripts
 
-Four CLI scripts, run in this order to go from a URL to what `search_api/` serves. All four are
-plain `argparse` scripts — `--help` on any of them lists the full flag set; this section covers
-the common path.
+Five CLI scripts; four of them run in order to go from a URL to what `search_api/` serves. All
+five are plain `argparse` scripts — `--help` on any of them lists the full flag set; this section
+covers the common path. The fifth, `split_mixed_source.py`, is **not** part of that normal
+sequence — it's a standalone, occasional-use tool for one specific situation (see below), never
+run as a routine step and never called by any of the other scripts.
 
 **Acquire source texts (`scripts/acquire_corpus.py`)** — fetches every URL listed in
 `data/sources.yaml` (a Project Gutenberg `.txt` link, a PDF, or an HTML "read online" page),
@@ -238,6 +240,21 @@ two runs if you're starting a brand-new multi-translation work from scratch). If
 turns out to be older than everything already there, the folder is renamed to match it
 automatically — existing files inside are never overwritten or touched, only the folder moves.
 Never overwrites an existing file on a filename collision either; it refuses and reports it.
+
+**Split a mixed-edition download (`scripts/split_mixed_source.py`)** — occasional-use, only
+needed when a single acquired file actually bundles several distinct editions together (e.g. a
+Gutenberg compilation containing the original-language text plus one or more later translations
+in one `.txt`). Write a small manifest describing each bundled edition (name, year, language, a
+few disambiguating clues) and run:
+```
+python scripts/split_mixed_source.py data/raw/<work>/<mixed-file>.txt --manifest <manifest.yaml>
+```
+Asks an LLM to assign each paragraph-chunk of the file to the edition it belongs to, then writes
+one correctly-named `data/raw/` file per edition in the same folder. Uses the project's usual
+`LITELLM_MODEL` by default, same as every other script here — pass `--model` to use a different
+backend for this one step. The
+original mixed file is deleted once its content has been fully split out (unlike every other file
+this project writes, it's never collision-protected — it's expected to be overwritten/removed).
 
 **1. Align a corpus (`scripts/align_corpus.py`)** — cleans and sentence/word-aligns a
 `data/raw/<work>/` folder of 2+ parallel-translation files into one `.jsonl` bitext file per

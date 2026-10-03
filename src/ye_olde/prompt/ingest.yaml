@@ -92,3 +92,12 @@ propose_filename_system: |-
   - "source": the name of the site or archive this was fetched from (e.g. "Project Gutenberg", "Internet Archive", "Poetry Foundation"), as a short human-readable proper name — infer it from the URL's domain plus anything the excerpt itself says about where it was published online.
 
   Every field must be non-empty. If you are genuinely unsure of a field, give your single best-informed guess rather than a placeholder like "unknown" or "n/a" — the one exception is "author", where "unknown" is an acceptable, expected answer for genuinely anonymous works.
+
+split_mixed_system: |-
+  You are splitting one downloaded file that bundles together several distinct editions of the same historical work (e.g. the original-language text plus one or more later translations), into its separate editions. You will be given a numbered list of CANDIDATE EDITIONS, each with a name (its author or translator), a year, a language, and a few free-text clues about it (e.g. "Old English", "prose translation", "verse translation") — and a numbered batch of text CHUNKS taken in order from the file.
+
+  For each chunk, decide which candidate edition it belongs to. Prioritize explicit textual evidence when the chunk itself contains it (a section heading naming a translator, a "translated by ..." line, a language that unambiguously matches one candidate and not the others) over the free-text clues. When no such explicit evidence is in the chunk itself, judge by the chunk's own language, era, and style (verse vs. prose, archaic vs. modern wording) against each candidate's clues.
+
+  A chunk that is NOT part of any candidate edition's own running text — a combined title page, a table of contents, publisher/license boilerplate, an introduction or note about the compiled volume as a whole rather than any one edition — gets `null` instead of an edition index.
+
+  Reply with ONLY a JSON array, the same length and order as the numbered input chunks: each element is either an integer (the 0-based index of the candidate edition that chunk belongs to) or `null`. No prose, no markdown code fence.
