@@ -144,6 +144,50 @@ def test_align_block_resolves_link_annotation_and_sense_id(monkeypatch, tmp_path
     assert link["sense_definition"] == "the visual effect of illumination on objects"
 
 
+def test_coerce_block_reply_to_list_passes_through_a_real_list():
+    pairs = [{"source_text": "a", "target_text": "b"}]
+    assert align._coerce_block_reply_to_list(pairs) is pairs
+
+
+def test_coerce_block_reply_to_list_wraps_a_single_pair_object():
+    pair = {"source_text": "a", "target_text": "b", "links": []}
+    assert align._coerce_block_reply_to_list(pair) == [pair]
+
+
+@pytest.mark.parametrize("raw", ["target_feats", 42, None, {"not_a_pair": True}, {"source_text": "a"}])
+def test_coerce_block_reply_to_list_treats_anything_else_as_empty(raw):
+    assert align._coerce_block_reply_to_list(raw) == []
+
+
+def test_align_block_wraps_a_single_pair_object_reply_instead_of_raising(monkeypatch):
+    cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
+    cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
+
+    # A valid pair object, just not wrapped in the expected one-item array --
+    # the real failure mode observed live against claude_code_cli/claude-sonnet-5.
+    fake_response = {
+        "source_text": "And God seide, Liyt be maad.",
+        "target_text": "Then God said, Let there be light.",
+        "links": [],
+    }
+    monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: fake_response)
+
+    resolved = align.align_block(["source unit"], ["target unit"], cf_a, cf_b)
+    assert len(resolved) == 1
+    assert resolved[0]["source_text"] == "And God seide, Liyt be maad."
+
+
+def test_align_block_treats_a_malformed_reply_as_no_pairs_instead_of_raising(monkeypatch):
+    cf_a = CorpusFile(Path("a.txt"), "enm", 1382, "Bible", "Wycliffe", "PG")
+    cf_b = CorpusFile(Path("b.txt"), "eng", 1989, "Bible", "NRSV", "PG")
+
+    # Observed live: a bare string instead of a JSON array of pair objects.
+    monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: "target_feats")
+
+    resolved = align.align_block(["source unit"], ["target unit"], cf_a, cf_b)
+    assert resolved == []
+
+
 def test_build_link_matches_by_gloss_even_when_the_source_lemma_is_not_english(monkeypatch, tmp_path):
     monkeypatch.setattr(sense, "DEFAULT_INDEX_ROOT", tmp_path)
     # The bug this guards against: an earlier version only ever tried
@@ -529,7 +573,11 @@ def test_align_corpus_folder_orders_pairs_chronologically(tmp_path, monkeypatch)
     # each unordered language pair appears exactly once (never both
     # directions).
     names = sorted(p.name for p in written)
-    assert names == ["enm-eng.bitext.jsonl", "lat-eng.bitext.jsonl", "lat-enm.bitext.jsonl"]
+    assert names == [
+        "enm-1380_eng-1897.bitext.jsonl",
+        "lat-523_eng-1897.bitext.jsonl",
+        "lat-523_enm-1380.bitext.jsonl",
+    ]
 
 
 def test_write_jsonl_round_trip(tmp_path):

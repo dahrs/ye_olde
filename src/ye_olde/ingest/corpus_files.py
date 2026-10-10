@@ -44,6 +44,21 @@ class CorpusFile:
         return self.title.replace("_", " ")
 
 
+def pair_slug(cf_a: CorpusFile, cf_b: CorpusFile) -> str:
+    """Filename-safe identifier for the language pair `(cf_a, cf_b)`,
+    e.g. `"ang-975_eng-1910"` -- `lang_code` alone (`"ang-eng"`) collides
+    whenever a work has two translations into the same language (seen
+    live: Beowulf's 1910 and 2021 English translations both aligned
+    against Old English wrote to the same `ang-eng.bitext.jsonl`, the
+    second silently overwriting the first). Including each side's `year`
+    disambiguates without needing the full filename. Shared by
+    `ingest.align` (which writes this) and `eval.compare_runs` (which
+    needs to construct the identical path to read it back), so the two
+    never drift apart.
+    """
+    return f"{cf_a.lang_code}-{cf_a.year}_{cf_b.lang_code}-{cf_b.year}"
+
+
 def parse_corpus_filename(path: Path) -> CorpusFile:
     """Splits a `data/raw/` filename into its five `-`-separated fields.
 

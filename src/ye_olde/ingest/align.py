@@ -93,13 +93,14 @@ from pathlib import Path
 from typing import Any, TypeAlias
 
 from ..common.llm_client import call_llm_json, is_local_model
+from ..common.logging import get_logger
 from ..common.tokenize import tokenize
 from ..common.ud_tags import TOOL_CONFIDENCE, normalize_deprel, normalize_ner, normalize_upos, parse_confidence
 from ..prompt import load_prompt
 from . import annotators
 from .checkpoint import Checkpoint
 from .clean import clean_corpus_file
-from .corpus_files import CorpusFile, discover_corpus_files
+from .corpus_files import CorpusFile, discover_corpus_files, pair_slug
 from .extract import extract_text, strip_boilerplate
 from .sense import ensure_wordnet_index_ready, resolve_sense_id
 from .sentence_align import SentenceMatch, lexical_align, mutual_nearest_neighbor_align
@@ -113,6 +114,8 @@ PairRecord: TypeAlias = dict[str, Any]
 
 _CONFIDENCE_CALIBRATION = load_prompt("common", "confidence_calibration")
 _ALIGN_SYSTEM_PROMPT = load_prompt("ingest", "align_system") + "\n\n" + _CONFIDENCE_CALIBRATION
+
+_log = get_logger(__name__)
 
 
 def _normalize(text: str) -> str:
@@ -330,6 +333,30 @@ def _build_link(
     }
 
 
+def _coerce_block_reply_to_list(raw_pairs: object) -> list[Any]:
+    """`align_block`'s reply is supposed to be a JSON array of pair
+    objects. An otherwise-valid reply occasionally comes back as a single
+    pair object instead of a one-item array around it (observed live
+    against `claude_code_cli/claude-sonnet-5` on a very small block) -- a
+    shape slip, not a hallucination, so it's wrapped rather than
+    discarded. Anything else that isn't a list (a bare string, a number,
+    `null`, or a dict that isn't itself a pair object) is treated as "no
+    pairs from this block" rather than raising and losing every block
+    already computed in this run -- the same safe-minimal-fallback-over-a
+    hard-failure rule `classify._resolve_tags` already applies to a
+    misaligned per-token tag; `_verify_pairs_against_source` still runs
+    afterwards regardless, so a wrapped single pair gets the same
+    verbatim-quote check as a normal array entry would.
+    """
+    if isinstance(raw_pairs, list):
+        return raw_pairs
+    if isinstance(raw_pairs, dict) and "source_text" in raw_pairs and "target_text" in raw_pairs:
+        _log.debug("align_block reply was a single pair object, not a one-item array -- wrapping it: %r", raw_pairs)
+        return [raw_pairs]
+    _log.debug("align_block reply wasn't a JSON array of pair objects -- treating this block as empty: %r", raw_pairs)
+    return []
+
+
 def align_block(
     block_a: list[str],
     block_b: list[str],
@@ -349,9 +376,7 @@ def align_block(
         f'TARGET ({cf_b.lang_code}, {cf_b.year}, "{cf_b.work_label}"):\n'
         f"{_format_units(block_b)}"
     )
-    raw_pairs = call_llm_json(prompt, system=_ALIGN_SYSTEM_PROMPT, model=model)
-    if not isinstance(raw_pairs, list):
-        raise ValueError(f"expected a JSON array of pair objects, got {raw_pairs!r}")
+    raw_pairs = _coerce_block_reply_to_list(call_llm_json(prompt, system=_ALIGN_SYSTEM_PROMPT, model=model))
 
     resolved: list[PairRecord] = []
     for rp in raw_pairs:
@@ -915,8 +940,9 @@ def align_corpus_folder(
 
     written: list[Path] = []
     for cf_a, cf_b in itertools.combinations(files, 2):
-        print(f"[align] pair {cf_a.lang_code}-{cf_b.lang_code} (mode={mode})", file=sys.stderr, flush=True)
-        checkpoint_path = processed_root / f"{cf_a.lang_code}-{cf_b.lang_code}.align_progress.json"
+        slug = pair_slug(cf_a, cf_b)
+        print(f"[align] pair {slug} (mode={mode})", file=sys.stderr, flush=True)
+        checkpoint_path = processed_root / f"{slug}.align_progress.json"
         records = align_corpus_pair(
             cf_a,
             cf_b,
@@ -931,9 +957,9 @@ def align_corpus_folder(
             checkpoint_path=checkpoint_path,
             use_checkpoint=use_cache,
         )
-        out_path = processed_root / f"{cf_a.lang_code}-{cf_b.lang_code}.bitext.jsonl"
+        out_path = processed_root / f"{slug}.bitext.jsonl"
         write_jsonl(records, out_path)
         written.append(out_path)
         checkpoint_path.unlink(missing_ok=True)  # done: no need to keep resumable progress for a finished pair
-        print(f"[align] pair {cf_a.lang_code}-{cf_b.lang_code}: {len(records)} pairs -> {out_path}", file=sys.stderr)
+        print(f"[align] pair {slug}: {len(records)} pairs -> {out_path}", file=sys.stderr)
     return written

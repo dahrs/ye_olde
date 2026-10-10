@@ -11,8 +11,11 @@ see run_local_model_eval.py, which compares a local model against a fixed
 baseline instead.
 
 A "run" is a directory holding `<corpus-file-stem><suffix>.cleaned.json`
-per source file and `<lang_a>-<lang_b><suffix>.bitext.jsonl` per language
-pair — this covers both `data/processed/<work>/` (suffix="") and an
+per source file and `<lang_a>-<year_a>_<lang_b>-<year_b><suffix>.bitext.jsonl`
+per language pair (`ye_olde.ingest.corpus_files.pair_slug` — year-qualified
+since `ingest.align` writes one file per pair, and `lang_code` alone
+collides whenever a work has two translations into the same language) —
+this covers both `data/processed/<work>/` (suffix="") and an
 `eval/baselines/<work>/` snapshot (suffix=".baseline_<tag>_<timestamp>").
 
 Usage:
@@ -36,7 +39,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from metrics import compare_alignment, compare_cleaning, format_report, slugify  # noqa: E402
 from ye_olde.ingest.clean import CleanedDocument  # noqa: E402
-from ye_olde.ingest.corpus_files import discover_corpus_files  # noqa: E402
+from ye_olde.ingest.corpus_files import discover_corpus_files, pair_slug  # noqa: E402
 from ye_olde.ingest.extract import extract_text, strip_boilerplate  # noqa: E402
 
 
@@ -97,10 +100,10 @@ def compare_runs(
 
     alignment_sections: dict[str, dict] = {}
     for cf_a, cf_b in itertools.combinations(sorted(files, key=lambda cf: cf.year), 2):
-        lang_pair = f"{cf_a.lang_code}-{cf_b.lang_code}"
+        slug = pair_slug(cf_a, cf_b)
         path_a, path_b = (
-            _bitext_path(run_a_dir, lang_pair, run_a_suffix),
-            _bitext_path(run_b_dir, lang_pair, run_b_suffix),
+            _bitext_path(run_a_dir, slug, run_a_suffix),
+            _bitext_path(run_b_dir, slug, run_b_suffix),
         )
         if not path_a.exists() or not path_b.exists():
             continue
@@ -130,7 +133,7 @@ def compare_runs(
             cf_a.lang_code: len(units_by_stem[cf_a.path.stem][1]),
             cf_b.lang_code: len(units_by_stem[cf_b.path.stem][1]),
         }
-        alignment_sections[f"{lang_pair} (coverage relative to {run_b_label}'s cleaned units)"] = metrics
+        alignment_sections[f"{slug} (coverage relative to {run_b_label}'s cleaned units)"] = metrics
         files_compared += [f"{run_a_label} bitext: {path_a}", f"{run_b_label} bitext: {path_b}"]
 
     header = {

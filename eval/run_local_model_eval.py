@@ -53,7 +53,7 @@ from ye_olde.common.llm_client import get_usage_summary, is_local_model, reset_u
 from ye_olde.config import get_settings  # noqa: E402
 from ye_olde.ingest.align import align_corpus_pair, write_jsonl  # noqa: E402
 from ye_olde.ingest.clean import CleanedDocument, clean_corpus_file  # noqa: E402
-from ye_olde.ingest.corpus_files import CorpusFile, discover_corpus_files  # noqa: E402
+from ye_olde.ingest.corpus_files import CorpusFile, discover_corpus_files, pair_slug  # noqa: E402
 from ye_olde.ingest.extract import extract_text, strip_boilerplate  # noqa: E402
 
 _DROPPED_RE = re.compile(r"verification: dropped (\d+)/(\d+) pairs")
@@ -224,7 +224,7 @@ def run_alignment_eval(
         # re-running the whole (very slow, for a local model) alignment
         # from scratch. align_corpus_pair itself doesn't clean this up
         # (align_corpus_folder normally does that) — done manually below.
-        checkpoint_path = out_dir / "_inprogress" / f"{cf_a.lang_code}-{cf_b.lang_code}.{tag}.align_progress.json"
+        checkpoint_path = out_dir / "_inprogress" / f"{pair_slug(cf_a, cf_b)}.{tag}.align_progress.json"
         reset_usage()
         stderr_buffer = io.StringIO()
         start = time.monotonic()
@@ -248,7 +248,7 @@ def run_alignment_eval(
         if match:
             local_dropped, local_candidates = int(match.group(1)), int(match.group(2))
 
-        out_path = out_dir / f"{cf_a.lang_code}-{cf_b.lang_code}.{tag}.{ts}.bitext.jsonl"
+        out_path = out_dir / f"{pair_slug(cf_a, cf_b)}.{tag}.{ts}.bitext.jsonl"
         write_jsonl(local_records, out_path)
         checkpoint_path.unlink(missing_ok=True)
 
