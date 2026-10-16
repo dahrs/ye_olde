@@ -1,0 +1,581 @@
+- key: https://www.gutenberg.org/browse/authors/u#a49
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/sa
+  - https://www.gutenberg.org/browse/authors/u#a49
+  title: Unknown
+  category: uncertain
+  reasoning: No information given to judge
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/9000
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/sa
+  - https://www.gutenberg.org/ebooks/9000
+  title: https://www.gutenberg.org/ebooks/9000
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 1 entries,
+    got {''decision'': ''candidate'', ''category'': ''old_text_candidate'', ''reasoning'':
+    ''A specific Sanskrit hymn text (Vishnu Sahasranamam) hosted as a primary text
+    on Project Gutenberg.'', ''confidence'': 0.9}'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a39401
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/a#a39401
+  title: https://www.gutenberg.org/browse/authors/a#a39401
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''English-language 19th-century
+    popular history book, not an old-language primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''English Makers of History series
+    book, modern English prose about ancient figure.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': "English children''s story about a dog, unrelated
+    to old-language texts.", ''confidence'': 0.9}, {''decision'': ''irrelevant'',
+    ''reasoning'': "English children''s book (Rollo series), not an old-language primary
+    text.", ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''English
+    Makers of History biography, not a primary old-language text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': "English children''s book,
+    unrelated to old-language texts.", ''confidence'': 0.9}, {''decision'': ''irrelevant'',
+    ''reasoning'': "English children''s book, unrelated to old-language texts.", ''confidence'':
+    0.9}, {''decision'': ''irrelevant'', ''reasoning'': "English children''s book,
+    unrelated to old-language texts.", ''confidence'': 0.9}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''English Makers of History biography, not a primary old-language
+    text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''English Makers of History biography, not a primary old-language text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''English travel narrative,
+    unrelated to old-language texts.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': "English children''s adventure book, unrelated to old-language
+    texts.", ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''English
+    Makers of History biography, not a primary old-language text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''English parenting manual,
+    modern English text unrelated to old languages.'', ''confidence'': 0.9}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a5565
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/c#a5565
+  title: https://www.gutenberg.org/browse/authors/c#a5565
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Modern (early 20th-century)
+    English fiction by James Branch Cabell, not an old-language primary text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel by
+    Cabell, not a historical primary text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel by Cabell, not an old-language
+    text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English novel, not a historical primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel, not a historical
+    primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English novel, not a historical primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel, not a historical
+    primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English novel, not a historical primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel, not a historical
+    primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English novel, not a historical primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English play, not a historical
+    primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern literary criticism/essay about an author, not a primary text.'', ''confidence'':
+    0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel, not
+    a historical primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English novel, not a historical primary text.'', ''confidence'':
+    0.85}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a5684
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/c#a5684
+  title: https://www.gutenberg.org/browse/authors/c#a5684
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Modern English fiction by
+    James Branch Cabell, not an old-language primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English fiction work, not
+    a historical primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English fiction work, not a historical primary text.'',
+    ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel title, not an old-language text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel title, not an old-language
+    text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English novel title, not an old-language text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel title, not
+    an old-language text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English novel title, not an old-language text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel title,
+    not an old-language text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English novel title, not an old-language text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel title,
+    not an old-language text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern scholarly essay about an author, not a primary text.'',
+    ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English
+    novel title, not an old-language text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel title, not an old-language
+    text.'', ''confidence'': 0.85}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a4522
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/h#a4522
+  title: https://www.gutenberg.org/browse/authors/h#a4522
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Modern zoological scientific
+    paper, not a historical text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern zoological scientific paper, not a historical text.'',
+    ''confidence'': 0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    index to scientific publications, not a historical primary text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern zoological publication,
+    not an old-language text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern zoological publication, not an old-language text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern taxonomic paper,
+    not a historical text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern taxonomic paper, not a historical text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern paleontology paper,
+    not a historical text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern taxonomic paper, not a historical text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern taxonomic paper,
+    not a historical text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern taxonomic paper, not a historical text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern taxonomic paper,
+    not a historical text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern taxonomic paper, not a historical text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern taxonomic paper,
+    not a historical text.'', ''confidence'': 0.95}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a7077
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/p#a7077
+  title: https://www.gutenberg.org/browse/authors/p#a7077
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Modern English textbook on
+    forestry, not an old-language primary text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Generic Wikipedia navigation link, not a primary
+    text.'', ''confidence'': 0.9}, {''decision'': ''candidate'', ''category'': ''old_text_candidate'',
+    ''reasoning'': ''17th-century alchemical/chymistry work by Glauber, a historical
+    primary text in translation.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Cross-reference to a modern (1867-1941) author, not an old-language
+    text.'', ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'': ''19th-century
+    English technical manual on calendars, not an old-language primary text.'', ''confidence'':
+    0.8}, {''decision'': ''irrelevant'', ''reasoning'': ''English technical dyeing
+    manual, modern subject matter.'', ''confidence'': 0.8}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Generic Wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English adventure fiction title, illustrator
+    credit.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English adventure tale illustration credit.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English adventure tale
+    illustration credit.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English adventure tale illustration credit.'', ''confidence'':
+    0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English memoir about
+    Fort Worth history, not an old-language text.'', ''confidence'': 0.8}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Cross-reference to a 20th-century author, not
+    relevant to old-language texts.'', ''confidence'': 0.8}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Generic Wikipedia navigation link.'', ''confidence'': 0.9}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a4523
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/s#a4523
+  title: https://www.gutenberg.org/browse/authors/s#a4523
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''A 20th-century German scholarly
+    monograph on folklore/psychology, not a primary historical text.'', ''confidence'':
+    0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Wikipedia navigation link,
+    not a primary text.'', ''confidence'': 0.95}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''A 19th-century photography journal, unrelated to old-language primary texts.'',
+    ''confidence'': 0.9}, {''decision'': ''candidate'', ''category'': ''old_text_candidate'',
+    ''reasoning'': "A compiled historical primary source of Washington''s own correspondence.",
+    ''confidence'': 0.5}, {''decision'': ''irrelevant'', ''reasoning'': ''Wikipedia
+    navigation link, not a primary text.'', ''confidence'': 0.95}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Appears to be a scholarly literary-motif essay,
+    not a primary source text.'', ''confidence'': 0.7}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Wikipedia navigation link, not a primary text.'', ''confidence'':
+    0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern scholarly history
+    of botany, not a primary historical text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Wikipedia navigation link, not a primary text.'',
+    ''confidence'': 0.95}, {''decision'': ''irrelevant'', ''reasoning'': ''A modern
+    travel narrative, unrelated to old-language texts.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Wikipedia navigation link, not a primary text.'',
+    ''confidence'': 0.95}, {''decision'': ''irrelevant'', ''reasoning'': "A children''s
+    novel illustration credit, not an old-language text.", ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''A modern novel illustration credit,
+    unrelated to old-language primary texts.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': "A children''s fantasy book illustration credit,
+    not a historical primary text.", ''confidence'': 0.85}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/z#a43503
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/browse/authors/z#a43503
+  title: https://www.gutenberg.org/browse/authors/z#a43503
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''candidate'', ''category'': ''old_text_candidate'', ''related_to'':
+    '''', ''reasoning'': "English edition of Goldoni''s 18th-century Italian comedies,
+    a historical primary text in translation.", ''confidence'': 0.7}, {''decision'':
+    ''candidate'', ''category'': ''old_text_candidate'', ''related_to'': '''', ''reasoning'':
+    ''Translated dramatic works of Lessing, 18th-century German playwright, primary
+    texts.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''category'':
+    None, ''related_to'': '''', ''reasoning'': ''Appears to be a historical/geographical
+    study, not a primary-language text.'', ''confidence'': 0.6}, {''decision'': ''irrelevant'',
+    ''category'': None, ''related_to'': '''', ''reasoning'': ''Likely a modern travel
+    or descriptive work about Holland, not an old-language primary text.'', ''confidence'':
+    0.55}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': "Nietzsche''s philosophical work in modern German, not an old-language
+    primary text.", ''confidence'': 0.6}, {''decision'': ''irrelevant'', ''category'':
+    None, ''related_to'': '''', ''reasoning'': ''Likely translated poetry collection
+    from a modern language, not an old-language text.'', ''confidence'': 0.5}, {''decision'':
+    ''candidate'', ''category'': ''old_text_candidate'', ''related_to'': '''', ''reasoning'':
+    "Reynolds'' 18th-century discourses on art are a genuine historical primary text.",
+    ''confidence'': 0.65}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'':
+    '''', ''reasoning'': ''Biography of a 19th-century painter, modern scholarship.'',
+    ''confidence'': 0.6}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'':
+    '''', ''reasoning'': ''Likely a modern natural history book, not a historical
+    primary text.'', ''confidence'': 0.55}, {''decision'': ''uncertain'', ''category'':
+    None, ''related_to'': '''', ''reasoning'': ''Portuguese title with unclear context;
+    could be modern or historical literature.'', ''confidence'': 0.3}, {''decision'':
+    ''irrelevant'', ''category'': None, ''related_to'': '''', ''reasoning'': ''Generic
+    Wikipedia link, not a primary text source.'', ''confidence'': 0.9}, {''decision'':
+    ''irrelevant'', ''category'': None, ''related_to'': '''', ''reasoning'': ''Modern
+    travel/historical account about Egypt, not a primary ancient text.'', ''confidence'':
+    0.6}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': ''19th-century travelogue, not an old-language primary text.'',
+    ''confidence'': 0.65}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'':
+    '''', ''reasoning'': ''Travel narrative, modern content unrelated to old-language
+    primary texts.'', ''confidence'': 0.65}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a7351
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/a#a7351
+  title: Adam, of Cobsam, active approximately 1462
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 15th-century figure, likely
+    leading to his primary text(s).'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a144
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/c#a144
+  title: Chaucer, Geoffrey, 1343?-1400
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Chaucer, leading to his
+    historical works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a5672
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/f#a5672
+  title: Furnivall, Frederick James, 1825-1910
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century scholar/editor whose author page likely
+    links to his editions of older texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a7241
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/h#a7241
+  title: Hermes, Trismegistus
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Legendary/ancient author name likely leading to
+    translations or editions of Hermetic texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a34489
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/m#a34489
+  title: Morris, Richard, 1833-1894
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century philologist/editor whose author page
+    likely links to his editions of older texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a2642
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/p#a2642
+  title: Pegge, Samuel, 1704-1796
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 18th-century antiquarian likely the editor connected
+    to the Forme of Cury entry below.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a4590
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/browse/authors/s#a4590
+  title: Skeat, Walter W. (Walter William), 1835-1912
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index link for Walter Skeat, a philologist
+    known for editing Middle English texts, likely leads to a list of old-language
+    text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a42169
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/b#a42169
+  title: https://www.gutenberg.org/browse/authors/b#a42169
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Wikipedia navigation link,
+    not a text'', ''confidence'': 0.95}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern French novel by an author, not an old-language primary text'', ''confidence'':
+    0.7}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern French novel, not
+    historical primary text'', ''confidence'': 0.7}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern French novel, not historical primary text'', ''confidence'':
+    0.7}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern French novel, not
+    historical primary text'', ''confidence'': 0.7}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Wikipedia navigation link, not a text'', ''confidence'': 0.95},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English fiction work, not
+    an old-language primary text'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English novel by Irving Bacheller, not old-language text'',
+    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel, not an old-language primary text'', ''confidence'': 0.75}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel sequel, not old-language
+    text'', ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel, not old-language text'', ''confidence'': 0.75}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Author index page for modern fiction writer,
+    not old-language works'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English novel, not old-language text'', ''confidence'':
+    0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English poetry collection,
+    not old-language primary text'', ''confidence'': 0.7}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a41498
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/b#a41498
+  title: https://www.gutenberg.org/browse/authors/b#a41498
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel by a
+    20th-century author, not an old-language primary text.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel, not a historical
+    primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English novel set in American history, not an old-language text.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English historical
+    novel, not a primary old-language text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel, not an old-language text.'',
+    ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel, not an old-language text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel, not an old-language text.'',
+    ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel, not an old-language text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel (fictional tale), not an
+    ancient primary text despite classical-sounding title.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Generic Wikipedia navigation link,
+    not a primary text.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern English vocabulary reference, not a bilingual old-language dictionary.'',
+    ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English
+    poetry compilation, not an old-language text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Generic Wikipedia navigation link, not a primary
+    text.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''Generic
+    Wikipedia navigation link, not a primary text.'', ''confidence'': 0.9}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a34983
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/b#a34983
+  title: https://www.gutenberg.org/browse/authors/b#a34983
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Wikipedia navigation link,
+    not a text'', ''confidence'': 0.95}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern French novel, not an old-language primary text'', ''confidence'': 0.8},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern French novel, not an old-language
+    primary text'', ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern French novel, not an old-language primary text'', ''confidence'': 0.8},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern French novel, not an old-language
+    primary text'', ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Wikipedia navigation link, not a text'', ''confidence'': 0.95}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English story, not an old-language primary
+    text'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel, not an old-language primary text'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel, not an old-language primary
+    text'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    English novel, not an old-language primary text'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern English novel, not an old-language primary
+    text'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Author
+    index page for modern English-language works, not an old-language text'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern English novel, not
+    an old-language primary text'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern English poetry collection, not an old-language primary
+    text'', ''confidence'': 0.85}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a45753
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/d#a45753
+  title: https://www.gutenberg.org/browse/authors/d#a45753
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Generic modern publisher
+    entry, not an old-language primary text.'', ''confidence'': 0.6}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Wikipedia navigation link, not a primary text.'',
+    ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern scholarly
+    work about industry history, not an old-language text.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Wikipedia navigation link.'',
+    ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern WWI-era
+    work, not an old-language primary text.'', ''confidence'': 0.7}, {''decision'':
+    ''irrelevant'', ''reasoning'': "Modern essay about Edison''s laboratory, unrelated
+    to old-language texts.", ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern memoir, not an old-language primary text.'',
+    ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'': ''Cross-reference
+    to a 20th-century author, not relevant to old texts.'', ''confidence'': 0.85},
+    {''decision'': ''candidate'', ''category'': ''old_text_candidate'', ''reasoning'':
+    ''An 18th-century (1761) English trial pamphlet, a genuine historical primary
+    text.'', ''confidence'': 0.7}, {''decision'': ''uncertain'', ''reasoning'': ''Could
+    be a modern historical narrative about an 18th-century figure rather than a primary
+    text itself.'', ''confidence'': 0.4}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'': ''uncertain'',
+    ''reasoning'': ''Ambiguous title/author with insufficient context to determine
+    era or textual nature.'', ''confidence'': 0.3}, {''decision'': ''follow'', ''reasoning'':
+    ''Dan Michel, active 14th century, is the known author of a Middle English primary
+    text (Ayenbite of Inwyt).'', ''confidence'': 0.85}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a42168
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/g#a42168
+  title: https://www.gutenberg.org/browse/authors/g#a42168
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''follow'', ''reasoning'': ''Pliny the Elder is an ancient
+    Roman author whose works are primary texts.'', ''confidence'': 0.8}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''19th-century French letters collection, not an
+    old-language primary text.'', ''confidence'': 0.6}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern 20th-century author, not historical/old-language.'', ''confidence'':
+    0.75}, {''decision'': ''follow'', ''reasoning'': ''Historical 17th-century figure
+    whose autobiography could be a primary text.'', ''confidence'': 0.75}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern early 20th-century Cuban poet, not old-language.'',
+    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    20th/21st century science fiction author.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Generic wikipedia navigation link.'', ''confidence'':
+    0.9}, {''decision'': ''candidate'', ''category'': ''old_text_candidate'', ''reasoning'':
+    ''English translation of the medieval Catalan romance Tirant lo Blanc.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern hygiene manual,
+    unrelated subject.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Modern hygiene/training manual.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Generic wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Modern scholarly essay about monastery history,
+    not a primary text.'', ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'':
+    ''Generic wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern work about aviation, unrelated subject.'', ''confidence'':
+    0.9}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a41497
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/h#a41497
+  title: https://www.gutenberg.org/browse/authors/h#a41497
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Modern Dutch pulp fiction
+    serial (Lord Lister), not an old-language primary text.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern Dutch pulp fiction serial,
+    not a historical primary text.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern Dutch pulp fiction serial, not a historical primary text.'',
+    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    Dutch pulp fiction serial, not a historical primary text.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern Dutch pulp fiction serial,
+    not a historical primary text.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern Dutch pulp fiction serial, not a historical primary text.'',
+    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    Dutch pulp fiction serial, not a historical primary text.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern Dutch pulp fiction serial,
+    not a historical primary text.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern Dutch pulp fiction serial, not a historical primary text.'',
+    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    Dutch pulp fiction serial, not a historical primary text.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern Dutch pulp fiction serial,
+    not a historical primary text.'', ''confidence'': 0.75}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''Modern Dutch pulp fiction serial, not a historical primary text.'',
+    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
+    Dutch pulp fiction serial, not a historical primary text.'', ''confidence'': 0.75},
+    {''decision'': ''irrelevant'', ''reasoning'': ''Modern Dutch pulp fiction serial,
+    not a historical primary text.'', ''confidence'': 0.75}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a45754
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/authors/r#a45754
+  title: https://www.gutenberg.org/browse/authors/r#a45754
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': "Modern illustrated children''s edition, not an old-language primary
+    text.", ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''category'': None,
+    ''related_to'': '''', ''reasoning'': ''Kipling work illustrated edition, not an
+    old-language primary text.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''category'': None, ''related_to'': '''', ''reasoning'': ''Modern fairy tale anthology
+    illustration credit.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'',
+    ''category'': None, ''related_to'': '''', ''reasoning'': "Modern English retelling/illustration
+    of Wagner''s Ring, not an old-language primary text.", ''confidence'': 0.8}, {''decision'':
+    ''irrelevant'', ''category'': None, ''related_to'': '''', ''reasoning'': ''Illustrated
+    Rip Van Winkle, not an old-language primary text.'', ''confidence'': 0.85}, {''decision'':
+    ''irrelevant'', ''category'': None, ''related_to'': '''', ''reasoning'': ''Modern
+    Dutch retelling of Arthurian legends, not an old-language primary text.'', ''confidence'':
+    0.75}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': "Modern English retelling/illustration of Wagner''s Ring.", ''confidence'':
+    0.8}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': ''Modern fairy tale illustration credit.'', ''confidence'': 0.85},
+    {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''', ''reasoning'':
+    "Modern illustrated edition of Lamb''s Tales from Shakespeare.", ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': ''Modern original fantasy work illustration credit.'', ''confidence'':
+    0.85}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'': '''',
+    ''reasoning'': ''Wikipedia link, site navigation/external reference not a text.'',
+    ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''category'': None, ''related_to'':
+    '''', ''reasoning'': ''Modern museum reference book on porcelain, not an old-language
+    text.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''category'': None,
+    ''related_to'': '''', ''reasoning'': ''Author name cross-reference, not a text
+    link.'', ''confidence'': 0.85}, {''decision'': ''irrelevant'', ''category'': None,
+    ''related_to'': '''', ''reasoning'': ''Modern English book on musical instruments,
+    not an old-language text.'', ''confidence'': 0.9}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/languages/enm
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  title: https://www.gutenberg.org/browse/languages/enm
+  category: uncertain
+  reasoning: broad listing (23 links), not auto-expanded -- survey it directly as
+    its own starting URL if its full contents are wanted. This is a language-based
+    browse index listing many different authors and works, not a single work's page.
+  related_to: ''

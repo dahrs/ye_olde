@@ -101,3 +101,33 @@ split_mixed_system: |-
   A chunk that is NOT part of any candidate edition's own running text — a combined title page, a table of contents, publisher/license boilerplate, an introduction or note about the compiled volume as a whole rather than any one edition — gets `null` instead of an edition index.
 
   Reply with ONLY a JSON array, the same length and order as the numbered input chunks: each element is either an integer (the 0-based index of the candidate edition that chunk belongs to) or `null`. No prose, no markdown code fence.
+
+survey_classify_system: |-
+  You are triaging links found on a library/digitization site's index page (a Project Gutenberg language-browse page, an author/title index, or any similar catalog on any site), looking for genuine historical/old-language primary-text digitizations -- NOT modern scholarship about them, NOT unrelated subjects. You will be given a numbered list of links, each with its own link text and the surrounding text it appeared in on the page (a language/date/role hint might sit next to a link rather than inside it), and sometimes an extra bibliographic-hint paragraph when one was already available for that link.
+
+  For each link, decide:
+  - "decision": exactly one of:
+    - "follow": this looks like it leads toward (not necessarily already IS) an old-language primary-text document -- e.g. a specific work's own page, another index/catalog worth descending into, a language or author name that's plausibly historical.
+    - "candidate": this is already enough on its own to record as worth investigating further -- e.g. the link itself is already a direct text/PDF file, or its context already clearly identifies a specific old-language work.
+    - "irrelevant": modern scholarship, an unrelated subject, site navigation/boilerplate, a biographical essay or critical commentary ABOUT an author or work (as opposed to the primary text itself), or anything else not actually leading toward an old-language primary text.
+    - "uncertain": genuinely unclear from what's given here -- don't guess past what the text actually supports.
+  - "category": only when "decision" is "candidate" -- "old_text_candidate" (a primary text written in, or a direct transcription/edition of, the old language itself) or "bilingual_reference" (a dictionary, grammar, glossary, or other reference work pairing the old language with another one). Omit/null for any other decision.
+  - "related_to": free text noting if this link looks like another edition or translation of the SAME underlying work as a different link in this same batch (name or number which one) -- the goal is catching multiple translations of one work across different eras, not judging each link in total isolation. Omit/empty when nothing in this batch looks related.
+  - "reasoning": one short sentence for your decision.
+  - "confidence": your own probability, 0.0-1.0, that someone who actually opened this link and checked would reach the same decision you did -- not how fluent your reasoning reads. Calibrate against these bands, don't just estimate a vibe:
+    - 0.9-1.0: the link text/context is explicit and unambiguous (title, author, and era cues all point the same way).
+    - 0.6-0.89: a reasonable best guess from genre/style cues, but another reading is plausible.
+    - 0.3-0.59: you're mostly guessing between two or more plausible readings.
+    - 0.0-0.29: essentially a guess -- you would not be surprised to be wrong.
+    Do not default to one value (e.g. always 0.9) regardless of the above.
+
+  Reply with ONLY a JSON array, the same length and order as the numbered input links: `[{"decision": "...", "category": "...", "related_to": "...", "reasoning": "...", "confidence": 0.0}, ...]`. No prose, no markdown code fence.
+
+survey_page_scope_system: |-
+  You are deciding whether a web page is a single work's own page or a broad listing/index page, from just its title and a short excerpt of its visible text -- not the full page, and not its list of links.
+
+  Reply with ONLY a JSON object with exactly these two fields, no prose, no markdown code fence:
+  - "decision": "single_work" (this page is about one specific book/text/edition -- a work's own detail page, even if it also has front matter, metadata, or multiple download formats) or "broad_listing" (this page is itself a listing of many separate works or entries -- an author's full bibliography, a subject index, a search-results page, a table of contents spanning multiple distinct works).
+  - "reasoning": one short sentence for your decision.
+
+  When genuinely unsure, prefer "single_work" -- the cost of wrongly treating a listing as a single work is a few extra classification calls on its links; the cost of wrongly treating a real work's page as a listing is silently never finding it at all.

@@ -213,11 +213,27 @@ way.
 
 ## Corpus ingestion & indexing scripts
 
-Five CLI scripts; four of them run in order to go from a URL to what `search_api/` serves. All
-five are plain `argparse` scripts — `--help` on any of them lists the full flag set; this section
-covers the common path. The fifth, `split_mixed_source.py`, is **not** part of that normal
-sequence — it's a standalone, occasional-use tool for one specific situation (see below), never
-run as a routine step and never called by any of the other scripts.
+Six CLI scripts; four of them run in order to go from a URL to what `search_api/` serves. All
+six are plain `argparse` scripts — `--help` on any of them lists the full flag set; this section
+covers the common path. The other two, `survey_catalog.py` and `split_mixed_source.py`, are
+**not** part of that normal sequence — each is a standalone, occasional-use tool for one specific
+situation (see below), never run as a routine step and never called by any of the other scripts.
+
+**Survey a catalog for candidates (`scripts/survey_catalog.py`)** — occasional-use, run *before*
+`acquire_corpus.py` when you don't already have a specific URL: given any index-of-works page on
+any digitization site (a Project Gutenberg language-browse page, an author index, or an
+equivalent page elsewhere), recursively follows promising links until it finds actual document
+URLs worth investigating, without downloading any book content itself:
+```
+python scripts/survey_catalog.py https://www.gutenberg.org/browse/languages/ang
+```
+Merges results into three accumulating YAML files under `data/catalog/`:
+`acquisition_candidates.yaml` (old-language primary-text candidates — the ones worth checking
+against `data/raw/` and queuing into `data/sources.yaml`), `bilingual_references.yaml`
+(dictionaries/grammars/glossaries — useful, but not corpus material), and
+`needs_manual_review.yaml` (genuinely unclear from the page alone — meant to be resolved by hand,
+including a live web search, not re-run). Resumable by default, same convention as every other
+script here.
 
 **Acquire source texts (`scripts/acquire_corpus.py`)** — fetches every URL listed in
 `data/sources.yaml` (a Project Gutenberg `.txt` link, a PDF, or an HTML "read online" page),

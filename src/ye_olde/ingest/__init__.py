@@ -16,6 +16,16 @@ manifest describing each bundled edition, it asks an LLM to assign each
 paragraph-chunk to the edition it belongs to and writes out one real
 `data/raw/` file per edition. See `scripts/split_mixed_source.py`.
 
+`survey.py` runs a step earlier still, before any URL is known at all:
+given any index-of-works page on any digitization site, it recursively
+follows promising links -- the LLM decides which are worth following
+deeper, which already look like old-language primary-text documents, and
+which are irrelevant -- until it reaches actual document URLs worth a
+human's attention, or a depth/page budget is spent. Nothing about the core
+path is Gutenberg-specific; two small shortcuts (reading Gutenberg's own
+direct-download format links and bibrec metadata when present) are bonus
+signal only, never a requirement. See `scripts/survey_catalog.py`.
+
 `align.py` (+ `clean.py`, `extract.py`, `corpus_files.py`) implements §6's
 alignment pipeline: given a `data/raw/<work>/` folder of 2+ parallel-
 translation files (built up by `acquire.py` above, one file at a time), it

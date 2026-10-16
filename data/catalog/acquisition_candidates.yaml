@@ -1,0 +1,137 @@
+- key: https://www.gutenberg.org/ebooks/9000.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/9000.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/sa
+  - https://www.gutenberg.org/ebooks/9000
+  title: Sri Vishnu Sahasranaamam by Unknown | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Explicitly identified as a Sanskrit religious hymn text, a genuine old-language
+    primary work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/14529.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/14529.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/ebooks/14529
+  title: The Old English Physiologus by Cynewulf | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Old English poem with translation, a primary text digitization
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/9700.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/9700.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/ebooks/9700
+  title: 'I. Beówulf: an Anglo-Saxon poem. II. The fight at Finnsburh: a fragment.
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: Edition of Beowulf, an Old English epic poem, directly available on Project
+    Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/9701.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/9701.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/ebooks/9701
+  title: 'I. Bēowulf: an Anglo-Saxon poem. II. The fight at Finnsburh: a fragment.
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A Gutenberg edition of Beowulf with Old English language tag, a genuine
+    old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/17400.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/17400.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/ebooks/17400
+  title: The Wright's Chaste Wife by active approximately 1462 of Cobsam Adam | Project
+    Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Middle English poem text on Project Gutenberg with explicit
+    author/date/language metadata.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/22120.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/22120.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/ebooks/22120
+  title: Chaucer's Works, Volume 4 — The Canterbury Tales by Geoffrey Chaucer | Project
+    Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg edition of Chaucer's Canterbury Tales in
+    Middle English, a genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/16845.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/16845.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/ebooks/16845
+  title: Arthur by Frederick James Furnivall | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Middle English Arthurian verse text (edited by Furnivall),
+    i.e. a primary old-language text itself.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/17179.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/17179.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/ebooks/17179
+  title: The Book of Quinte Essence or the Fifth Being (1889) by Furnivall and Hermes
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Middle English text from a 15th-century manuscript (edited 1889), directly
+    a primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/14568.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/14568.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/ebooks/14568
+  title: Sir Gawayne and the Green Knight by Richard Morris | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Middle English romance-poem edition directly linked on Gutenberg,
+    with clear date/language identification.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/8102.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/8102.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/enm
+  - https://www.gutenberg.org/ebooks/8102
+  title: 'The Forme of Cury: A Roll of Ancient English Cookery Compiled, about A.D.
+    1390 | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A Middle English cookery manuscript edition from 1390, directly a primary
+    old-language text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/43383.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/43383.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/ebooks/43383
+  title: 'Galen: On the Natural Faculties by Galen | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A classical Greek medical work by Galen, translated/edited, qualifies
+    as a primary text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/42053.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/42053.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/ebooks/42053
+  title: Διδαχή των Δώδεκα αποστόλων = Teaching of the Twelve Apostles by Bryennios
+    et al. | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Gutenberg edition of the Didache in Ancient Greek with English, a genuine
+    early-church primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/50212.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/50212.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/ebooks/50212
+  title: Dionysius of Halicarnassus On Literary Composition by of Halicarnassus Dionysius
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is an edition presenting the Ancient Greek text of Dionysius' De
+    Compositione Verborum alongside English translation.
+  related_to: ''

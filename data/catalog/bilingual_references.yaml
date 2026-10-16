@@ -1,0 +1,10 @@
+- key: https://www.gutenberg.org/ebooks/45861.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/45861.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/ang
+  - https://www.gutenberg.org/ebooks/45861
+  title: Ælfrics Grammatik und Glossar by Abbot of Eynsham Aelfric | Project Gutenberg
+  category: bilingual_reference
+  reasoning: A grammar and glossary of Old English with German, a bilingual reference
+    work pairing old and modern languages.
+  related_to: ''
