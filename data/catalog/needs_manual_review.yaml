@@ -2668,3 +2668,28 @@
     is wanted. Original reasoning: Author of a well-known Latin grammar; could lead
     to a bilingual reference work.'
   related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a6947
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/kld
+  - https://www.gutenberg.org/browse/authors/m#a6947
+  title: Mason, Walter George, 1820-1866
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/illustrator index entry likely leading to
+    a listing of their works, one of which (item 4) is a 19th-century Australian language
+    text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a6946
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/kld
+  - https://www.gutenberg.org/browse/authors/r#a6946
+  title: Ridley, William, 1819-1878
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 19th-century figure plausibly
+    linked to the Kamilaroi-language work above, worth descending into.'
+  related_to: ''

@@ -223,7 +223,21 @@ situation (see below), never run as a routine step and never called by any of th
 `acquire_corpus.py` when you don't already have a specific URL: given any index-of-works page on
 any digitization site (a Project Gutenberg language-browse page, an author index, or an
 equivalent page elsewhere), recursively follows promising links until it finds actual document
-URLs worth investigating, without downloading any book content itself:
+URLs worth investigating, without downloading any book content itself. How it works, stage by
+stage:
+
+1. **Fetch** the page it's given.
+2. **Extract links** — pull out every real link on the page, throwing away site navigation like
+   "Donate" or "Help".
+3. **Classify each link** — ask the LLM whether it looks like an old-language text worth
+   chasing, a dictionary/grammar, irrelevant, or unclear — without auto-following an author's
+   full bibliography page or any other unusually wide listing page (both too costly to expand
+   automatically).
+4. **Resolve candidates** — for anything worth chasing, follow it one more hop to find the
+   actual downloadable file, using the site's own "download formats" section when there is one.
+5. **Save results** — merge everything found into three running files: real candidates,
+   dictionary/grammar-type references, and anything unclear that needs a human look.
+
 ```
 python scripts/survey_catalog.py https://www.gutenberg.org/browse/languages/ang
 ```

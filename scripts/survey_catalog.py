@@ -5,6 +5,21 @@ digitization site, follows promising links hop by hop until it reaches
 actual document URLs worth investigating -- *before* anything is
 downloaded.
 
+How it works, stage by stage:
+1. Fetch the page it's given.
+2. Extract links -- pull out every real link on the page, throwing away
+   site navigation like "Donate" or "Help".
+3. Classify each link -- ask the LLM whether it looks like an old-language
+   text worth chasing, a dictionary/grammar, irrelevant, or unclear --
+   without auto-following an author's full bibliography page or any other
+   unusually wide listing page (both too costly to expand automatically).
+4. Resolve candidates -- for anything worth chasing, follow it one more
+   hop to find the actual downloadable file, using the site's own
+   "download formats" section when there is one.
+5. Save results -- merge everything found into three running files: real
+   candidates, dictionary/grammar-type references, and anything unclear
+   that needs a human look.
+
 Usage:
     python scripts/survey_catalog.py https://www.gutenberg.org/browse/languages/ang
     python scripts/survey_catalog.py <url> <url> ...

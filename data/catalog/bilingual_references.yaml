@@ -70,3 +70,13 @@
   reasoning: A French-Latin synonym dictionary/reference work directly tied to Latin
     language study.
   related_to: ''
+- key: https://www.gutenberg.org/ebooks/16811.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/16811.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/kld
+  - https://www.gutenberg.org/ebooks/16811
+  title: Gurre Kamilaroi, by William Ridley | Project Gutenberg
+  category: bilingual_reference
+  reasoning: An 1856 English/Kamilaroi phrasebook of sayings and terms is a bilingual
+    primary-source language reference, not modern scholarship.
+  related_to: ''
