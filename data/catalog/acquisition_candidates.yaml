@@ -135,3 +135,758 @@
   reasoning: This is an edition presenting the Ancient Greek text of Dionysius' De
     Compositione Verborum alongside English translation.
   related_to: ''
+- key: https://www.gutenberg.org/ebooks/61024.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/61024.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/ebooks/61024
+  title: צל העולם by active 1245 of Metz Gautier | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Hebrew encyclopedia text from a medieval author (Gautier of Metz, active
+    1245) translated into Hebrew, hosted on Project Gutenberg as a primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/45252.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/45252.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/ebooks/45252
+  title: הצופה לבית ישראל by Isaac Erter | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Direct link to a specific historical Hebrew satirical work by a named
+    19th-century author.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/43740.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/43740.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/ebooks/43740
+  title: בית נכות ההלכות by Chaim M. Horowitz | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Hebrew Geonic-era legal text edition on Project Gutenberg, a direct primary-text
+    work page.
+  related_to: ''
+- key: https://www.gutenberg.org/files/20676/20676-readme.txt
+  document_url: https://www.gutenberg.org/files/20676/20676-readme.txt
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/ebooks/20676
+  title: Genesis | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Hebrew text of Genesis is a direct old-language primary text on Project
+    Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/8400.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/8400.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/8400
+  title: 'Selections from Erasmus: Principally from his Epistles by Desiderius Erasmus
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: This is a specific Gutenberg edition presenting selections from Erasmus's
+    own Latin epistles (with English), a primary historical text rather than modern
+    scholarship about him.
+  related_to: ''
+- key: https://www.gutenberg.org/files/19635/19635.txt
+  document_url: https://www.gutenberg.org/files/19635/19635.txt
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/19635
+  title: Biblia Sacra Vulgata - Psalmi XXII by Anonymous | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg entry for the Latin Vulgate text of Psalm
+    22, a direct primary-text scripture in an old language.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/828.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/828.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/828
+  title: 'Latin Vulgate, Daniel: Prophetia Danielis by Anonymous | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg entry for the Latin Vulgate text of Daniel,
+    a direct old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/826.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/826.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/826
+  title: 'Latin Vulgate, Esther: Liber Esther by Anonymous | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A specific Latin Vulgate biblical text (Esther) hosted on Project Gutenberg,
+    clearly a primary old-language text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/827.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/827.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/827
+  title: 'Latin Vulgate, Esther: Liber Esther by Anonymous | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: Explicitly the Latin Vulgate text of Esther, a direct primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/4317.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/4317.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/4317
+  title: Prophetia Ionae by Anonymous | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Direct Project Gutenberg page for a specific Latin biblical paraphrase
+    text, an old-language primary work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/16439.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/16439.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/16439
+  title: Apicii librorum X qui dicuntur De re coquinaria quae extant by Apicius |
+    Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Project Gutenberg edition of the actual Latin text of Apicius's Roman
+    cookbook, a primary ancient-language work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/57615.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/57615.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/57615
+  title: Fabulae, virginibus puerisque aut narrandae aut recitandae by R. B. Appleton
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg page for a Latin-language work of short stories,
+    a primary text written in the old language itself.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/56744.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/56744.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/56744
+  title: Puer romanus by R. B. Appleton and W. H. S. Jones | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin-language reader text on Project Gutenberg is a direct
+    primary-text digitization candidate.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/49764.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/49764.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/49764
+  title: Aristophanis Lysistrata by Aristophanes | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin translation of Aristophanes' Lysistrata, a classical
+    primary text, hosted on Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/32549.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/32549.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/32549
+  title: Declaration of Faith, in Latin and the Original Greek by Athanasius | Project
+    Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg page for a specific historical theological
+    work by Athanasius presented in its original Latin and Greek.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/37641.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/37641.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/37641
+  title: 'In Illud: Omnia mihi tradita sunt a Patre by Athanasius | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A specific patristic homily text by Athanasius presented in Latin and
+    the original Greek, a genuine primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/33849.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/33849.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/33849
+  title: Confessiones by Saint of Hippo Augustine | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Latin primary text of Augustine's Confessiones hosted on Project Gutenberg
+    with full bibliographic metadata.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/66595.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/66595.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/66595
+  title: 'Monumentum Ancyranum: The Deeds of Augustus by Emperor of Rome Augustus
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A specific Gutenberg edition of an ancient Latin/Greek inscription (Res
+    Gestae Divi Augusti) with English translation, directly presenting the primary
+    text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/76193.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/76193.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/76193
+  title: 'Mr. Ray''s travels, Vol. 2 :  A collection of curious travels and voyages.…
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg digitization of Rauwolf's 16th-century travel
+    account (tr. Staphorst), an early-modern primary travel text explicitly tagged
+    'Early works to 1800'.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/41763.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/41763.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/41763
+  title: Dissertatio inauguralis physico-medica de respiratione by Daniel Bernoulli
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific identified Latin medical dissertation text by Daniel Bernoulli,
+    clearly a primary historical-language work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/10054.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/10054.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/10054
+  title: Nova analysis aquarum Medeviensium by friherre Jöns Jakob Berzelius | Project
+    Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg ebook page for a specific original Latin-language
+    scientific treatise, not commentary about it.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/22368.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/22368.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/22368
+  title: De francicae linguae recta pronuntiatione by Théodore de Bèze | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A 16th-century Latin treatise by Théodore de Bèze, directly linked as
+    its own Project Gutenberg text page.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/73440.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/73440.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/73440
+  title: Canto heróico sobre as façanh. dos portugueses na expedição de Tripoli by
+    Cardoso | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Specific Latin/Portuguese heroic poem text with named author and translator
+    on Project Gutenberg, a direct primary-text edition.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/51045.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/51045.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/51045
+  title: Ephemerides Barometricae Mutinenses (anni M.DC.XCIV) by Bernardino Ramazzini
+    et al. | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Latin primary scientific text from 1694 (early work on barometric observations)
+    hosted directly on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/17859.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/17859.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/17859
+  title: Colloquium heptaplomeres de rerum sublimium arcanis abditis by Jean Bodin
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin primary text by Jean Bodin with explicit bibliographic
+    metadata, directly hosted on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/15680.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/15680.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/15680
+  title: De Usu Ratiocinii Mechanici in Medicina by Herman Boerhaave | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Latin medical treatise by Boerhaave (early modern era), a direct primary
+    text link on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/13316.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/13316.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/13316
+  title: The Theological Tractates and The Consolation of Philosophy by Boethius |
+    Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg edition of Boethius's genuine Latin primary
+    texts (Theological Tractates and Consolation of Philosophy) with English translation,
+    not modern scholarship about them.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/59382.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/59382.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/59382
+  title: Secreta Monita Societatis Jesu. The Secret Counsels of the Society of Jesus,
+    in… | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin primary text (Secreta Monita) with English translation,
+    not a reference work or modern scholarship.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/33786.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/33786.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/33786
+  title: Readings from Latin Verse; With Notes by Curtis C. Bushnell | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg page for an actual anthology of Latin verse
+    texts with explanatory notes, a genuine old-language primary text collection.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/218.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/218.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/218
+  title: C. Iuli Caesaris De Bello Gallico, I-IV by Julius Caesar | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin primary text (Caesar's Gallic Wars) hosted on Gutenberg
+    in the original language.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/18837.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/18837.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/18837
+  title: Commentarii de Bello Gallico, Libri V-VIII by Julius Caesar | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A direct Project Gutenberg page for a Latin primary text by Caesar, explicitly
+    identified by language and era.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/29645.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/29645.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/29645
+  title: The Gate to Cæsar by Julius Caesar | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Latin-language reader/edition of Caesar's text hosted on Project Gutenberg
+    is a direct primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/27050.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/27050.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/27050
+  title: 'De Canibus Britannicis: Of Englishe Dogges by John Caius | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: This is a specific Project Gutenberg page for a 16th-century Latin work
+    (with its historical English translation) on dogs, explicitly flagged as an early
+    work to 1800.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/26570.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/26570.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/26570
+  title: De Pronunciatione Graecae & Latinae Linguae by John Caius | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A 16th-century Latin treatise on classical pronunciation, directly hosted
+    as a primary text on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/27655.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/27655.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/27655
+  title: De Rariorum Animalium atque Stirpium Historia by John Caius | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific 16th-century Latin zoological work by John Caius on Project
+    Gutenberg, a direct primary-text edition.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/73030.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/73030.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/73030
+  title: Robinson Crusoëus by Joachim Heinrich Campe and Daniel Defoe | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin-language edition of Robinson Crusoe (Robinson Crusoëus),
+    a direct primary text in Latin.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/23294.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/23294.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/23294
+  title: Catulli Carmina by Gaius Valerius Catullus and Robinson Ellis | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Direct Project Gutenberg page for Catullus's Latin poems, a genuine ancient-language
+    primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/51812.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/51812.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/51812
+  title: Vitruvii De architectura libri decem by Vitruvius Pollio | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Project Gutenberg edition of Vitruvius's De architectura in Latin,
+    a genuine ancient primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/20356.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/20356.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/20356
+  title: Hero and Leander and Other Poems by Christopher Marlowe and George Chapman
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is the Project Gutenberg page for the primary 1590s Elizabethan
+    poetic text itself (Marlowe/Chapman's Hero and Leander), not commentary about
+    it.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/46938.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/46938.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/46938
+  title: The Works of Horace, with English Notes by Horace | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Explicitly a Latin edition of Horace's works, a genuine old-language
+    primary text with English notes for Latin readers.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/15582.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/15582.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/15582
+  title: Chartvlarivm Ecclesiae Sancti Petri de Bvrgo Valentiae Ordinis Sancti Avgvstini
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Latin cartulary (collection of medieval charters) is itself a historical
+    primary-text edition in Latin, not modern scholarship about one.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/42212.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/42212.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/42212
+  title: Aloisiæ Sigeæ Toletanæ Satyra Sotadica de arcanis Amoris et Veneris by Chorier
+    et al. | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg ebook page for a Latin/French early-modern
+    erotic text (Satyra Sotadica), a primary historical-language work itself.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/14970.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/14970.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/14970
+  title: Academica by Marcus Tullius Cicero | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A direct Project Gutenberg page for a specific Latin philosophical work
+    by Cicero with an English/Latin text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/14945.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/14945.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/14945
+  title: Cato Maior de Senectute with Introduction and Notes by Marcus Tullius Cicero
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is Cicero's Latin work Cato Maior de Senectute with English notes,
+    a genuine old-language primary text edition.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/47001.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/47001.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/47001
+  title: De Officiis by Marcus Tullius Cicero | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Gutenberg work page for Cicero's De Officiis, a genuine Latin
+    primary text (with English translation), not a modern scholarly discussion.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/39355.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/39355.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/39355
+  title: Speeches against Catilina by Marcus Tullius Cicero | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Project Gutenberg edition of Cicero's Latin orations against Catiline,
+    a genuine classical Latin primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/226.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/226.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/226
+  title: Cicero's Orations by Marcus Tullius Cicero | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Direct Project Gutenberg page for a specific Latin primary text by Cicero.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/24967.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/24967.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/24967
+  title: First Oration of Cicero Against Catiline by Marcus Tullius Cicero | Project
+    Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg page for a specific Latin primary text (Cicero's
+    oration) with notes and vocabulary.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/51443.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/51443.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/51443
+  title: Claudian, volume 1 (of 2) by Claudius Claudianus | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Direct Gutenberg edition of Claudian's Latin text with parallel English
+    translation, a genuine primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/51444.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/51444.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/51444
+  title: Claudian, volume 2 (of 2) by Claudius Claudianus | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a direct Gutenberg edition of Claudian's Latin poetry with English
+    translation, a genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/9175.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/9175.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/9175
+  title: 'The Art of Poetry: an Epistle to the Pisos by Horace | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A bilingual Latin/English edition of Horace's Ars Poetica, a genuine
+    old-language primary text with translation.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/70468.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/70468.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/70468
+  title: 'Rebilius Crūsō :  Robinson Crusoe, in Latin; a book to lighten tedium to…
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: A Latin translation of Robinson Crusoe, directly linked on Project Gutenberg,
+    is a genuine old-language primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/50732.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/50732.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/50732
+  title: 'Rebilius Cruso: Robinson Crusoe, in Latin; a book to lighten tedium to…
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: Direct Project Gutenberg entry for a Latin-language edition of Robinson
+    Crusoe, a specific old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/23306.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/23306.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/23306
+  title: Meditationes de prima philosophia by René Descartes | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is Project Gutenberg's edition of Descartes' own Latin text of Meditationes
+    de prima philosophia, a primary work in an old language.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/66977.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/66977.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/66977
+  title: '[Pausaniou Ellados periegesis] = Pausaniae Descriptio Græciæ by Pausanias
+    | Project Gutenberg'
+  category: old_text_candidate
+  reasoning: Direct Gutenberg edition of Pausanias's ancient Greek text with parallel
+    Latin title, a genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/59357.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/59357.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/59357
+  title: Introduction to Anatomy, 1532 by David Edguard | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Project Gutenberg ebook page for a 1532 Latin anatomical text
+    with English translation, directly identifying an old-language primary work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/41255.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/41255.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/41255
+  title: Prodromus Florae Norfolkicae by Stephan Endlicher | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg book page for a Latin-language botanical
+    work, a primary text in the old language itself.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/18976.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/18976.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/18976
+  title: 'Encomium Artis Medicae: De Lof Der Geneeskunde by Desiderius Erasmus | Project
+    Gutenberg'
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg edition of an actual Erasmus work in Latin
+    with Dutch translation, a genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/16561.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/16561.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/16561
+  title: Encomium artis medicae by Desiderius Erasmus | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is Erasmus's own Latin oration on medicine, a primary Latin text
+    on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/58528.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/58528.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/58528
+  title: Fratris Felicis Fabri Evagatorium in Terrae Sanctae, Arabiae et Egypti… |
+    Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Project Gutenberg edition of a 15th-century Latin pilgrimage narrative,
+    a genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/60772.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/60772.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/60772
+  title: Fratris Felicis Fabri Evagatorium in Terrae Sanctae, Arabiae et Egypti… |
+    Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Latin edition of Felix Fabri's 15th-century pilgrimage account is a
+    genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/63139.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/63139.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/63139
+  title: Fratris Felicis Fabri Evagatorium in Terrae Sanctae, Arabiae et Egypti… |
+    Project Gutenberg
+  category: old_text_candidate
+  reasoning: A Project Gutenberg edition of a 15th-century Latin pilgrimage account
+    by Felix Fabri, edited by Hassler.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/51220.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/51220.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/51220
+  title: Crito by Plato | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin translation of Plato's Crito by Marsilio Ficino hosted
+    on Project Gutenberg, a direct primary-text work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/53315.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/53315.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/53315
+  title: Hesiodi Carmina by Hesiod | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Latin edition of Hesiod's works is a direct old-language primary text,
+    not modern scholarship.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/52692.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/52692.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/52692
+  title: 'Homeri Carmina et Cycli Epici Reliquiæ. Pars Prima: Ilias by Homer | Project
+    Gutenberg'
+  category: old_text_candidate
+  reasoning: A Latin translation/edition of Homer's Iliad is a specific old-language
+    primary text on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/52693.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/52693.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/52693
+  title: 'Homeri Carmina et Cycli Epici Reliquiæ. Pars Secunda: Odyssea by Homer |
+    Project Gutenberg'
+  category: old_text_candidate
+  reasoning: This is a specific Project Gutenberg edition of a Latin translation of
+    Homer's Odyssey, a genuine primary-text digitization in Latin.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/52691.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/52691.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/52691
+  title: 'Homeri Carmina et Cycli Epici Reliquiæ. Pars Tertia: Hymni by Homer | Project
+    Gutenberg'
+  category: old_text_candidate
+  reasoning: A Project Gutenberg edition of Homeric Hymns in Latin text, a direct
+    primary-text digitization.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/34914.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/34914.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/34914
+  title: De Plantis Esculentis Insularum Oceani Australis Commentatio Botanica by
+    Forster | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Latin botanical treatise, a primary text in the old/classical-style scholarly
+    Latin language itself hosted on Project Gutenberg.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/36186.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/36186.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/36186
+  title: Florulae Insularum Australium Prodromus by Georg Forster | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Latin-language primary work by an 18th-century naturalist listed on a
+    Gutenberg catalog page
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/58978.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/58978.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/58978
+  title: Galeni pergamensis de temperamentis, et de inaequali intemperie by Galen
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: This is a Project Gutenberg entry for Linacre's 16th-century Latin translation
+    of Galen's medical treatise, a genuine old-language primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/38503.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/38503.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/38503
+  title: The Oxford Book of Latin Verse by H. W. Garrod | Project Gutenberg
+  category: old_text_candidate
+  reasoning: Direct Project Gutenberg edition of a Latin verse anthology spanning
+    ancient through 5th-century texts, a genuine old-language primary-text compilation.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/16562.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/16562.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/16562
+  title: Chemiam artibus academicis jure esse inserendam by Hieronymus David Gaubius
+    | Project Gutenberg
+  category: old_text_candidate
+  reasoning: A specific Latin academic oration/work by an 18th-century author, directly
+    on Project Gutenberg.
+  related_to: ''

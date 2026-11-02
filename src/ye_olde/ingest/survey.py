@@ -41,6 +41,7 @@ from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup, Tag
 from pydantic import BaseModel
 
+from ..common.errors import LLMError
 from ..common.llm_client import call_llm_json, get_usage_summary
 from ..common.logging import get_logger
 from ..prompt import load_prompt
@@ -269,6 +270,19 @@ def _normalize_batch_reply(reply: object, *, batch_size: int) -> list[object] | 
 
 
 def _classify_batch_with_repair(prompt: str, *, batch_size: int, model: str | None) -> list[object]:
+    """Classifies one batch, with one repair retry on a count mismatch (see
+    `classify_links`'s docstring). If the repair retry *also* comes back the
+    wrong shape, this batch degrades to `batch_size` "uncertain" placeholders
+    instead of raising -- confirmed live, at real scale (a 146-link page
+    needing ~10 batches), that raising here is actively harmful: `classify_links`
+    only returns its accumulated `results` once every batch succeeds, so one
+    unrecoverable batch anywhere in that loop silently discarded every other
+    batch's already-correct classifications too, not just its own. A real run
+    lost ~145 links' worth of real work this way over exactly one bad batch.
+    Degrading just the broken batch is strictly better: the other 9 batches'
+    results survive, and the few links in this one batch are flagged for a
+    human instead of guessed at.
+    """
     reply = call_llm_json(prompt, system=_SYSTEM_PROMPT, model=model)
     normalized = _normalize_batch_reply(reply, batch_size=batch_size)
     if normalized is not None:
@@ -284,7 +298,12 @@ def _classify_batch_with_repair(prompt: str, *, batch_size: int, model: str | No
     normalized = _normalize_batch_reply(reply, batch_size=batch_size)
     if normalized is not None:
         return normalized
-    raise ValueError(f"expected a JSON array of {batch_size} entries, got {reply!r}")
+
+    _log.warning("batch of %d links still malformed after repair retry, degrading to uncertain: %r", batch_size, reply)
+    return [
+        {"decision": "uncertain", "reasoning": f"classification failed for this link even after retry: {reply!r}"}
+        for _ in range(batch_size)
+    ]
 
 
 class PageScopeDecision(BaseModel):
@@ -497,13 +516,21 @@ def crawl(
 
         try:
             raw_visit = checkpoint.get_or_compute(f"page:{url}", compute) if checkpoint else compute()
-        except ValueError as exc:
-            # A malformed LLM reply for this one page (CLAUDE.md "Error handling": a specific,
-            # expected condition, same shape as clean.review_units_with_llm's own fallback) --
-            # confirmed live that losing an entire multi-hundred-page crawl's already-found
-            # results over one bad batch is a real, expensive failure mode, not a hypothetical
-            # one. Logged and flagged for a human instead of silently retried (a repeat call is
-            # not obviously more likely to succeed) or allowed to discard everything else.
+        except (ValueError, LLMError) as exc:
+            # A malformed/empty LLM reply for this one page (CLAUDE.md "Error handling": a
+            # specific, expected condition, same shape as clean.review_units_with_llm's own
+            # fallback) -- confirmed live, twice, that losing an entire multi-hundred-page
+            # crawl's already-found results over one bad call is a real, expensive failure
+            # mode, not a hypothetical one: first a `ValueError` from a persistent batch-count
+            # mismatch, then (after that was fixed) an `LLMEmptyResponseError` -- a `RuntimeError`
+            # subclass, not a `ValueError`, from the `claude` CLI backend returning an empty/
+            # truncated response for one call out of 96 -- which this `except` didn't catch
+            # until now, and which discarded that entire crawl's results the same way. `LLMError`
+            # is this project's own catch-all for "the configured LLM didn't give us what we
+            # needed" (see `common/errors.py`) -- the right-sized net for this, not bare
+            # `Exception`, which would also swallow a genuine bug here instead of surfacing it.
+            # Logged and flagged for a human instead of silently retried (a repeat call is not
+            # obviously more likely to succeed) or allowed to discard everything else.
             _log.warning("page visit failed for %r, flagging for manual review instead of aborting: %s", url, exc)
             results.append(
                 SurveyResult(

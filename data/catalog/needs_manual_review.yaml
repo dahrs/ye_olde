@@ -469,33 +469,14 @@
 - key: https://www.gutenberg.org/browse/authors/g#a42168
   document_url: null
   found_via_chain:
-  - https://www.gutenberg.org/browse/languages/grc
+  - https://www.gutenberg.org/browse/languages/la
   - https://www.gutenberg.org/browse/authors/g#a42168
-  title: https://www.gutenberg.org/browse/authors/g#a42168
+  title: Galen
   category: uncertain
-  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
-    got [{''decision'': ''follow'', ''reasoning'': ''Pliny the Elder is an ancient
-    Roman author whose works are primary texts.'', ''confidence'': 0.8}, {''decision'':
-    ''irrelevant'', ''reasoning'': ''19th-century French letters collection, not an
-    old-language primary text.'', ''confidence'': 0.6}, {''decision'': ''irrelevant'',
-    ''reasoning'': ''Modern 20th-century author, not historical/old-language.'', ''confidence'':
-    0.75}, {''decision'': ''follow'', ''reasoning'': ''Historical 17th-century figure
-    whose autobiography could be a primary text.'', ''confidence'': 0.75}, {''decision'':
-    ''irrelevant'', ''reasoning'': ''Modern early 20th-century Cuban poet, not old-language.'',
-    ''confidence'': 0.75}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern
-    20th/21st century science fiction author.'', ''confidence'': 0.85}, {''decision'':
-    ''irrelevant'', ''reasoning'': ''Generic wikipedia navigation link.'', ''confidence'':
-    0.9}, {''decision'': ''candidate'', ''category'': ''old_text_candidate'', ''reasoning'':
-    ''English translation of the medieval Catalan romance Tirant lo Blanc.'', ''confidence'':
-    0.85}, {''decision'': ''irrelevant'', ''reasoning'': ''Modern hygiene manual,
-    unrelated subject.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'', ''reasoning'':
-    ''Modern hygiene/training manual.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'',
-    ''reasoning'': ''Generic wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'':
-    ''irrelevant'', ''reasoning'': ''Modern scholarly essay about monastery history,
-    not a primary text.'', ''confidence'': 0.8}, {''decision'': ''irrelevant'', ''reasoning'':
-    ''Generic wikipedia navigation link.'', ''confidence'': 0.9}, {''decision'': ''irrelevant'',
-    ''reasoning'': ''Modern work about aviation, unrelated subject.'', ''confidence'':
-    0.9}]'
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for the ancient physician Galen,
+    leading toward his works (11).'
   related_to: ''
 - key: https://www.gutenberg.org/browse/authors/h#a41497
   document_url: null
@@ -578,4 +559,2112 @@
   reasoning: broad listing (23 links), not auto-expanded -- survey it directly as
     its own starting URL if its full contents are wanted. This is a language-based
     browse index listing many different authors and works, not a single work's page.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/languages/la
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  title: https://www.gutenberg.org/browse/languages/la
+  category: uncertain
+  reasoning: 'classification failed for this page: expected a JSON array of 15 entries,
+    got [{''decision'': ''irrelevant'', ''reasoning'': ''Bernardino Ramazzini was
+    an early modern Italian physician known for occupational medicine treatises, not
+    an old-language primary text in this classical context, but era is plausible.'',
+    ''confidence'': 0.4}, {''decision'': ''irrelevant'', ''reasoning'': ''Edward Kennard
+    Rand was a 20th-century classical scholar/critic, not an old-language primary
+    author.'', ''confidence'': 0.75}, {''decision'': ''follow'', ''reasoning'': ''16th-century
+    German traveler/physician plausibly author of a primary travel account.'', ''confidence'':
+    0.55}, {''decision'': ''follow'', ''reasoning'': ''17th-century English naturalist
+    with his own period writings.'', ''confidence'': 0.5}, {''decision'': ''irrelevant'',
+    ''reasoning'': ''James S. Reid was a 19th/20th-century classical scholar/editor,
+    not an ancient primary author.'', ''confidence'': 0.65}, {''decision'': ''irrelevant'',
+    ''reasoning'': "Ernest Rhys was a modern (19th-20th c.) editor/writer, e.g. Everyman''s
+    Library, not an old-language primary text.", ''confidence'': 0.7}, {''decision'':
+    ''follow'', ''reasoning'': ''Name is too sparse to confirm, but plausibly a Latin
+    textbook/reader author worth checking.'', ''confidence'': 0.35}, {''decision'':
+    ''irrelevant'', ''reasoning'': ''Maren-Sofie Roestvig is a modern literary scholar,
+    not a primary old-language author.'', ''confidence'': 0.7}, {''decision'': ''follow'',
+    ''reasoning'': ''Valentin Rose was a 19th-century classical philologist who edited
+    ancient texts, plausibly leading to primary editions.'', ''confidence'': 0.55},
+    {''decision'': ''follow'', ''reasoning'': ''Georg Alexander Ruperti was a classical
+    scholar/editor of Latin authors, plausibly leading to primary editions.'', ''confidence'':
+    0.55}, {''decision'': ''irrelevant'', ''reasoning'': ''John Ruskin was a 19th-century
+    Victorian critic, not an old-language primary text author.'', ''confidence'':
+    0.8}, {''decision'': ''irrelevant'', ''reasoning'': ''Kenneth Fitzpatrick Russell
+    (b. 1911) is a modern bibliographer/historian, not a primary old-language author.'',
+    ''confidence'': 0.75}, {''decision'': ''follow'', ''reasoning'': ''Sallust is
+    an ancient Roman historian (86-34 BC), a genuine old-language primary author.'',
+    ''confidence'': 0.9}, {''decision'': ''candidate'', ''category'': ''old_text_candidate'',
+    ''related_to'': ''Sallust entry (13), likely an edition/translation of his works'',
+    ''reasoning'': "Specific title ''De Bello Catilinario Et Jugurthino'' is Sallust''s
+    ancient Latin work, a primary text edition.", ''confidence'': 0.85}]'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a51225
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/browse/authors/d#a51225
+  title: Delacrut, Mattathias ben Solomon, active 16th century
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 16th-century named author/translator entry, plausibly
+    historical Judaica figure, leads to a works list.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/e#a43174
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/browse/authors/e#a43174
+  title: Erter, Isaac, 1792-1851
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Named Hebrew Haskalah-era author (1792-1851) with
+    explicit dates, leads to his original Hebrew works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a51224
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/browse/authors/g#a51224
+  title: Gautier, of Metz, active 1245
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Explicitly tagged ''active 1245'', a medieval author
+    whose work is plausibly the source of another entry in this batch.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a42473
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/browse/authors/h#a42473
+  title: Horowitz, Chaim M., 1855?-1905
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Named compiler (1855?-1905) whose role suggests
+    assembling older rabbinic/legal texts, leads to his compiled works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a7926
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/browse/authors/s#a7926
+  title: Segal, Elhanan
+  category: uncertain
+  reasoning: An author name with no title or language cues; could be a modern commentator
+    or historical author.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/w#a1712
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/he
+  - https://www.gutenberg.org/browse/authors/w#a1712
+  title: Wiskott, Dawid
+  category: uncertain
+  reasoning: Just a name with no further context indicating era, language, or genre.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a2724
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a2724
+  title: Allen, P. S. (Percy Stafford), 1869-1933
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern scholar/editor (1869-1933); link likely
+    leads to his catalog of editorial works on historical figures.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a216
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a216
+  title: Anonymous
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Generic ''Anonymous'' author label/link, likely
+    leads to a list of anonymously-authored texts that may include old primary texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a6712
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a6712
+  title: Apicius
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman author name; link likely leads to
+    his works page (e.g. De re coquinaria).'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a49013
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a49013
+  title: Appleton, R. B. (Reginald Bainbridge), 1886-1938
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern person (1886-1938), likely translator/editor;
+    link may lead to an edition of an older work.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a965
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a965
+  title: Aristophanes, 446? BC-385? BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for the ancient Greek playwright Aristophanes.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a36259
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a36259
+  title: Arnold, Henry Hamilton
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for a 19th/20th-century editor/translator,
+    unclear which works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a36324
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a36324
+  title: Arrowsmith, Robert, 1860-1928
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for a modern (1860-1928) editor, leads
+    to his edited works.'
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/33311
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/33311
+  title: Selections from Viri Romae
+  category: uncertain
+  reasoning: Selections from the Latin schoolbook Viri Romae, but tagged English so
+    unclear if original Latin text is included.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a35906
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a35906
+  title: Athanasius, Saint, Patriarch of Alexandria, -373
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for the 4th-century Church Father
+    Athanasius.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a45796
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a45796
+  title: Auden, H. W. (Henry William), 1867-1940
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for a modern (1867-1940) editor/translator,
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a1156
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a1156
+  title: Augustine, of Hippo, Saint, 354-430
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for the ancient Church Father Augustine
+    of Hippo.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a53745
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a53745
+  title: Augustus, Emperor of Rome, 63 BC-14
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for the Roman emperor Augustus, likely
+    leading to related primary texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/a#a43799
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/a#a43799
+  title: Avellanus, Arcadius, 1851-1935
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/translator entry likely leading to his various
+    Latin translation works listed below.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a57685
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a57685
+  title: Barnett, P. A. (Percy Arthur), 1858-1941
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/editor entry that may lead to other works,
+    though the listed work itself is modern.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a58336
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a58336
+  title: Belon, Pierre, 1517?-1564
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for a 16th-century naturalist/traveler,
+    plausibly leading to historical primary accounts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a41345
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a41345
+  title: Bernoulli, Daniel, 1700-1782
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for the 18th-century scientist, leading
+    to his own works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a3282
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a3282
+  title: Berzelius, Jöns Jakob, friherre, 1779-1848
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for the chemist, likely leading to
+    his own historical scientific writings.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a25291
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a25291
+  title: Bèze, Théodore de, 1519-1605
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Théodore de Bèze, likely
+    leads to his historical works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a8542
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a8542
+  title: Bocage, Manuel Maria Barbosa du, 1765-1805
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Bocage, likely leads to
+    his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a46213
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a46213
+  title: Boccabadati, Giovan Battista, 1635-1696
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Boccabadati, likely leads
+    to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a7655
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a7655
+  title: Bodin, Jean, 1530-1596
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Jean Bodin, likely leads
+    to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a6193
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a6193
+  title: Boerhaave, Herman, 1668-1738
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Boerhaave, likely leads
+    to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/19072
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/19072
+  title: Opuscula Selecta Neerlandicorum Nederlandsch Tijdschrift voor Geneeskunde
+  category: uncertain
+  reasoning: A Dutch-language journal compilation of contributions; unclear if it's
+    an old primary text or a later journal reprint.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a4992
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a4992
+  title: Boethius, 480-525?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Boethius, likely leads to
+    his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a56151
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a56151
+  title: Borgnet, Auguste, 1848-
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Borgnet, could lead to further
+    works but era unclear.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a45532
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a45532
+  title: Brunck, Rich. Fr. Phil. (Richard François Philippe), 1729-1803
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 18th-century French classical scholar/editor, likely
+    leads to editions of Greek/Latin texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/b#a36602
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/b#a36602
+  title: Bushnell, Curtis C. (Curtis Clark), 1870-1936
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry (1870-1936), likely a modern classicist
+    whose works may include editions of ancient texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a3621
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a3621
+  title: Caesar, Julius, 99 BC-43 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman author entry, leads to his classical
+    works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a44382
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a44382
+  title: Cahun, David-Léon, 1841-1900
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century French orientalist/historian author
+    entry, plausibly leads to historical works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a32107
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a32107
+  title: Caius, John, 1510-1573
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 16th-century English scholar/physician, leads to
+    genuine old-language primary texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a9569
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a9569
+  title: Campe, Joachim Heinrich, 1746-1818
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a German writer; may lead
+    to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a57069
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a57069
+  title: Cardoso, José Francisco, 1761?-1823?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry, no work listed yet.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a8308
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a8308
+  title: Catullus, Gaius Valerius, 83? BC-53 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Classical Latin poet author entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a49148
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a49148
+  title: Cetius Faventinus, Marcus
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Roman-era technical writer author entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a9210
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a9210
+  title: Chapman, George, 1559?-1634
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: English Renaissance poet/translator author entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a44045
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a44045
+  title: Chase, Reginald Heber, 1832-1885
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century figure, likely editor/translator author
+    entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a3703
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a3703
+  title: Chevalier, Ulysse, 1841-1923
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: French historian/editor author entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a41575
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a41575
+  title: Chorier, Nicolas, 1612-1692
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 17th-century French author entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a128
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a128
+  title: Cicero, Marcus Tullius, 106 BC-43 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an ancient Roman writer,
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a46419
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a46419
+  title: Claudianus, Claudius, 370?-404?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for ancient Roman poet Claudian,
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a7562
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a7562
+  title: Collado, Diego, -1638
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a historical missionary-linguist,
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a34055
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a34055
+  title: Collar, William C. (William Coe), 1833-1916
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 19th-century classicist
+    whose works may include Latin texts or grammars.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/c#a9129
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/c#a9129
+  title: Colman, George, 1732-1794
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an 18th-century playwright/translator,
+    leads to his works (see link 14).'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a204
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/d#a204
+  title: Defoe, Daniel, 1661?-1731
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Defoe likely leads to his
+    works catalog, including the Latin translation listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a43946
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/d#a43946
+  title: Denison, Henry, 1810-1858
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/translator name entry leading to the Latin
+    Julius Caesar translation listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a44
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/d#a44
+  title: Descartes, René, 1596-1650
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Descartes leading to his
+    Latin philosophical work listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a54058
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/d#a54058
+  title: Dindorf, Ludwig August, 1805-1871
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Editor name entry leading to the classical text
+    edition listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a36257
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/d#a36257
+  title: Doederlein, Ludwig von, 1791-1863
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name entry leading to the Latin synonymy
+    manual listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/d#a36711
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/d#a36711
+  title: Du Bois, Philippe Goibaud, sieur, 1626-1694
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 17th-century translator name; could lead to French
+    translations of older Latin/patristic texts worth checking.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/e#a50412
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/e#a50412
+  title: Edguard, David, 1502?-1542?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name (16th century) leading to the 1532
+    anatomy text listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/e#a35307
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/e#a35307
+  title: Ekeberg, Anders Gustaf, 1767-1813
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an 18th/19th-century chemist;
+    could lead to his scientific writings.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/e#a8309
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/e#a8309
+  title: Ellis, Robinson, 1834-1913
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Robinson Ellis was a classical scholar/translator
+    of Latin texts, so this author entry likely leads to Latin works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/e#a41074
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/e#a41074
+  title: Endlicher, Stephan, 1804-1849
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Botanist author entry that plausibly leads to his
+    Latin botanical catalogue listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/e#a3026
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/e#a3026
+  title: Erasmus, Desiderius, 1469-1536
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Erasmus author entry leading to his Latin/Dutch
+    works listed below.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a50017
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a50017
+  title: Fabri, Felix, 1442?-1502
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Medieval author entry leading to his Latin travel
+    account listed below.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a53864
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a53864
+  title: Fairley, William, 1857-1918
+  category: uncertain
+  reasoning: Bare author name with no language or work context to judge relevance.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a46309
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a46309
+  title: Ficino, Marsilio, 1433-1499
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Renaissance translator of Plato into Latin, likely
+    leading to the Latin translation listed below.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a47003
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a47003
+  title: Firmin-Didot, Ambroise, 1790-1876
+  category: uncertain
+  reasoning: 19th-century printer/publisher; unclear if entry leads to a primary old-language
+    text or modern scholarship on printing/typography.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a32416
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a32416
+  title: Fleming, Abraham, 1552?-1607
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an Elizabethan-era writer/translator,
+    worth exploring further.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a37318
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a37318
+  title: Forster, Georg, 1754-1794
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry leading to his listed works
+    (6,7).'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/f#a8986
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/f#a8986
+  title: François de Neufchâteau, Nicolas Louis, comte, 1750-1828
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry, could lead to other works worth
+    checking.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a39500
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a39500
+  title: Garrod, H. W. (Heathcote William), 1878-1960
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/editor index entry, leads to his edited
+    anthology (13).'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a6790
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a6790
+  title: Gaubius, Hieronymus David, 1705?-1780
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an 18th-century figure,
+    possibly leading to Latin-language works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a31619
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a31619
+  title: Gellius, Aulus
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name for a classical Roman writer whose
+    works are old Latin texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a6713
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a6713
+  title: Giarratano, Caesar, 1880-1953
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Name of a modern editor/scholar, may lead to classical
+    text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a25124
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a25124
+  title: Gildersleeve, Basil L. (Basil Lanneau), 1831-1924
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Classicist editor''s name, likely links to editions
+    of Latin texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a760
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a760
+  title: Giles, J. A. (John Allen), 1808-1884
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century editor/translator of many historical
+    texts, likely leads to primary sources.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a56919
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a56919
+  title: Goffaux, François Joseph, 1755-1836
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Unclear historical figure name with dates, insufficient
+    context to judge relevance.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/g#a150
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/g#a150
+  title: Gower, John, 1325?-1408
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Medieval English poet, author entry likely leads
+    to his historical works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a1212
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a1212
+  title: Hakluyt, Richard, 1552?-1616
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Early modern English compiler/author whose works
+    are historical primary sources.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a55191
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a55191
+  title: Hariri, 1054-1122
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for al-Hariri of Basra (1054-1122),
+    a historical Arabic author, likely leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a50018
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a50018
+  title: Hassler, Konrad Dietrich, 1803-1873
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Name of an editor/scholar (1803-1873), likely linked
+    to an edited historical text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a48518
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a48518
+  title: Henderson, John, 1846?-1932
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name entry, role unclear but could lead
+    to historical text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a828
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a828
+  title: Herodotus, 480? BC-420? BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Entry for the ancient historian Herodotus, likely
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a45497
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a45497
+  title: Hertel, Johann Gottlob
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name entry, likely leads to a specific historical
+    work.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a191
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a191
+  title: Hesiod
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Entry for the ancient Greek poet Hesiod, likely
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a25706
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a25706
+  title: Hilary, Saint, Bishop of Poitiers, -367?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Entry for the 4th-century Christian author Hilary
+    of Poitiers, likely leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a8384
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a8384
+  title: Hillesum, L.
+  category: uncertain
+  reasoning: Bare name with no role or date context given, can't tell if linked to
+    a historical primary text.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a28377
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a28377
+  title: Hils, G.
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Translator name entry linked to the Odes of Casimire
+    translation listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a705
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a705
+  title: Homer, 750? BC-650? BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Entry for the ancient Greek poet Homer, likely
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a1790
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a1790
+  title: Horace, 65 BC-8 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for ancient Roman poet Horace,
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/h#a34543
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/h#a34543
+  title: Hosius, Carl, 1866-1937
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern classical scholar/editor whose author page
+    likely links to editions of ancient texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/j#a36500
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/j#a36500
+  title: Jahn, Otto, 1813-1869
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern classical scholar/editor (Jahn), likely
+    linking to editions of ancient works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/j#a48778
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/j#a48778
+  title: James, John, -1746
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Historical translator figure, likely linking to
+    his translated work(s).'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/j#a49014
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/j#a49014
+  title: Jones, W. H. S. (William Henry Samuel), 1876-1963
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Classical scholar/translator (Jones), author page
+    likely links to ancient text translations.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/k#a4962
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/k#a4962
+  title: Keightley, Thomas, 1789-1872
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century classical author/scholar whose page
+    likely links to his works on antiquity.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/k#a39160
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/k#a39160
+  title: Kelsey, Francis W. (Francis Willey), 1858-1927
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern classical scholar/editor, author page likely
+    links to ancient text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/k#a2950
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/k#a2950
+  title: Kirtland, John Copeland, 1870-1951
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern scholar/editor, author page likely links
+    to ancient text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/k#a36325
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/k#a36325
+  title: Knapp, Charles, 1868-1936
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern classical scholar whose author page likely
+    links to ancient text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a40819
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a40819
+  title: Laing, Gordon Jennings, 1869-1945
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern classical scholar whose author page likely
+    links to ancient text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a57185
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a57185
+  title: Leclaire, Théophile
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name entry in a catalog index with no further
+    detail; likely leads to a bibliography of works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a8336
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a8336
+  title: Leeuwenhoek, Antoni van, 1632-1723
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 17th-century natural philosopher;
+    may lead to Latin treatises.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a32551
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a32551
+  title: Lemaire, N. E. (Nicolas Eloi), 1767-1832
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a classical scholar/editor,
+    likely leads to Latin editions he produced.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a39724
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a39724
+  title: L'Héritier de Brutelle, Charles Louis, 1746-1800
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an 18th-century botanist,
+    likely leads to his Latin works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a36330
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a36330
+  title: L'Homond, C. F., 1727-1794
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an 18th-century French grammarian,
+    likely leads to Latin textbooks/editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a50248
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a50248
+  title: Linacre, Thomas, 1460-1524
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 15th-16th century humanist/translator,
+    likely leads to Latin/Greek translations.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a9516
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a9516
+  title: Linné, Carl von, 1707-1778
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Linnaeus, likely leads to
+    his Latin scientific works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/l#a40737
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/l#a40737
+  title: Liseux, Isidore, 1835-1894
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 19th-century publisher/translator
+    of classical texts, likely leads to editions/translations of old-language works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a151
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a151
+  title: Macaulay, G. C. (George Campbell), 1852-1915
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Classical scholar/translator (known for Herodotus
+    and Gower editions) whose author page likely links to old-language text translations.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a44044
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a44044
+  title: Macleane, A. J., 1813-1858
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century classicist known for editing Latin
+    satirists (Juvenal/Persius); author page likely leads to Latin texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a46930
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a46930
+  title: Macoubrey, William
+  category: uncertain
+  reasoning: No identifying context beyond a name; can't tell if this leads to an
+    old-language text.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a48972
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a48972
+  title: Mainwaring, Cyril Lyttleton, -1919
+  category: uncertain
+  reasoning: No identifying context beyond a name and dates; unclear if works are
+    old-language texts.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a156
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a156
+  title: Melanchthon, Philipp, 1497-1560
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Reformation-era theologian who wrote in Latin/German;
+    his author page likely includes historical-language works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a46003
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a46003
+  title: Meurs, Johannes van, 1579-1639
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Dutch classical scholar (Janus Meursius) who wrote
+    in Latin on antiquities; likely leads to Latin scholarly texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a8214
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a8214
+  title: Michelet, Jules, 1798-1874
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a 19th-century historian;
+    may lead to editions of historical primary texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a25705
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a25705
+  title: Migne, J.-P. (Jacques-Paul), 1800-1875
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/editor entry for the compiler of the Patrologia
+    Latina, likely leading to further Latin patristic editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a47498
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a47498
+  title: Miller, Walter, 1864-1949
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/translator index entry; could lead to translations
+    of classical works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/m#a1368
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/m#a1368
+  title: Mozart, Wolfgang Amadeus, 1756-1791
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Composer author entry; unclear if linked works
+    include old-language letters or texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/n#a31620
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/n#a31620
+  title: Nall, G. Herbert (George Herbert), 1860-
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry with no further content indication.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/n#a4201
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/n#a4201
+  title: Newman, Francis William, 1805-1897
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Known 19th-century translator of classical works
+    (e.g. Iliad); likely leads to such translations.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/n#a8264
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/n#a8264
+  title: Newman, John Henry, 1801-1890
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for John Henry Newman, who wrote
+    both English works and Latin academic pieces.'
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/34733
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/34733
+  title: Hymni ecclesiae
+  category: uncertain
+  reasoning: Title suggests Latin church hymns but is tagged (English) as Author,
+    making it unclear if this is an old-language primary text or an English-language
+    work.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/n#a6288
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/n#a6288
+  title: Newton, Isaac, 1642-1727
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry for Isaac Newton, whose major Latin
+    work follows in this list.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/n#a6792
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/n#a6792
+  title: Nixon, Paul, 1882-1956
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Translator index entry (known classical Latin translator),
+    may lead to classical text translations.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/n#a47631
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/n#a47631
+  title: Noel, François, 1755-1841
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author name with dates (1755-1841), likely a Latinist/lexicographer
+    whose works page may lead to bilingual references, but no direct text hint here.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/o#a2868
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/o#a2868
+  title: Ovid, 43 BC-18?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient author (Ovid) link likely leads to a works
+    index of classical Latin poetry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a48971
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a48971
+  title: Paine, W. L. (Walter Lionel), -1915
+  category: uncertain
+  reasoning: No era or role hint given for this name; could be modern or unrelated.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a39618
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a39618
+  title: Patrick, Saint, 373?-463?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Saint Patrick (5th century) author page likely
+    leads to his Latin writings listed elsewhere in this batch.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a54057
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a54057
+  title: Pausanias, active approximately 150-175
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Greek geographer/writer (2nd century AD)
+    link likely leads to his classical text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a7028
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a7028
+  title: Paxson, Susan
+  category: uncertain
+  reasoning: No dates or role given; name gives no clear indication of era or relevance.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a50247
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a50247
+  title: Payne, Joseph Frank, 1840-1910
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry, likely leads to a list of his
+    works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a37909
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a37909
+  title: Peano, Giuseppe, 1858-1932
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for Peano, leads to his works
+    including item 3.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a55192
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a55192
+  title: Peiper, C. R. S. (Carl Rudolph Samuel), 1798-1879
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/editor index entry, likely leads to editions
+    he produced.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a25123
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a25123
+  title: Persius, 34-62
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman satirist''s author index entry, likely
+    leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a24914
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a24914
+  title: Peterson, William, 1856-1921
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Editor index entry, leads to his edition of Quintilian
+    listed as item 7.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a42406
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a42406
+  title: Petitmangin, H. (Henri), 1872-1937
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Editor/author index entry, leads to his edition
+    listed as item 9.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a47547
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a47547
+  title: Pierrugues, P. (Pierre)
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry, leads to his glossary work
+    listed as item 11.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a55801
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a55801
+  title: Placentius, Jean-Leo, -1550?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 16th-century author index entry, leads to his work
+    listed as item 13.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a46420
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a46420
+  title: Platnauer, Maurice
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author/editor index entry, likely leads to classical
+    editions he produced.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a93
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a93
+  title: Plato, 427? BC-347? BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an ancient philosopher,
+    likely leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a2406
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a2406
+  title: Plautus, Titus Maccius, 254 BC-184 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an ancient Roman playwright,
+    likely leads to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a45496
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a45496
+  title: Pohl, Johann Christoph, 1705-1780
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 18th-century author entry, likely leads to his
+    Latin dissertation listed separately.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a7950
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a7950
+  title: Pohl, Rudolf, 1879-
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author entry with insufficient context to tell
+    what works he produced.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a5776
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a5776
+  title: Pope, R. Martin (Robert Martin), 1865-1944
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Translator''s author entry, modern figure who translated
+    old texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a133
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a133
+  title: Propertius, Sextus
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an ancient Roman poet, leading
+    to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a5755
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a5755
+  title: Prudentius, 348-
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for the ancient Latin Christian
+    poet.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/p#a1157
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/p#a1157
+  title: Pusey, E. B. (Edward Bouverie), 1800-1882
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century theologian/translator known for editions
+    of patristic texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/q#a24913
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/q#a24913
+  title: Quintilian, 35?-100?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for an ancient Roman rhetorician,
+    leading to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a46212
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/r#a46212
+  title: Ramazzini, Bernardino, 1633-1714
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ramazzini (1633-1714) was an early-modern physician
+    who authored his own Latin medical treatises, so this author page plausibly leads
+    to a primary text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a58289
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/r#a58289
+  title: Rauwolf, Leonhard, 1535-1596
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Leonhard Rauwolf (1535-1596) was a 16th-century
+    traveler/botanist who wrote his own historical travel account.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a58328
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/r#a58328
+  title: Ray, John, 1627-1705
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: John Ray (1627-1705) was a 17th-century naturalist
+    who authored his own period works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a46564
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/r#a46564
+  title: Rose, Valentin, 1829-1916
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Valentin Rose (1829-1916) was a 19th-century philologist
+    who edited editions of ancient texts, which could include primary-text material.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/r#a32836
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/r#a32836
+  title: Ruperti, Georg Alexander, 1758-1839
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Georg Alexander Ruperti (1758-1839) edited commentaries/editions
+    of classical Latin authors, which could lead to primary-text editions.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a28378
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a28378
+  title: Sarbiewski, Maciej Kazimierz, 1595-1640
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Neo-Latin Jesuit poet (1595-1640), author page
+    likely leads to Latin poetry works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a34152
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a34152
+  title: Schmitz, Leonhard, 1807-1890
+  category: uncertain
+  reasoning: 19th-century classical scholar/translator; unclear if his page leads
+    to primary texts or his own modern commentary.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a55879
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a55879
+  title: Schottennius, Hermannus
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Obscure name likely the author of the adjacent
+    Latin Colloquia text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a1308
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a1308
+  title: Seneca, Lucius Annaeus, 4? BC-65
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman Stoic philosopher, author page should
+    lead to his classical Latin works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a43584
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a43584
+  title: Sigea, Luisa, 1530?-1560?
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Renaissance female Latin humanist writer, author
+    page likely leads to a Latin primary text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a32550
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a32550
+  title: Silius Italicus, Tiberius Catius
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman epic poet (Punica), author page should
+    lead to classical Latin text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a42364
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a42364
+  title: Sinistrari, Ludovico Maria, 1632?-1701
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 17th-century Italian theologian who wrote Latin
+    treatises, plausibly leads to an old-language primary text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a58329
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a58329
+  title: Staphorst, Nicolaus, 1679-1731
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 18th-century German Lutheran historian/theologian,
+    plausibly wrote in Latin.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a32617
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a32617
+  title: Stewart, H. F. (Hugh Fraser), 1863-1948
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Bare author name/dates entry, could lead to historical
+    works by this editor/scholar.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a48777
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a48777
+  title: Sturt, John, 1658-1730
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 17th-18th century English engraver, might lead
+    to an illustrated historical work.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/s#a8335
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/s#a8335
+  title: Swammerdam, Jan, 1637-1680
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 17th century Dutch naturalist who wrote scientific
+    treatises, plausible old-language author.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/t#a2591
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/t#a2591
+  title: Tacitus, Cornelius, 56-117
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman historian, classic old-language primary-text
+    author.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/t#a36258
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/t#a36258
+  title: Taylor, Samuel H. (Samuel Harvey), 1807-1871
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th century American classicist likely compiled
+    Latin textbooks/readers.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/t#a50678
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/t#a50678
+  title: Törngren, Johannes Agapetus, 1772-1859
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Finnish scholar whose dissertation appears in the
+    next entry.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/t#a46214
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/t#a46214
+  title: Torti, Francesco, 1658-1741
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 17-18th century Italian physician known for Latin
+    medical treatises.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/t#a8448
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/t#a8448
+  title: Treub, Hector, 1856-1920
+  category: uncertain
+  reasoning: Modern Dutch gynecologist with no work title given; unclear if any old-language
+    text is attached.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/u#a9254
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/u#a9254
+  title: Université de Paris. Faculté de théologie
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Institutional author link leading to its own catalog
+    listed next.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/u#a39949
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/u#a39949
+  title: Upcott, Ernest Alfred
+  category: uncertain
+  reasoning: No work title or era clarity for this author name.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/v#a6680
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/v#a6680
+  title: Varro, Marcus Terentius, 116 BC-27 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Ancient Roman scholar, classic old-language primary-text
+    author.'
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/16400
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/16400
+  title: De M. Terenti Varronis Libris Grammaticis
+  category: uncertain
+  reasoning: Latin dissertation about Varro's grammatical works could be old primary
+    text or modern Latin-language scholarship about him.
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/v#a129
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/v#a129
+  title: Virgil, 70 BC-19 BC
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author index entry for a classical Latin author,
+    leading to his works.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/v#a9180
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/v#a9180
+  title: Vitruvius Pollio
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Classical Roman author (De Architectura), likely
+    leads to his primary text.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/v#a6714
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/v#a6714
+  title: Vollmer, Friedrich, 1867-1923
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Modern classical scholar/editor; may lead to editions
+    of classical Latin texts he contributed to.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/w#a56150
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/w#a56150
+  title: Wagner, Franz, 1675-1738
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 18th-century scholar; may lead to editions or commentaries
+    on classical texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/w#a6681
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/w#a6681
+  title: Wilmanns, Augustus, 1835-
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: 19th-century classical scholar/editor; may lead
+    to editions of Latin texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/w#a46258
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/w#a46258
+  title: Wolf, F. A. (Friedrich August), 1759-1824
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Famous classical philologist (Wolf); may lead to
+    editions/commentary on ancient texts.'
+  related_to: ''
+- key: https://www.gutenberg.org/browse/authors/z#a34153
+  document_url: null
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/browse/authors/z#a34153
+  title: Zumpt, Karl Gottlob, 1792-1849
+  category: uncertain
+  reasoning: 'author bibliography page, not auto-followed (can list dozens of unrelated
+    works) -- survey it directly as its own starting URL if its full bibliography
+    is wanted. Original reasoning: Author of a well-known Latin grammar; could lead
+    to a bilingual reference work.'
   related_to: ''

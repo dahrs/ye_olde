@@ -8,3 +8,65 @@
   reasoning: A grammar and glossary of Old English with German, a bilingual reference
     work pairing old and modern languages.
   related_to: ''
+- key: https://www.gutenberg.org/ebooks/825.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/825.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/825
+  title: Latin Vulgate, Bible Book Titles and Names by Anonymous | Project Gutenberg
+  category: bilingual_reference
+  reasoning: A specific Gutenberg ebook listing Latin Vulgate Bible book titles/names,
+    effectively a Latin-to-common-name reference list.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/33197.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/33197.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/33197
+  title: Döderlein's Hand-book of Latin Synonymes by Ludwig von Doederlein | Project
+    Gutenberg
+  category: bilingual_reference
+  reasoning: This is a Latin-English synonym reference work, directly identified by
+    title/subject metadata.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/50280.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/50280.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/50280
+  title: Latin Phrase-Book by Carl Meissner | Project Gutenberg
+  category: bilingual_reference
+  reasoning: A Latin phrase-book is a bilingual reference work (idioms/phrases) rather
+    than a historical primary text itself.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/71280.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/71280.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/71280
+  title: 'Lexicon Latinum :  Universae phraseologiae corpus congestum etc. by Franz
+    Wagner | Project Gutenberg'
+  category: bilingual_reference
+  reasoning: This is a Latin-French phraseological dictionary/lexicon, a bilingual
+    reference work pairing Latin with French.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/17713.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/17713.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/17713
+  title: Ars grammaticae Iaponicae linguae by Diego Collado | Project Gutenberg
+  category: bilingual_reference
+  reasoning: This is a specific early (pre-1800) Latin grammar of the Japanese language,
+    a bilingual reference work.
+  related_to: ''
+- key: https://www.gutenberg.org/ebooks/73700.txt.utf-8
+  document_url: https://www.gutenberg.org/ebooks/73700.txt.utf-8
+  found_via_chain:
+  - https://www.gutenberg.org/browse/languages/la
+  - https://www.gutenberg.org/ebooks/73700
+  title: Manuel de synonymie Latine by Ludwig von Doederlein | Project Gutenberg
+  category: bilingual_reference
+  reasoning: A French-Latin synonym dictionary/reference work directly tied to Latin
+    language study.
+  related_to: ''

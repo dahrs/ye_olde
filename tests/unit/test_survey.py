@@ -6,8 +6,7 @@ classification, and the crawl's frontier/depth-limit/checkpoint behavior
 
 from __future__ import annotations
 
-import pytest
-
+from ye_olde.common.errors import LLMEmptyResponseError
 from ye_olde.ingest import survey
 from ye_olde.ingest.acquire import FetchedContent
 from ye_olde.ingest.checkpoint import Checkpoint
@@ -195,13 +194,37 @@ def test_classify_links_recovers_via_one_repair_retry_on_count_mismatch(monkeypa
     assert decisions[1].decision == "irrelevant"
 
 
-def test_classify_links_raises_if_repair_retry_also_fails(monkeypatch):
+def test_classify_links_degrades_a_batch_to_uncertain_if_repair_retry_also_fails(monkeypatch):
+    # Confirmed live at real scale: raising here would discard every OTHER batch's already-
+    # correct classifications in the same classify_links call too (a 146-link page needing
+    # ~10 batches lost all of them over exactly one unrecoverable batch). Degrading just the
+    # broken batch, not the whole call, is the fix.
     links = [PageLink(url="https://x/1", text="A", context="ctx1")]
     calls = []
     monkeypatch.setattr(survey, "call_llm_json", lambda *a, **k: (calls.append(1), [])[1])
-    with pytest.raises(ValueError):
-        survey.classify_links(links)
+    decisions = survey.classify_links(links)
     assert len(calls) == 2  # one initial call + one repair retry, not retried indefinitely
+    assert len(decisions) == 1
+    assert decisions[0].decision == "uncertain"
+
+
+def test_classify_links_other_batches_survive_one_batch_degrading(monkeypatch):
+    links = [
+        PageLink(url="https://x/1", text="A", context="ctx1"),
+        PageLink(url="https://x/2", text="B", context="ctx2"),
+    ]
+    calls = []
+
+    def fake_call(prompt, **k):
+        calls.append(prompt)
+        if len(calls) <= 2:
+            return []  # batch 1 (both initial call and its repair retry) permanently broken
+        return [{"decision": "candidate", "category": "old_text_candidate", "reasoning": "r"}]
+
+    monkeypatch.setattr(survey, "call_llm_json", fake_call)
+    decisions = survey.classify_links(links, batch_size=1)
+    assert decisions[0].decision == "uncertain"  # batch 1 degraded
+    assert decisions[1].decision == "candidate"  # batch 2 still succeeded normally
 
 
 def _no_sleep(monkeypatch):
@@ -513,6 +536,39 @@ def test_crawl_survives_one_pages_malformed_reply_without_losing_others(monkeypa
     assert any(r.document_url == "https://example.com/ok-child" for r in results)
     # ...and the /broken branch must be flagged for manual review, not silently dropped
     # or allowed to abort the whole crawl.
+    assert any("classification failed" in r.reasoning for r in results)
+
+
+def test_crawl_survives_an_llm_error_not_just_valueerror(monkeypatch):
+    # Confirmed live, a second time, after the ValueError case above was already fixed: a
+    # real run against `la` made 96 successful calls, then hit one `LLMEmptyResponseError`
+    # (a RuntimeError subclass, NOT a ValueError -- the claude CLI backend returned an empty/
+    # truncated response for one call) -- which this crawl's `except ValueError` didn't catch,
+    # discarding all 96 calls' worth of results the same way the first bug did.
+    _no_sleep(monkeypatch)
+
+    def fake_fetch(url):
+        if url == "https://example.com/index":
+            html = '<a href="/ok">An ok page</a><a href="/broken">A broken page</a>'
+            return FetchedContent(raw=html.encode(), content_type="text/html", final_url=url)
+        if url == "https://example.com/ok":
+            return FetchedContent(raw=b"content", content_type="text/plain", final_url=url)
+        if url == "https://example.com/broken":
+            html = '<a href="/trigger-failure">TRIGGER_FAILURE</a>'
+            return FetchedContent(raw=html.encode(), content_type="text/html", final_url=url)
+        raise AssertionError(f"unexpected fetch: {url}")
+
+    def fake_classify(links, **k):
+        if any("TRIGGER_FAILURE" in link.text for link in links):
+            raise LLMEmptyResponseError("model response was empty or looked truncated")
+        return [survey.LinkDecision(decision="follow", reasoning="fine") for _ in links]
+
+    monkeypatch.setattr(survey, "fetch_source", fake_fetch)
+    monkeypatch.setattr(survey, "classify_links", fake_classify)
+
+    results = survey.crawl("https://example.com/index", max_depth=3)
+
+    assert any(r.document_url == "https://example.com/ok" for r in results)
     assert any("classification failed" in r.reasoning for r in results)
 
 
