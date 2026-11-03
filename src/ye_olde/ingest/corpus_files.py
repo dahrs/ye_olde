@@ -29,6 +29,12 @@ SUPPORTED_EXTENSIONS = (".txt", ".pdf")
 # English æ/þ, Latin macrons, ...) rather than stripping them.
 _UNSAFE_CHARS_RE = re.compile(r"[^\w]+", re.UNICODE)
 
+# A BC/BCE composition date (most of classical Latin/Greek literature) can't be written with a
+# literal "-" -- that's already the field separator -- so a BC year is instead the token
+# "BC<digits>" (e.g. "BC0019" for 19 BC), parsed to a negative CorpusFile.year. Plain digits parse
+# exactly as before; nothing about an existing, non-BC filename changes.
+_BC_YEAR_TOKEN_RE = re.compile(r"^BC(\d+)$")
+
 
 @dataclass(frozen=True)
 class CorpusFile:
@@ -77,12 +83,17 @@ def parse_corpus_filename(path: Path) -> CorpusFile:
     source = parts[-1]
     author = parts[-2]
     title = "-".join(parts[2:-2])
-    if not year_str.isdigit():
-        raise ValueError(f"{path.name!r}: year field {year_str!r} is not numeric")
+    bc_match = _BC_YEAR_TOKEN_RE.match(year_str)
+    if bc_match:
+        year = -int(bc_match.group(1))
+    elif year_str.isdigit():
+        year = int(year_str)
+    else:
+        raise ValueError(f"{path.name!r}: year field {year_str!r} is not numeric or a BC<digits> token")
     return CorpusFile(
         path=path,
         lang_code=lang_code,
-        year=int(year_str),
+        year=year,
         title=title,
         author=author.replace("_", " "),
         source=source.replace("_", " "),
@@ -108,13 +119,22 @@ def build_corpus_filename(*, lang_code: str, year: str | int, title: str, author
     (as `ye_olde.ingest.acquire.propose_metadata` infers them from scraped
     content), sanitizing each field with `sanitize_name_field` first.
 
+    `year` is almost always a plain positive numeral, as always. For a BC/BCE
+    composition date (most of classical Latin/Greek literature), pass a
+    negative `int` (e.g. `-19` for 19 BC) or the equivalent `"BC19"` string
+    directly -- either renders as the `BC<digits>` filename token
+    `parse_corpus_filename` reads back as a negative year (see that
+    function's own comment for why a literal "-" can't be used instead).
+
     Round-trips the result through `parse_corpus_filename` before returning
     it -- the one guarantee that every filename this project writes is also
     one `discover_corpus_files`/`align_corpus.py` can read back later.
     """
     year_str = str(year).strip()
-    if not year_str.isdigit():
-        raise ValueError(f"year {year!r} is not a valid 4-digit numeral")
+    if year_str.lstrip("-").isdigit():
+        year_str = f"BC{-int(year_str)}" if year_str.startswith("-") else year_str
+    elif not _BC_YEAR_TOKEN_RE.match(year_str):
+        raise ValueError(f"year {year!r} is not a valid 4-digit numeral, negative int, or BC<digits> token")
     stem = "-".join(
         [
             sanitize_name_field(lang_code),
@@ -181,6 +201,78 @@ def rename_folder_to_match_oldest(folder_path: Path, new_file: CorpusFile, *, ra
     folder_path.rename(renamed)
     _log.info("renamed %s -> %s (%s is now the oldest file in this work)", folder_path, renamed, new_file.path.name)
     return renamed
+
+
+def _normalize_for_matching(value: str) -> str:
+    # `_UNSAFE_CHARS_RE` (`\w`, unicode-aware) -- not an ASCII-only `[a-z0-9]` class, which
+    # collapses any non-Latin-script title (confirmed live: two distinct Greek-titled works,
+    # "Ἰδύλλια" and "Ἐπιγράμματα", both normalized to "" and were wrongly treated as the same work).
+    return _UNSAFE_CHARS_RE.sub(" ", value.lower()).strip()
+
+
+def authors_plausibly_match(author_a: str, author_b: str) -> bool:
+    """Whether two author/editor/translator strings plausibly name the
+    same person -- substring containment after normalization (handles
+    "Vergil" vs. "P. Vergilius Maro"), guarded by a minimum length so a
+    short/common fragment can't match almost anything. Two placeholder
+    "unknown"s count as a match (both sides genuinely don't know); an
+    "unknown" never matches a real name, since that would just be
+    guessing that an anonymous-attributed text and a named author's text
+    are the same work.
+    """
+    a, b = _normalize_for_matching(author_a), _normalize_for_matching(author_b)
+    if not a or not b:
+        return False
+    if a == "unknown" or b == "unknown":
+        return a == b
+    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
+    return len(shorter) >= 3 and shorter in longer
+
+
+def find_matching_work_folder(raw_dir: Path, title: str, original_author: str) -> Path | None:
+    """Finds an existing `data/raw/<work>/` folder whose OLDEST file --
+    by convention, the work's own original-language edition, see
+    `oldest_parseable_file` -- carries this same title AND a plausibly-
+    the-same original author. Used by a more-reliable re-acquisition of a
+    work already covered by an earlier, less reliable pass (e.g.
+    `structured_sources.py`'s Perseus path finding a work the generic
+    LLM-crawl path already acquired) to add to or correct that existing
+    folder instead of creating an accidental duplicate one.
+
+    Matches against the folder's oldest file specifically, not just any
+    file in it -- a translation's own `author` field is its translator,
+    not the work's original author, so comparing `original_author`
+    against an arbitrary sibling file (rather than the one file that's
+    reliably the original) would near-never match an existing folder
+    whose other translations happen to be by someone else.
+
+    Both title AND original author must match -- title alone is NOT
+    enough: many classical titles are conventional genre names reused by
+    unrelated authors ("Elegiae", "Epistulae", "Apology", "Symposium",
+    "Helen" are all titles two or more different, unrelated authors used
+    for two or more different works). Matching on title alone was caught
+    live silently merging Tibullus's "Elegiae" with Propertius's
+    "Elegiae" (and many similar cases) -- completely different texts, not
+    the same work from a different source.
+
+    `None` if nothing already on disk matches both, or `raw_dir` doesn't
+    exist yet.
+    """
+    raw_dir = Path(raw_dir)
+    if not raw_dir.is_dir():
+        return None
+    normalized_title = _normalize_for_matching(title)
+    for folder in sorted(raw_dir.iterdir()):
+        if not folder.is_dir():
+            continue
+        anchor = oldest_parseable_file(folder)
+        if anchor is None:
+            continue
+        if _normalize_for_matching(anchor.work_label) == normalized_title and authors_plausibly_match(
+            anchor.author, original_author
+        ):
+            return folder
+    return None
 
 
 def discover_corpus_files(folder: Path) -> list[CorpusFile]:

@@ -45,6 +45,7 @@ from ..common.errors import LLMError
 from ..common.llm_client import call_llm_json, get_usage_summary
 from ..common.logging import get_logger
 from ..prompt import load_prompt
+from . import authenticated_sites
 from .acquire import classify_content, fetch_source
 from .checkpoint import Checkpoint
 
@@ -395,7 +396,7 @@ def _visit_page(url: str, *, model: str | None, allow_broad_listing_gate: bool =
     instance directly) -- `crawl` immediately re-validates it into a
     `_PageVisit` before reading anything out of it.
     """
-    fetched = fetch_source(url)
+    fetched = fetch_source(url, extra_headers=authenticated_sites.headers_for(url))
     time.sleep(_POLITE_DELAY_SECONDS)
     if looks_like_a_document(fetched.content_type, url):
         return _PageVisit(kind="document").model_dump()

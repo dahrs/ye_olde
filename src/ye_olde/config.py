@@ -116,6 +116,20 @@ class Settings(BaseSettings):
     # .env only, same as every other credential in this file.
     hf_token: str = ""
 
+    # Not an API key -- Gallica (gallica.bnf.fr) sits behind Cloudflare *and*
+    # an ALTCHA proof-of-work check that only a real browser running
+    # JavaScript can solve (confirmed live: no plain HTTP request, however
+    # honestly identified, gets past it). Solving it once in a real browser
+    # grants a session good for 24 hours (confirmed live by actually doing
+    # this) -- copy the *entire* `Cookie` request-header value from the
+    # browser's DevTools after solving it (not one specific cookie name;
+    # robust to Gallica changing which cookies Cloudflare/ALTCHA actually
+    # set) and paste the whole thing here. Used by
+    # `ye_olde.ingest.authenticated_sites.headers_for` -- see that module
+    # for which sites need this and why it's kept separate from the plain,
+    # no-identification-needed fetch path everything else uses.
+    gallica_cookie: str = ""
+
 
 def get_settings() -> Settings:
     return Settings()

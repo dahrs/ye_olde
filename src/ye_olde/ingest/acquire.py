@@ -1,10 +1,23 @@
 """Corpus acquisition (spec §6 step 0, previously entirely manual): given a
-URL to a Project Gutenberg `.txt` file, a PDF on some other site, or an HTML
-"read online" page, fetches it, infers the five `data/raw/` naming fields
-(`lang_code`/`year`/`title`/`author`/`source`) from the actual fetched
-content via the configured LLM, and saves it under `data/raw/<work>/` with a
-filename `corpus_files.build_corpus_filename` guarantees is valid for the
-rest of the pipeline.
+URL, resolves it into one or more `data/raw/<work>/` files with filenames
+`corpus_files.build_corpus_filename` guarantees are valid for the rest of
+the pipeline. Two ways a URL gets resolved:
+
+- `structured_sources.resolve_structured_documents` first -- for a source
+  registered there (so far: Perseus Digital Library's CTS catalogs), it
+  reads that source's own structured metadata and returns every document
+  the naming fields are needed for, with no LLM call at all. `None` (the
+  URL isn't one of those) falls through to the next path -- "not a known
+  LLM-free source" always means the LLM path, never a silent skip.
+- Otherwise, the original path: fetch it (a Project Gutenberg `.txt` file,
+  a PDF on some other site, an HTML "read online" page), infer the five
+  `data/raw/` naming fields (`lang_code`/`year`/`title`/`author`/`source`)
+  from the actual fetched content via the configured LLM.
+
+A structured-source result that turns out to already be covered by an
+earlier, less reliable acquisition (matched by title via
+`corpus_files.find_matching_work_folder`) is merged into that same folder
+rather than duplicated -- see `_write_structured_documents`.
 
 The list of URLs to fetch lives in `data/sources.yaml` (`load_sources`), not
 hardcoded here -- see that file's own comments for its format.
@@ -33,8 +46,17 @@ from pydantic import BaseModel
 from ..common.llm_client import call_llm_json
 from ..common.logging import get_logger
 from ..prompt import load_prompt
+from . import authenticated_sites, structured_sources
 from .checkpoint import Checkpoint
-from .corpus_files import build_corpus_filename, parse_corpus_filename, rename_folder_to_match_oldest
+from .corpus_files import (
+    SUPPORTED_EXTENSIONS,
+    authors_plausibly_match,
+    build_corpus_filename,
+    find_matching_work_folder,
+    parse_corpus_filename,
+    rename_folder_to_match_oldest,
+)
+from .structured_sources import ResolvedDocument
 
 _log = get_logger(__name__)
 
@@ -87,14 +109,22 @@ class FetchedContent:
     final_url: str
 
 
-def fetch_source(url: str) -> FetchedContent:
+def fetch_source(url: str, *, extra_headers: dict[str, str] | None = None) -> FetchedContent:
     """GETs `url`, following redirects, with up to `_MAX_ATTEMPTS` tries.
 
     Only retries conditions that are plausibly transient (a connection-level
     error, or one of `_RETRYABLE_STATUSES`) -- a permanent client error
     (404, 403, ...) raises immediately via `raise_for_status()` rather than
     wasting two more attempts on something that won't change.
+
+    `extra_headers` -- from `authenticated_sites.headers_for(url)` at every
+    real call site -- merges over (and can override) the default headers
+    below; `{}`/`None` for every URL outside that module's registry, which
+    is every URL this function has ever handled before this parameter
+    existed. Zero behavior change for the plain, no-identification-needed
+    path that stays the default.
     """
+    headers = {"User-Agent": _USER_AGENT, **(extra_headers or {})}
     last_exc: Exception | None = None
     for attempt in range(1, _MAX_ATTEMPTS + 1):
         try:
@@ -102,7 +132,7 @@ def fetch_source(url: str) -> FetchedContent:
                 url,
                 follow_redirects=True,
                 timeout=_FETCH_TIMEOUT_SECONDS,
-                headers={"User-Agent": _USER_AGENT},
+                headers=headers,
             )
         except httpx.TransportError as exc:
             last_exc = exc
@@ -202,25 +232,31 @@ def acquire_source(
     raw_dir: Path,
     model: str | None = None,
     checkpoint: Checkpoint | None = None,
-) -> Path:
+) -> list[Path]:
     """Fetches, names, and saves one `data/sources.yaml` entry under
-    `raw_dir`. Resumable via `checkpoint` (keyed by URL) -- a URL already
-    recorded as done is returned from cache without re-fetching or re-
-    calling the LLM. Never overwrites an existing file: a computed filename
-    that already exists on disk raises `FileExistsError` instead.
+    `raw_dir` -- one file for the ordinary LLM path, or one per
+    edition/translation when a structured source (e.g. Perseus) resolves
+    this URL to a whole work's cluster at once. Resumable via `checkpoint`
+    (keyed by URL) -- a URL already recorded as done is returned from cache
+    without re-fetching or re-calling the LLM. Never overwrites an existing
+    file outside the structured-source merge case (see
+    `_write_structured_documents`): a computed filename that already
+    exists on disk otherwise raises `FileExistsError` instead.
     """
-    if checkpoint is not None and entry.url in checkpoint.entries:
-        return Path(str(checkpoint.entries[entry.url]))
 
-    def compute() -> str:
-        return str(_acquire_source_uncached(entry, raw_dir=raw_dir, model=model))
+    def compute() -> list[str]:
+        return [str(p) for p in _acquire_source_uncached(entry, raw_dir=raw_dir, model=model)]
 
     result = checkpoint.get_or_compute(entry.url, compute) if checkpoint is not None else compute()
-    return Path(result)
+    return [Path(p) for p in result]
 
 
-def _acquire_source_uncached(entry: SourceEntry, *, raw_dir: Path, model: str | None) -> Path:
-    fetched = fetch_source(entry.url)
+def _acquire_source_uncached(entry: SourceEntry, *, raw_dir: Path, model: str | None) -> list[Path]:
+    structured = structured_sources.resolve_structured_documents(entry.url, model=model)
+    if structured is not None:
+        return _write_structured_documents(structured, raw_dir=Path(raw_dir))
+
+    fetched = fetch_source(entry.url, extra_headers=authenticated_sites.headers_for(entry.url))
     kind = classify_content(fetched.content_type, fetched.final_url)
 
     if kind == "pdf":
@@ -249,4 +285,75 @@ def _acquire_source_uncached(entry: SourceEntry, *, raw_dir: Path, model: str | 
         target.write_bytes(fetched.raw)
     else:
         target.write_text(text, encoding="utf-8")
-    return target
+    return [target]
+
+
+def _write_structured_documents(documents: list[ResolvedDocument], *, raw_dir: Path) -> list[Path]:
+    """Writes every document a structured source resolved for one work,
+    merging into an existing `data/raw/<work>/` folder when
+    `corpus_files.find_matching_work_folder` finds one already covering
+    this title and original author (e.g. from an earlier, less reliable
+    LLM-crawl acquisition) rather than creating a duplicate. Within the
+    matched (or newly created) folder, a document *overwrites* whatever
+    already occupies its slot -- same `lang_code` for an edition (a work
+    has at most one original-language text), same `lang_code` AND a
+    plausibly-matching translator for a translation (a work can have
+    several genuine translations into the same language, from different
+    eras OR even the same year by different translators -- caught live:
+    two different 1894 English translations of Catullus, by Burton and by
+    Smithers, are not the same slot just because their years coincide) --
+    on the reasoning that a structured source resolving this far is more
+    reliable than the LLM guess that produced whatever's already there.
+    Anything that doesn't match an existing slot is added as a new file
+    instead.
+    """
+    if not documents:
+        return []
+    raw_dir = Path(raw_dir)
+    folder_path = find_matching_work_folder(raw_dir, documents[0].title, documents[0].original_author)
+
+    written: list[Path] = []
+    for doc in documents:
+        filename = build_corpus_filename(
+            lang_code=doc.lang_code, year=doc.year, title=doc.title, author=doc.author, source=doc.source, ext=".txt"
+        )
+        new_file = parse_corpus_filename(Path(filename))
+        if folder_path is None:
+            folder_path = raw_dir / Path(filename).stem  # anchors a brand-new work on its first document
+        folder_path = rename_folder_to_match_oldest(folder_path, new_file, raw_dir=raw_dir)
+
+        superseded = _find_overwrite_target(folder_path, doc)
+        target = superseded if superseded is not None else folder_path / filename
+        if target.exists() and superseded is None:
+            raise FileExistsError(f"refusing to overwrite existing file {target}")
+
+        folder_path.mkdir(parents=True, exist_ok=True)
+        if superseded is not None and superseded != folder_path / filename:
+            _log.info("replacing %s with more reliably-acquired %s", superseded, filename)
+            superseded.unlink()
+        final_target = folder_path / filename
+        final_target.write_text(doc.content, encoding="utf-8")
+        written.append(final_target)
+    return written
+
+
+def _find_overwrite_target(folder: Path, doc: ResolvedDocument) -> Path | None:
+    """The existing file in `folder` that `doc` should replace, if any --
+    see `_write_structured_documents` for the matching rule.
+    """
+    if not folder.is_dir():
+        return None
+    for existing in folder.iterdir():
+        if not (existing.is_file() and existing.suffix.lower() in SUPPORTED_EXTENSIONS):
+            continue
+        try:
+            parsed = parse_corpus_filename(existing)
+        except ValueError:
+            continue
+        if parsed.lang_code != doc.lang_code:
+            continue
+        if doc.role == "edition":
+            return existing
+        if parsed.year == doc.year and authors_plausibly_match(parsed.author, doc.author):
+            return existing
+    return None

@@ -93,6 +93,17 @@ propose_filename_system: |-
 
   Every field must be non-empty. If you are genuinely unsure of a field, give your single best-informed guess rather than a placeholder like "unknown" or "n/a" — the one exception is "author", where "unknown" is an acceptable, expected answer for genuinely anonymous works.
 
+lookup_composition_year_system: |-
+  You are a classics/historical-literature research assistant helping date a text for a diachronic translation corpus. You will be given a work's title and its original author, both in the work's ORIGINAL language -- not a later translation or a modern scholarly edition of it. Your only job is to state the single best-supported year that specific original-language text was actually composed/written.
+
+  Rules:
+  - Give a year only when it reflects well-established scholarly consensus (even an approximate one, e.g. "late Augustan era" collapsing to a representative year is fine) -- never your own guess dressed up as consensus.
+  - If the work's date is genuinely and substantially disputed among scholars (e.g. an oral-tradition epic with no single agreed-on century), reply with "year": null rather than inventing a precise-looking date for an acknowledged uncertainty.
+  - Never confuse the ORIGINAL work's own composition date with a later manuscript copy's date, a modern printed edition's publication year, or any translation's publication year.
+  - Most classical Latin/Greek works predate year 0 (BC/BCE) -- this is the expected, normal case here, not something unusual to second-guess.
+
+  Reply with ONLY a JSON object, no prose, no markdown code fence: {"year": <positive integer, or null>, "bc": <true if the year is BC/BCE, false if AD/CE -- ignored and may be false when year is null>, "reasoning": "<one short sentence citing what's well-established and why>"}
+
 split_mixed_system: |-
   You are splitting one downloaded file that bundles together several distinct editions of the same historical work (e.g. the original-language text plus one or more later translations), into its separate editions. You will be given a numbered list of CANDIDATE EDITIONS, each with a name (its author or translator), a year, a language, and a few free-text clues about it (e.g. "Old English", "prose translation", "verse translation") — and a numbered batch of text CHUNKS taken in order from the file.
 

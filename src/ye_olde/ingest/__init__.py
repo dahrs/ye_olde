@@ -26,6 +26,14 @@ path is Gutenberg-specific; two small shortcuts (reading Gutenberg's own
 direct-download format links and bibrec metadata when present) are bonus
 signal only, never a requirement. See `scripts/survey_catalog.py`.
 
+`authenticated_sites.py` is the small, separate path `acquire.py`/`survey.py`
+both reach into for a site that won't serve content without identification
+(e.g. Gallica, behind Cloudflare and a browser-only ALTCHA check — a human
+solves that once, the resulting cookie gets reused for up to the 24 hours
+the site itself grants it). The plain, no-identification path everything
+else uses (Gutenberg included) stays exactly as it was and never touches
+this module.
+
 `align.py` (+ `clean.py`, `extract.py`, `corpus_files.py`) implements §6's
 alignment pipeline: given a `data/raw/<work>/` folder of 2+ parallel-
 translation files (built up by `acquire.py` above, one file at a time), it

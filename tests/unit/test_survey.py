@@ -234,7 +234,9 @@ def _no_sleep(monkeypatch):
 def test_crawl_resolves_candidate_straight_to_a_document(monkeypatch):
     _no_sleep(monkeypatch)
     monkeypatch.setattr(
-        survey, "fetch_source", lambda url: FetchedContent(raw=b"irrelevant", content_type="text/plain", final_url=url)
+        survey,
+        "fetch_source",
+        lambda url, **k: FetchedContent(raw=b"irrelevant", content_type="text/plain", final_url=url),
     )
     results = survey.crawl("https://example.com/book.txt")
     assert len(results) == 1
@@ -244,7 +246,7 @@ def test_crawl_resolves_candidate_straight_to_a_document(monkeypatch):
 def test_crawl_follows_a_link_then_finds_gutenberg_format_link(monkeypatch):
     _no_sleep(monkeypatch)
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         if url == "https://www.gutenberg.org/browse/languages/ang":
             return FetchedContent(raw=_GUTENBERG_SHAPED_HTML.encode(), content_type="text/html", final_url=url)
         if url == "https://www.gutenberg.org/ebooks/111":
@@ -279,7 +281,7 @@ def test_crawl_downgrades_follow_to_uncertain_at_max_depth(monkeypatch):
     monkeypatch.setattr(
         survey,
         "fetch_source",
-        lambda url: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
+        lambda url, **k: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
     )
     monkeypatch.setattr(
         survey, "classify_links", lambda links, **k: [survey.LinkDecision(decision="follow", reasoning="maybe")]
@@ -297,7 +299,7 @@ def test_crawl_never_follows_a_gutenberg_author_listing_even_when_decided_follow
     _no_sleep(monkeypatch)
     fetch_calls = []
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         fetch_calls.append(url)
         return FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url)
 
@@ -325,7 +327,7 @@ def test_visit_page_skips_classification_for_a_broad_listing(monkeypatch):
     monkeypatch.setattr(
         survey,
         "fetch_source",
-        lambda url: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
+        lambda url, **k: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
     )
     many_links = [PageLink(url=f"https://example.com/{i}", text=f"Work {i}", context="ctx") for i in range(20)]
     monkeypatch.setattr(survey, "extract_links", lambda html, url: many_links)
@@ -348,7 +350,7 @@ def test_visit_page_proceeds_normally_for_a_single_work_with_many_links(monkeypa
     monkeypatch.setattr(
         survey,
         "fetch_source",
-        lambda url: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
+        lambda url, **k: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
     )
     many_links = [PageLink(url=f"https://example.com/{i}", text=f"Work {i}", context="ctx") for i in range(20)]
     monkeypatch.setattr(survey, "extract_links", lambda html, url: many_links)
@@ -380,7 +382,7 @@ def test_crawl_never_gates_its_own_starting_url_as_a_broad_listing(monkeypatch):
     monkeypatch.setattr(
         survey,
         "fetch_source",
-        lambda url: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
+        lambda url, **k: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
     )
     many_links = [PageLink(url=f"https://example.com/{i}", text=f"Work {i}", context="ctx") for i in range(20)]
     monkeypatch.setattr(survey, "extract_links", lambda html, url: many_links)
@@ -414,7 +416,7 @@ def test_crawl_respects_max_pages_budget(monkeypatch):
     _no_sleep(monkeypatch)
     fetch_calls = []
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         fetch_calls.append(url)
         return FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url)
 
@@ -435,7 +437,7 @@ def test_crawl_stops_gracefully_at_max_cost_usd(monkeypatch):
     _no_sleep(monkeypatch)
     fetch_calls = []
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         fetch_calls.append(url)
         return FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url)
 
@@ -471,7 +473,7 @@ def test_crawl_never_revisits_the_same_url_twice(monkeypatch):
     """
     fetch_calls = []
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         fetch_calls.append(url)
         if url == "https://example.com/index":
             return FetchedContent(raw=html_with_duplicate_link.encode(), content_type="text/html", final_url=url)
@@ -490,7 +492,7 @@ def test_crawl_is_resumable_via_checkpoint(monkeypatch, tmp_path):
     _no_sleep(monkeypatch)
     fetch_calls = []
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         fetch_calls.append(url)
         return FetchedContent(raw=b"content", content_type="text/plain", final_url=url)
 
@@ -508,7 +510,7 @@ def test_crawl_survives_one_pages_malformed_reply_without_losing_others(monkeypa
     # real money, zero usable output, on an actual run against all six real pages.
     _no_sleep(monkeypatch)
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         if url == "https://example.com/index":
             html = '<a href="/ok">An ok page</a><a href="/broken">A broken page</a>'
             return FetchedContent(raw=html.encode(), content_type="text/html", final_url=url)
@@ -547,7 +549,7 @@ def test_crawl_survives_an_llm_error_not_just_valueerror(monkeypatch):
     # discarding all 96 calls' worth of results the same way the first bug did.
     _no_sleep(monkeypatch)
 
-    def fake_fetch(url):
+    def fake_fetch(url, **k):
         if url == "https://example.com/index":
             html = '<a href="/ok">An ok page</a><a href="/broken">A broken page</a>'
             return FetchedContent(raw=html.encode(), content_type="text/html", final_url=url)
@@ -577,7 +579,7 @@ def test_crawl_drops_irrelevant_links_without_emitting_a_result(monkeypatch):
     monkeypatch.setattr(
         survey,
         "fetch_source",
-        lambda url: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
+        lambda url, **k: FetchedContent(raw=_NON_GUTENBERG_HTML.encode(), content_type="text/html", final_url=url),
     )
     monkeypatch.setattr(
         survey, "classify_links", lambda links, **k: [survey.LinkDecision(decision="irrelevant", reasoning="nope")]

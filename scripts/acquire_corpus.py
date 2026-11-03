@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> None:
     failed: list[tuple[str, str]] = []
     for entry in entries:
         try:
-            path = acquire_source(entry, raw_dir=Path(args.raw_dir), model=args.model, checkpoint=checkpoint)
+            paths = acquire_source(entry, raw_dir=Path(args.raw_dir), model=args.model, checkpoint=checkpoint)
         except Exception as exc:
             # Boundary catch (CLAUDE.md "Error handling"), applied per entry rather than once for
             # the whole run -- these are independent units of work, and one bad URL (a dead link,
@@ -79,8 +79,9 @@ def main(argv: list[str] | None = None) -> None:
             print(f"[FAILED] {entry.url}: {exc}", file=sys.stderr)
             failed.append((entry.url, str(exc)))
         else:
-            print(str(path))
-            succeeded.append(path)
+            for path in paths:
+                print(str(path))
+            succeeded.extend(paths)
 
     usage = get_usage_summary()
     print(
