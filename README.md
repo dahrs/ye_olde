@@ -5,13 +5,23 @@ Translates `(sentence, lang_code, year) → (sentence, lang_code, year)` — bet
 
 ## Status
 
-Translation pipeline (`src/ye_olde/`): `resolver/` and `retrieval/` are implemented (adaptive
-temporal reranking against the live Search API — see §4/§9); `classify/`, `fallback/`,
-`generation/`, and `translate()` itself are still stubs.
+Translation pipeline (`src/ye_olde/`): `resolver/`, `retrieval/`, `classify/`, `fallback/`,
+`generation/`, and `translate()` itself are all implemented — see `api.py`'s own docstring for the
+one real limitation: `fallback` only has data behind its *native* rung (loan/constructed-compound
+resolution raise `NotImplementedError`, §3a relational data isn't ingested yet), so a token with no
+native attested form falls through to `anachronism-passthrough` rather than a genuine loanword
+resolution.
 Search API (`search_api/`): deployed and serving real data — `/lookup` and `/search` both work
-against *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999, 704 aligned pairs). `/attest`
-has no data yet (spec §3a — community contributions aren't ingested yet). See spec §13e for the
-current state of each endpoint, and §7 for the next build-order step.
+against *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999, 704 aligned pairs), and both
+also serve `classify/`'s UD tags (`upos`/`ner`) for tag-aware matching. `/attest` has no data yet
+(spec §3a — community contributions aren't ingested yet). See spec §13e for the current state of
+each endpoint, and §7 for the next build-order step.
+Corpus acquisition/alignment is ahead of indexing right now: *Beowulf* (`ang`/`eng`, two modern
+translations) and *The Old English Physiologus* (`ang`/`eng`) are fully aligned under
+`data/processed/`, and a large batch of Latin/Greek texts from the Perseus Digital Library has
+been acquired into `data/raw/` — none of that is in `data/index/` or served by `search_api` yet
+(only the original Sir Gawayne pair is). Building/pushing their indexes is the next concrete step,
+not done automatically by acquisition or alignment.
 
 ## Project layout
 
@@ -213,11 +223,12 @@ way.
 
 ## Corpus ingestion & indexing scripts
 
-Six CLI scripts; four of them run in order to go from a URL to what `search_api/` serves. All
-six are plain `argparse` scripts — `--help` on any of them lists the full flag set; this section
-covers the common path. The other two, `survey_catalog.py` and `split_mixed_source.py`, are
-**not** part of that normal sequence — each is a standalone, occasional-use tool for one specific
-situation (see below), never run as a routine step and never called by any of the other scripts.
+Seven CLI scripts; four of them run in order to go from a URL to what `search_api/` serves. All
+seven are plain `argparse` scripts — `--help` on any of them lists the full flag set; this section
+covers the common path. The other three, `survey_catalog.py`, `acquire_structured_catalog.py`, and
+`split_mixed_source.py`, are **not** part of that normal sequence — each is a standalone,
+occasional-use tool for one specific situation (see below), never run as a routine step and never
+called by any of the other scripts.
 
 **Survey a catalog for candidates (`scripts/survey_catalog.py`)** — occasional-use, run *before*
 `acquire_corpus.py` when you don't already have a specific URL: given any index-of-works page on
@@ -248,6 +259,27 @@ against `data/raw/` and queuing into `data/sources.yaml`), `bilingual_references
 `needs_manual_review.yaml` (genuinely unclear from the page alone — meant to be resolved by hand,
 including a live web search, not re-run). Resumable by default, same convention as every other
 script here.
+
+**Acquire from a structured-catalog source (`scripts/acquire_structured_catalog.py`)** —
+occasional-use, an alternative to `survey_catalog.py` + `acquire_corpus.py` for a source that
+publishes its own machine-readable catalog metadata rather than needing an LLM to guess at it. So
+far this means Perseus Digital Library's CTS-format GitHub repos
+(`PerseusDL/canonical-<lang>Lit`), where each work's `__cts__.xml`/TEI headers already state
+author, edition-vs-translation, language, and publication year explicitly — no `sources.yaml`
+entry or `acquisition_candidates.yaml` triage needed, every work in the repo is discovered and
+acquired straight into `data/raw/`:
+```
+python scripts/acquire_structured_catalog.py --repo PerseusDL/canonical-latinLit
+python scripts/acquire_structured_catalog.py --repo PerseusDL/canonical-latinLit \
+    --repo PerseusDL/canonical-greekLit --limit 5
+```
+`--limit` caps how many works are acquired per repo — useful for a small validation run first.
+One classical-edition wrinkle: a scholarly edition's own `<date>` is the *edition's* publication
+year (e.g. 1881), not the work's actual composition date, which this corpus's `year` field means —
+Perseus doesn't carry that anywhere in its own metadata, so the configured LLM is asked for it
+specifically (the one LLM call this path still makes). Resumable by default, same as
+`acquire_corpus.py`; one work's failure is logged and reported without stopping the rest of the
+batch.
 
 **Acquire source texts (`scripts/acquire_corpus.py`)** — fetches every URL listed in
 `data/sources.yaml` (a Project Gutenberg `.txt` link, a PDF, or an HTML "read online" page),
@@ -300,17 +332,18 @@ builds the WordNet sense-id index first (step 3 below) if it's missing or incomp
 real alignment work starts — no separate manual step needed, though running step 3 standalone
 ahead of time (e.g. overnight) avoids that wait blocking your first real run.
 
-**Per-language tagging: tool-first (Stanza), LLM elsewhere (spec §3d)** — for a language with a
-real Universal Dependencies treebank model registered in `ye_olde.ingest.annotators` (today:
-`lat`, `grc` — Latin and Ancient Greek; add a language there only after confirming it has a real
-Stanza package, never assumed from its ISO code), `align_corpus.py` uses that model's own
-lemma/UPOS/FEATS/DEPREL for a linked span instead of trusting the LLM's guess for it — real
-treebank output beats an LLM guess where one exists. Every language without a registered tool
-(including this project's own `ang`/`enm` v1 focus — no tool covers those) falls back to the LLM's
-proposal exactly as before. Either source's tags are normalized through the same closed UD
-vocabularies (`ye_olde.common.ud_tags`) before being used anywhere, so a `lat` link's UPOS and an
-`enm` link's UPOS are guaranteed the same notation, never two different standards for the two
-languages just because they came from different sources. Stanza models auto-download to
+**Per-language tagging: tool-first (Stanza), LLM elsewhere (spec §3d)** — `ye_olde.ingest.annotators`
+registers every language Stanza has a full pos+lemma+depparse pipeline for (87, as of Stanza's
+`resources_1.14.0.json` — sourced programmatically from Stanza's own published resource manifest
+and resolved to this project's ISO 639-3 convention via `pycountry`, not hand-picked one language
+at a time). For a linked span in one of those languages, `align_corpus.py` uses that model's own
+lemma/UPOS/FEATS/DEPREL instead of trusting the LLM's guess for it — real treebank output beats an
+LLM guess where one exists. Every language without a registered tool (including this project's own
+`ang`/`enm` v1 focus — no Stanza model covers those) falls back to the LLM's proposal exactly as
+before. Either source's tags are normalized through the same closed UD vocabularies
+(`ye_olde.common.ud_tags`) before being used anywhere, so a `lat` link's UPOS and an `enm` link's
+UPOS are guaranteed the same notation, never two different standards for the two languages just
+because they came from different sources. Stanza models auto-download to
 `~/.cache/stanza` on first use of a registered language (~150-200MB per language) — redirect that
 cache the same way `.venv` was moved in this reference setup if disk is tight (symlink
 `~/.cache/stanza` elsewhere).
