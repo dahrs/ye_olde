@@ -140,6 +140,33 @@ def test_parse_cts_work_extracts_title_role_lang_and_description():
     assert "translator" in roles["translation"].description
 
 
+_GERMAN_INCONSISTENT_CTS_XML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<ti:work xmlns:ti="http://chs.harvard.edu/xmlns/cts" urn="urn:cts:greekLit:tlg0003.tlg001" xml:lang="grc">
+    <ti:title xml:lang="eng">History of the Peloponnesian War</ti:title>
+    <ti:translation urn="urn:cts:greekLit:tlg0003.tlg001.1st1K-ger1" xml:lang="ger">
+        <ti:label xml:lang="ger">Vier Staatsreden aus Thucydides</ti:label>
+        <ti:description xml:lang="ger">Gursching, Heinrich, translator. Augsburg: Wirth, 1856.</ti:description>
+    </ti:translation>
+    <ti:translation urn="urn:cts:greekLit:tlg0003.tlg001.1st1K-ger2" xml:lang="deu">
+        <ti:label xml:lang="deu">Geschichte des Peloponnesischen Kriegs</ti:label>
+        <ti:description xml:lang="deu">Wahrmund, Adolf, translator. 1864.</ti:description>
+    </ti:translation>
+</ti:work>
+"""
+
+
+def test_parse_cts_work_normalizes_iso_639_2_bibliographic_codes_to_terminology():
+    """Caught live: Perseus's own __cts__.xml tags the SAME language
+    (Modern Standard German) as "ger" for some translation entries of a
+    work and "deu" for others, within the very same work. Both must
+    normalize to "deu" -- the ISO 639-3 code this project's other
+    lang_codes already follow -- so they don't silently split into two
+    different lang_codes for one actual language.
+    """
+    _work_lang, _title, entries = ss._parse_cts_work(_GERMAN_INCONSISTENT_CTS_XML)
+    assert {e.lang for e in entries} == {"deu"}
+
+
 def test_parse_xml_tolerates_undefined_html_entities():
     """Several older canonical-latinLit source files use bare HTML named
     entities (&dagger;, &mdash;, &lsquo;, ...) that plain XML doesn't

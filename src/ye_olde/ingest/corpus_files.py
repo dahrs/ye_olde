@@ -7,6 +7,19 @@ under `data/raw/` (see the two example works there):
 e.g. `enm-1400-Sir_Gawayne_and_the_Green_Knight-Richard_Morris-Project_Gutenberg.txt`.
 A folder groups two or more files that are translations of one another —
 "parallel/comparable diachronic texts" in spec §3c.
+
+`lang_code` is always ISO 639-3 (`ang`, `enm`, `lat`, `grc`, `non`, ...). For a
+language where ISO 639-2 historically had two different 3-letter codes --
+"bibliographic" (B) and "terminology" (T), e.g. German `ger`/`deu`, French
+`fre`/`fra` -- ISO 639-3 adopted the T code as canonical, and so does this
+project: always `deu`, never `ger`; always `fra`, never `fre`. A source that
+hands back a B code (confirmed live: Perseus Digital Library's own
+`__cts__.xml` inconsistently tags the SAME German translation work's entries
+as `ger` for some and `deu` for others) must normalize it to the T code
+before it ever reaches a `data/raw/` filename -- see
+`structured_sources._normalize_lang_code` for where Perseus's own data gets
+this treatment. Never store a B code here, even if a source's own metadata
+uses one.
 """
 
 from __future__ import annotations

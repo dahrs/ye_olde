@@ -205,10 +205,45 @@ def _cts_child_text(el: ElementTree.Element, tag: str) -> str:
     return child.text.strip() if child is not None and child.text else ""
 
 
+# This project's lang_code is always ISO 639-3's "terminology" (T) code, never the older ISO
+# 639-2 "bibliographic" (B) one where the two differ -- see corpus_files.py's module docstring
+# for the standing rule. Perseus's own __cts__.xml isn't always consistent about which one it
+# tags xml:lang with -- confirmed live: the same Thucydides work's German translations are
+# tagged "ger" (B) for two entries and "deu" (T) for two others, despite all four being the same
+# (Modern Standard) language. Normalized to the T code on the way in so this corpus never
+# silently splits one language across two lang_codes.
+_ISO_639_2B_TO_639_3 = {
+    "alb": "sqi",
+    "arm": "hye",
+    "baq": "eus",
+    "bur": "mya",
+    "chi": "zho",
+    "cze": "ces",
+    "dut": "nld",
+    "fre": "fra",
+    "geo": "kat",
+    "ger": "deu",
+    "gre": "ell",
+    "ice": "isl",
+    "mac": "mkd",
+    "mao": "mri",
+    "may": "msa",
+    "per": "fas",
+    "rum": "ron",
+    "slo": "slk",
+    "tib": "bod",
+    "wel": "cym",
+}
+
+
+def _normalize_lang_code(code: str) -> str:
+    return _ISO_639_2B_TO_639_3.get(code, code)
+
+
 def _parse_cts_work(xml_bytes: bytes) -> tuple[str, str, list[_CtsEntry]]:
     """Returns `(work_lang, title, entries)` from a work-level `__cts__.xml`."""
     root = _parse_xml(xml_bytes)
-    work_lang = root.get(_XML_LANG, "")
+    work_lang = _normalize_lang_code(root.get(_XML_LANG, ""))
     titles = root.findall(f"{_CTS_NS}title")
     title = next((t.text.strip() for t in titles if t.get(_XML_LANG) == "eng" and t.text), "")
     if not title:
@@ -226,7 +261,7 @@ def _parse_cts_work(xml_bytes: bytes) -> tuple[str, str, list[_CtsEntry]]:
                 _CtsEntry(
                     role=role,
                     urn=urn,
-                    lang=el.get(_XML_LANG) or work_lang,
+                    lang=_normalize_lang_code(el.get(_XML_LANG) or work_lang),
                     label=_cts_child_text(el, "label"),
                     description=_cts_child_text(el, "description"),
                 )
