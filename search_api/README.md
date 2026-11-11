@@ -34,8 +34,11 @@ mid-2026, see spec §10).
   download with the HF token to avoid anonymous-read rate-limiting, same as the data shards below.
 
 `/attest` returns an empty `results: []` — no relational/attestation data has been ingested yet
-(spec §3a; only §3c aligned pairs exist so far). `/lookup` and `/search` both have real data:
-704 aligned `(enm, eng)` sentence pairs from *Sir Gawayne and the Green Knight* (1400 ↔ 1999).
+(spec §3a; only §3c aligned pairs exist so far). `/lookup` and `/search` both have real data,
+three shards: 557 aligned `(enm, eng)` pairs from *Sir Gawayne and the Green Knight* (1400 ↔ 1999),
+1,164 `(ang, eng)` pairs from *Beowulf* and *The Old English Physiologus*, and 1,256 `(eng, eng)`
+modernization-vs-modernization pairs from those same two works (see the main repo's
+`docs/diachronic-translation-pipeline-plan.md` §13e for the full current-state breakdown).
 All three are still soft-fail by design for whatever *isn't* covered yet — a language pair or
 year range with no shard returns `[]` rather than erroring (spec §11); `/search` specifically
 returns `[]` for a shard that has a `pairs/` Parquet file but no matching `vectors/pairs/` FAISS

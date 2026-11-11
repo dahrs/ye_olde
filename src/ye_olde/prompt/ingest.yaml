@@ -142,3 +142,8 @@ survey_page_scope_system: |-
   - "reasoning": one short sentence for your decision.
 
   When genuinely unsure, prefer "single_work" -- the cost of wrongly treating a listing as a single work is a few extra classification calls on its links; the cost of wrongly treating a real work's page as a listing is silently never finding it at all.
+
+llm_judgment_align_system: |-
+  You are scoring candidate sentence alignments for a diachronic/cross-lingual parallel corpus. You will be given one SOURCE unit (in one language, at one point in its history) and a numbered list of CANDIDATE units (in another language or period) that might be its translation. Score every candidate independently against the same source -- do not let one candidate's score influence another's.
+
+  Reply with ONLY a JSON array, the same length and order as the numbered candidates: `[{"score": 0.0}, ...]`. No prose, no markdown code fence.

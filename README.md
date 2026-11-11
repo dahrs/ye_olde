@@ -12,16 +12,30 @@ resolution raise `NotImplementedError`, §3a relational data isn't ingested yet)
 native attested form falls through to `anachronism-passthrough` rather than a genuine loanword
 resolution.
 Search API (`search_api/`): deployed and serving real data — `/lookup` and `/search` both work
-against *Sir Gawayne and the Green Knight* (enm 1400 ↔ eng 1999, 704 aligned pairs), and both
-also serve `classify/`'s UD tags (`upos`/`ner`) for tag-aware matching. `/attest` has no data yet
+against three indexed language-code pairs now: `enm_eng` (*Sir Gawayne and the Green Knight*, enm
+1400 ↔ eng 1999, 557 aligned pairs — see the note below on why this isn't 704 anymore), `ang_eng`
+(*Beowulf*'s two modern translations + *The Old English Physiologus*'s two, 1,164 pairs, merged
+into one shard since both works share the same `ang`/`eng` codes), and `eng_eng` (the four
+works' own `eng`↔`eng` modernization-vs-modernization pairs, 1,256 pairs). Both endpoints also
+serve `classify/`'s UD tags (`upos`/`ner`) for tag-aware matching. `/attest` has no data yet
 (spec §3a — community contributions aren't ingested yet). See spec §13e for the current state of
 each endpoint, and §7 for the next build-order step.
-Corpus acquisition/alignment is ahead of indexing right now: *Beowulf* (`ang`/`eng`, two modern
-translations) and *The Old English Physiologus* (`ang`/`eng`) are fully aligned under
-`data/processed/`, and a large batch of Latin/Greek texts from the Perseus Digital Library has
-been acquired into `data/raw/` — none of that is in `data/index/` or served by `search_api` yet
-(only the original Sir Gawayne pair is). Building/pushing their indexes is the next concrete step,
-not done automatically by acquisition or alignment.
+
+**`translate()` has now been run against real `ang` data for the first time** (previously only
+`enm`/`eng` had ever been exercised end-to-end) — see spec §9's newly-added open-decision entry
+for a real, reproducible gap it surfaced: `fallback.resolve` can end up preferring a *fuzzy*
+`/lookup` match that happens to carry a word-alignment span over an *exact* match that doesn't,
+because a result with no `highlighted_span` is skipped outright regardless of how confident the
+exact match itself was.
+
+**Sir Gawayne's pair count dropped from the original 704 to 557** — not a regression introduced by
+indexing, but something that had already happened in the committed `data/processed/` bitext file
+(commit `b54e32a`) before this round of indexing/pushing ever ran: the project tried several
+alignment re-runs for this work (`eval/reports/.../run1-imperfect-vs-run2.md` and friends — run1
+704 pairs via the Claude API, run2 752, run3 877 via the Claude CLI backend, run4 557 via Gemini),
+and the committed file is run4's output. Production had simply never been re-pushed since the
+original run1 build until now, so today's push also brought Sir Gawayne's *own* served data back
+in sync with what's actually been committed, not just added the two new pairs.
 
 ## Project layout
 

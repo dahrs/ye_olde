@@ -35,3 +35,16 @@ confidence_calibration: |-
   Do not default to one value (e.g. always 0.9) regardless of the above --
   a field where every rating clusters at the same number is as uninformative
   as not rating at all.
+
+translation_correspondence_calibration: |-
+  ## Translation-correspondence scoring
+
+  Wherever you are asked to score whether one sentence (the "candidate") is a genuine translation of another (the "source"), the number means: your estimate of the probability that a competent bilingual reader of both languages, shown both sentences side by side, would judge the candidate to be a genuine translation of the source -- allowing for ordinary translation looseness (different word order, idiom, added/dropped function words) -- not your own certainty about anything else, and not a measure of topical relatedness alone.
+
+  Calibrate it against these bands:
+  - 0.9-1.0: the candidate clearly renders the source's actual meaning -- the specific claim, description, or event the source expresses, not just its general subject.
+  - 0.6-0.8: real partial overlap -- the candidate shares the source's general topic or some of its content, but is missing, adding, or altering enough that it is not a faithful rendering of this specific sentence.
+  - 0.3-0.5: only superficial overlap -- a shared proper name, a shared common word, or the same broad subject area, with no real correspondence of what is actually being said.
+  - 0.0-0.2: no meaningful relationship -- different subject matter entirely, or the source/candidate is too short or generic (e.g. a bare title) to meaningfully support any claim of correspondence.
+
+  Do not default to a middle score like 0.5 because you are uncertain which band applies -- commit to whichever band the actual textual evidence supports, even a confidently low one. A score near the middle should mean you genuinely judged real-but-partial overlap (the 0.6-0.8 case above), not that you were unsure. Do not let a shared proper name, number, or common word alone pull your score up -- score the actual correspondence of meaning, not surface overlap (confirmed live, 2026-11-10: an embedding-based method was fooled by exactly this -- two Delphic maxims sharing the word "gods" but commanding different things scored higher than a genuine, unrelated-vocabulary translation pair).

@@ -17,7 +17,7 @@ Two halves, deliberately split:
     aligners (fast_align, awesome-align) handle poorly here because they
     weren't built for text with this much spelling/grammar drift.
 
-Three alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
+Four alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
   - "hybrid" (default): `sentence_align.mutual_nearest_neighbor_align` finds
     high-confidence sentence matches cheaply via embeddings; only the gaps
     it leaves unmatched (and the runner-up-margin cases it wasn't sure
@@ -25,7 +25,9 @@ Three alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
     embedding-matched anchors are back-filled with batched LLM calls.
     Far fewer LLM calls than "llm" mode on a long book, at the cost of
     trusting the embedding aligner's matches it doesn't ask the LLM to
-    double check.
+    double check. Works well for the English-family pairs this project
+    started with (`ang`/`enm`/`eng`) — see "llm_judge" below for where it
+    doesn't.
   - "llm": the LLM proposes sentence matches from scratch over sliding
     windows of the whole text, with no embedding pass at all — simpler,
     slower/costlier at scale, and doesn't depend on `sentence-transformers`
@@ -40,6 +42,23 @@ Three alignment modes (`mode=` on `align_corpus_pair`/`align_corpus_folder`):
     (word/phrase linking is an LLM-only capability elsewhere in this
     module) and the local-model review pass never runs for it, regardless
     of `LITELLM_MODEL` — this mode's whole point is zero model involvement.
+  - "llm_judge" (2026-11-10, for cross-script/cross-family pairs "hybrid"
+    doesn't work for): same shape as "hybrid" — a cheap-ish anchor pass,
+    then LLM discovery for whatever gaps remain — but the anchor pass
+    itself (`sentence_align.llm_judgment_align`) scores candidates by a
+    real LLM call instead of embedding cosine similarity.
+    `eval/alignment_benchmark_eval.py` found that neither embedding model
+    tried (`multilingual-e5-large`, the classics-specific
+    `bowphs/SPhilBerta`) reliably tells a genuine Ancient-Greek<->English
+    translation from an adversarial near-miss (shared vocabulary, wrong
+    meaning), while a plain LLM judgment call did. Considerably more
+    expensive than "hybrid" even where it finds the same anchors — there
+    is no free pass here at all — which is exactly why its own anchor-
+    finding step is checkpointed per unit (unlike "hybrid"'s embedding
+    pass, which is cheap enough not to need it): an interrupted run (an
+    API billing limit mid-document, the expected case at this cost, not
+    an edge case) resumes from its last-scored unit on retry, same
+    guarantee as every other LLM call in this module already has.
 
 Every LLM call this module makes — cleaning (clean.py), gap/block
 discovery, word-link batches — is checkpointed to disk as it succeeds (see
@@ -103,7 +122,7 @@ from .clean import clean_corpus_file
 from .corpus_files import CorpusFile, discover_corpus_files, pair_slug
 from .extract import extract_text, strip_boilerplate
 from .sense import ensure_wordnet_index_ready, resolve_sense_id
-from .sentence_align import SentenceMatch, lexical_align, mutual_nearest_neighbor_align
+from .sentence_align import SentenceMatch, lexical_align, llm_judgment_align, mutual_nearest_neighbor_align
 
 # A §3c aligned-pair record in its working (pre-output) shape: heterogeneous
 # values (str, list[str], nested alignment_links dicts, float, None) that
@@ -562,7 +581,90 @@ def _align_pairs_hybrid(
         units_a, units_b, model_name=embedding_model, margin_threshold=margin_threshold
     )
     print(f"[align] hybrid: {len(matches)} embedding anchors found", file=sys.stderr)
+    return _align_pairs_from_anchors(
+        cf_a,
+        cf_b,
+        units_a,
+        units_b,
+        matches,
+        anchor_method="embedding",
+        model=model,
+        block_size=block_size,
+        link_batch_size=link_batch_size,
+        checkpoint=checkpoint,
+    )
 
+
+def _align_pairs_llm_judge(
+    cf_a: CorpusFile,
+    cf_b: CorpusFile,
+    units_a: list[str],
+    units_b: list[str],
+    *,
+    model: str | None,
+    block_size: int,
+    margin_threshold: float,
+    link_batch_size: int,
+    checkpoint: Checkpoint | None = None,
+) -> list[PairRecord]:
+    """`mode="llm_judge"`'s anchor-finding pass: same banded matching as
+    `_align_pairs_hybrid`, but scored by `sentence_align.llm_judgment_align`
+    (a real LLM call per unit, checkpointed) instead of embeddings — see
+    that function's own docstring and this module's docstring for why.
+    Costs considerably more than "hybrid" mode even where it finds the
+    same anchors (there is no free anchor-finding pass here at all), but
+    the anchor pass itself is checkpointed exactly like the gap-discovery
+    calls below it are, so an interrupted run resumes without re-paying
+    for units already scored.
+    """
+    n_a, n_b = len(units_a), len(units_b)
+    print(f"[align] llm_judge: scoring {n_a}+{n_b} units via LLM judgment...", file=sys.stderr, flush=True)
+    matches = llm_judgment_align(
+        units_a,
+        units_b,
+        lang_a=cf_a.lang_code,
+        lang_b=cf_b.lang_code,
+        model=model,
+        margin_threshold=margin_threshold,
+        checkpoint=checkpoint,
+    )
+    print(f"[align] llm_judge: {len(matches)} LLM-judged anchors found", file=sys.stderr)
+    return _align_pairs_from_anchors(
+        cf_a,
+        cf_b,
+        units_a,
+        units_b,
+        matches,
+        anchor_method="llm_judge",
+        model=model,
+        block_size=block_size,
+        link_batch_size=link_batch_size,
+        checkpoint=checkpoint,
+    )
+
+
+def _align_pairs_from_anchors(
+    cf_a: CorpusFile,
+    cf_b: CorpusFile,
+    units_a: list[str],
+    units_b: list[str],
+    matches: list[SentenceMatch],
+    *,
+    anchor_method: str,
+    model: str | None,
+    block_size: int,
+    link_batch_size: int,
+    checkpoint: Checkpoint | None = None,
+) -> list[PairRecord]:
+    """Shared gap-filling + word-link-extraction + dedup logic for any
+    anchor-finding pass that's already produced a sorted, monotonic
+    `matches` list — `_align_pairs_hybrid`/`_align_pairs_llm_judge` differ
+    only in *how* `matches` was found (embeddings vs. LLM judgment), not in
+    what happens with it afterward, so that part is written once here.
+    `anchor_method` is stamped onto each anchor's own `"method"` field —
+    the one thing that does need to differ per caller in the output itself.
+    """
+    n_a, n_b = len(units_a), len(units_b)
     pairs: list[PairRecord] = []
     anchors: list[PairRecord] = []
     prev_i, prev_j = -1, -1
@@ -571,7 +673,7 @@ def _align_pairs_hybrid(
         gap_a, gap_b = units_a[prev_i + 1 : m.i], units_b[prev_j + 1 : m.j]
         if gap_a and gap_b:
             print(
-                f"[align] hybrid: gap of {len(gap_a)}+{len(gap_b)} units -> LLM discovery",
+                f"[align] {anchor_method}: gap of {len(gap_a)}+{len(gap_b)} units -> LLM discovery",
                 file=sys.stderr,
                 flush=True,
             )
@@ -597,7 +699,7 @@ def _align_pairs_hybrid(
                 "citation": None,
                 "sentence_confidence": m.score,
                 "alignment_links": [],
-                "method": "embedding",
+                "method": anchor_method,
             }
             pairs.append(anchor)
             anchors.append(anchor)
@@ -605,10 +707,10 @@ def _align_pairs_hybrid(
 
     extract_links_batch(anchors, cf_a, cf_b, model=model, batch_size=link_batch_size, checkpoint=checkpoint)
 
-    # Defensive dedup: gap-discovered pairs shouldn't overlap embedding
-    # anchors by construction (they cover disjoint unit ranges), but this
-    # costs nothing and guards against the LLM re-proposing a pair it was
-    # also shown as surrounding context.
+    # Defensive dedup: gap-discovered pairs shouldn't overlap anchors by
+    # construction (they cover disjoint unit ranges), but this costs
+    # nothing and guards against the LLM re-proposing a pair it was also
+    # shown as surrounding context.
     seen: set[tuple[str, str]] = set()
     deduped = []
     for pair in pairs:
@@ -666,8 +768,8 @@ def align_corpus_pair(
     use_checkpoint: bool = True,
 ) -> list[PairRecord]:
     """Aligns two whole cleaned works into deduped §3c-shaped pair records.
-    See the module docstring for what `mode="hybrid"`/`"llm"`/`"algorithmic"`
-    mean.
+    See the module docstring for what `mode="hybrid"`/`"llm"`/`"algorithmic"`/
+    `"llm_judge"` mean.
 
     If `checkpoint_path` is given, every LLM call this makes (gap/block
     discovery, word-link batches) is persisted there as it succeeds; a call
@@ -703,8 +805,20 @@ def align_corpus_pair(
         )
     elif mode == "algorithmic":
         pairs = _align_pairs_lexical(units_a, units_b, margin_threshold=margin_threshold)
+    elif mode == "llm_judge":
+        pairs = _align_pairs_llm_judge(
+            cf_a,
+            cf_b,
+            units_a,
+            units_b,
+            model=model,
+            block_size=block_size,
+            margin_threshold=margin_threshold,
+            link_batch_size=link_batch_size,
+            checkpoint=checkpoint,
+        )
     else:
-        raise ValueError(f"mode must be 'hybrid', 'llm', or 'algorithmic', got {mode!r}")
+        raise ValueError(f"mode must be 'hybrid', 'llm', 'algorithmic', or 'llm_judge', got {mode!r}")
 
     # "algorithmic" mode's whole point is zero model involvement -- never
     # run the (free-but-still-a-model-call) local review pass for it,
@@ -844,6 +958,15 @@ def _finalize_records(
             # resolved_model/resolved_embedding_model, since no model of
             # either kind was actually involved in producing this pair.
             sentence_method = "lexical:trigram-dice"
+        elif method == "llm_judge":
+            # Distinct from the plain "llm:" label below on purpose: a
+            # "llm_judge"-mode anchor and a gap-discovered pair went
+            # through genuinely different code paths (banded per-unit
+            # judgment-scoring vs. block-level proposal) with different
+            # cost/reliability characteristics -- collapsing them into the
+            # same label would lose exactly the provenance distinction
+            # spec §9 already flags `sentence_method` as needing to carry.
+            sentence_method = f"llm_judge:{resolved_model}"
         else:
             sentence_method = f"llm:{resolved_model}"
         records.append(
@@ -913,14 +1036,15 @@ def align_corpus_folder(
 
     Returns the list of bitext file paths written.
     """
-    if mode in ("hybrid", "llm"):
-        # Both modes eventually call resolve_sense_id (via _build_link) for
-        # every word/phrase link -- checked/built here, once, up front,
-        # rather than discovering only pair-by-pair that the WordNet index
-        # is missing or incomplete. Not passed `model_name=embedding_model`:
-        # resolve_sense_id's own calls below never pass one either (they use
-        # get_settings().embedding_model), so checking against that same
-        # default is what actually matches what gets queried at runtime.
+    if mode in ("hybrid", "llm", "llm_judge"):
+        # All three modes eventually call resolve_sense_id (via
+        # _build_link) for every word/phrase link -- checked/built here,
+        # once, up front, rather than discovering only pair-by-pair that
+        # the WordNet index is missing or incomplete. Not passed
+        # `model_name=embedding_model`: resolve_sense_id's own calls below
+        # never pass one either (they use get_settings().embedding_model),
+        # so checking against that same default is what actually matches
+        # what gets queried at runtime.
         ensure_wordnet_index_ready()
     folder = Path(folder)
     # discover_corpus_files() already returns files sorted oldest-year-first;

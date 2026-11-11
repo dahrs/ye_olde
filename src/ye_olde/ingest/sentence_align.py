@@ -29,6 +29,17 @@ candidate pair's score is computed, not in how that score becomes a match:
     no-model-at-all baseline: how much of the hybrid aligner's quality
     actually comes from semantic embeddings/LLM judgment, versus what pure
     lexical overlap alone would already get you.
+  - `llm_judgment_align` (LLM-scored): same banded/mutual-nearest-neighbor/
+    monotonic skeleton again, scored by asking the configured LLM to judge
+    each in-band candidate directly, instead of either metric above.
+    `eval/alignment_benchmark_eval.py` found (2026-11-10) that neither
+    embedding model tested (`multilingual-e5-large`, the classics-specific
+    `bowphs/SPhilBerta`) reliably separates genuine Ancient-Greek<->English
+    translations from adversarial near-misses (shared vocabulary, wrong
+    meaning), while a plain LLM judgment call did -- at real LLM-call cost,
+    unlike the two metrics above, which is why this one is checkpoint-aware
+    (see its own docstring) and used by align.py's `mode="llm_judge"`
+    deliberately, not as every mode's default.
 
 The two scoring metrics (embedding cosine similarity, trigram Dice
 similarity) and the shared margin-acceptance check live in `scorer.py`, not
@@ -46,11 +57,25 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
+from ..common.llm_client import call_llm_json
+from ..common.logging import get_logger
+from ..common.ud_tags import parse_confidence
+from ..prompt import load_prompt
+from .checkpoint import Checkpoint
 from .embed import embed_units
 from .scorer import char_trigrams, cosine_similarities, dice_coefficient, find_top1_top2
+
+_log = get_logger(__name__)
+
+_LLM_JUDGMENT_SYSTEM_PROMPT = (
+    load_prompt("ingest", "llm_judgment_align_system")
+    + "\n\n"
+    + load_prompt("common", "translation_correspondence_calibration")
+)
 
 
 @dataclass(frozen=True)
@@ -231,4 +256,123 @@ def lexical_align(
         margin_threshold=margin_threshold,
         score_a_to_b=lambda i, lo, hi: np.array([dice_coefficient(grams_a[i], grams_b[k]) for k in range(lo, hi)]),
         score_b_to_a=lambda j, lo, hi: np.array([dice_coefficient(grams_b[j], grams_a[k]) for k in range(lo, hi)]),
+    )
+
+
+def _normalize_judgment_reply(reply: object, *, batch_size: int) -> list[dict[str, Any]] | None:
+    if batch_size == 1 and isinstance(reply, dict):
+        reply = [reply]
+    if isinstance(reply, list) and len(reply) == batch_size and all(isinstance(x, dict) for x in reply):
+        return reply
+    return None
+
+
+def _judgment_batch_with_repair(prompt: str, *, batch_size: int, model: str | None) -> list[dict[str, Any]]:
+    """One LLM call scoring a whole batch of candidates against one source
+    unit, with one repair retry on a count/shape mismatch -- the same
+    "exactly one repair attempt, then degrade the batch rather than lose
+    it" shape as `ye_olde.ingest.survey.classify_links`'s own batch
+    repair, applied here to score objects instead of link decisions.
+    """
+    reply = call_llm_json(prompt, system=_LLM_JUDGMENT_SYSTEM_PROMPT, model=model)
+    normalized = _normalize_judgment_reply(reply, batch_size=batch_size)
+    if normalized is not None:
+        return normalized
+
+    repair_prompt = (
+        f"{prompt}\n\n---\n\nYour previous reply was: {reply!r}\n\nThat has the wrong shape. I gave you exactly "
+        f"{batch_size} numbered candidates above and need exactly {batch_size} score objects back, same order. "
+        "Reply again with ONLY the corrected JSON array, no prose, no markdown code fence."
+    )
+    reply = call_llm_json(repair_prompt, system=_LLM_JUDGMENT_SYSTEM_PROMPT, model=model)
+    normalized = _normalize_judgment_reply(reply, batch_size=batch_size)
+    if normalized is not None:
+        return normalized
+
+    _log.warning(
+        "batch of %d candidates still malformed after repair retry, degrading to score 0.0: %r", batch_size, reply
+    )
+    return [{"score": 0.0} for _ in range(batch_size)]
+
+
+def _llm_judgment_scores(
+    source: str, candidates: list[str], *, lang_a: str, lang_b: str, model: str | None
+) -> list[float]:
+    """One LLM call scoring `source` (language `lang_a`) against every one
+    of `candidates` (language `lang_b`) -- the batched building block
+    `llm_judgment_align`'s banded matching calls once per unit, covering
+    that unit's whole band in one call rather than one call per candidate
+    pair (the only thing that keeps this tractable at all: a single-pair-
+    per-call design would mean `O(n * band)` calls instead of `O(n)`).
+    """
+    if not candidates:
+        return []
+    prompt = f"SOURCE ({lang_a}): {source}\n\nCANDIDATES ({lang_b}):\n" + "\n".join(
+        f"{i}. {c}" for i, c in enumerate(candidates)
+    )
+    reply = _judgment_batch_with_repair(prompt, batch_size=len(candidates), model=model)
+    return [parse_confidence(item.get("score")) or 0.0 for item in reply]
+
+
+def llm_judgment_align(
+    units_a: list[str],
+    units_b: list[str],
+    *,
+    lang_a: str,
+    lang_b: str,
+    model: str | None = None,
+    band_ratio: float = 0.1,
+    min_band: int = 20,
+    margin_threshold: float = 0.05,
+    checkpoint: Checkpoint | None = None,
+) -> list[SentenceMatch]:
+    """Same banded, mutual-nearest-neighbor, monotonic algorithm as
+    `mutual_nearest_neighbor_align`/`lexical_align`, scored by asking the
+    configured LLM to directly judge whether each in-band candidate is a
+    genuine translation of the source unit — see this module's docstring
+    for why (`eval/alignment_benchmark_eval.py`'s 2026-11-10 finding: this
+    scores cross-script pairs far more reliably than either embedding
+    model tested), at the cost of a real LLM call per unit (batched over
+    that unit's whole band in one call — see `_llm_judgment_scores`).
+
+    `checkpoint`, if given, caches each unit's own batch-scored band under
+    a key encoding direction+index (`"a2b:<i>"`/`"b2a:<j>"`) — a real
+    requirement here, not a nice-to-have: at real LLM-call cost (unlike the
+    two free aligners above), an interrupted run (e.g. hitting an API
+    billing limit mid-document) has to resume from its last completed
+    unit, never re-paying for ones already scored. A candidate whose batch
+    reply stayed malformed after one repair retry gets a score of `0.0`
+    (never a crash, never a silently-dropped unit) — see
+    `_judgment_batch_with_repair`.
+
+    `lang_a`/`lang_b` are passed through only as a labeling hint in the
+    prompt text; nothing in this function's own control flow branches on
+    them.
+    """
+    n_a, n_b = len(units_a), len(units_b)
+    if n_a == 0 or n_b == 0:
+        return []
+
+    def score_a_to_b(i: int, lo: int, hi: int) -> np.ndarray:
+        def compute() -> list[float]:
+            return _llm_judgment_scores(units_a[i], units_b[lo:hi], lang_a=lang_a, lang_b=lang_b, model=model)
+
+        scores = checkpoint.get_or_compute(f"a2b:{i}", compute) if checkpoint is not None else compute()
+        return np.asarray(scores, dtype=float)
+
+    def score_b_to_a(j: int, lo: int, hi: int) -> np.ndarray:
+        def compute() -> list[float]:
+            return _llm_judgment_scores(units_b[j], units_a[lo:hi], lang_a=lang_b, lang_b=lang_a, model=model)
+
+        scores = checkpoint.get_or_compute(f"b2a:{j}", compute) if checkpoint is not None else compute()
+        return np.asarray(scores, dtype=float)
+
+    return _band_and_match(
+        n_a,
+        n_b,
+        band_ratio=band_ratio,
+        min_band=min_band,
+        margin_threshold=margin_threshold,
+        score_a_to_b=score_a_to_b,
+        score_b_to_a=score_b_to_a,
     )

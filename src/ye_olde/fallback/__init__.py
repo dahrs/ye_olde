@@ -91,13 +91,23 @@ def resolve(term: str, lang_a: str, year_a: int, lang_b: str, year_b: int, *, to
     year-aware-ranking capability this currently lacks.
     """
     hits = retrieval.lookup(term, lang_a, year_a, lang_b, year_b)
-    for hit in hits[:top_k]:
-        if hit.highlighted_span is None:
-            continue  # matched the sentence but no word-level span -- never usable as a "form"
+    # Filter to usable hits (a real word-level span to extract a form from)
+    # *before* capping by top_k, not after -- a hit with no highlighted_span
+    # carries zero word-level information regardless of its own sentence-pair
+    # confidence, so letting it occupy one of the top_k slots can push a
+    # genuinely usable, lower-but-still-confident hit out of consideration
+    # entirely. Confirmed live (2026-11-06, first real `ang` data test):
+    # querying "bearn" surfaced two exact, 0.95-confidence sentence matches
+    # with no span ahead of the first spanned hit -- with the old
+    # filter-after-slicing order, those two wasted 2 of top_k=5's slots on
+    # hits that could never produce a form either way, pushing the actual
+    # best spanned candidate one slot closer to falling out of top_k.
+    usable = [(hit, hit.highlighted_span) for hit in hits if hit.highlighted_span is not None]
+    for hit, span in usable[:top_k]:
         if hit.confidence >= _NATIVE_MATCH_THRESHOLD:
             return FallbackResult(
                 status="attested",
-                form=hit.highlighted_span,
+                form=span,
                 note=f"attested via {hit.citation or 'corpus'} lookup (confidence {hit.confidence:.2f})",
             )
 

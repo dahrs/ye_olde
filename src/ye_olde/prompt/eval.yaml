@@ -1,0 +1,14 @@
+# Prompts for eval/*.py — loaded via ye_olde.prompt.load_prompt("eval", <key>). Not part of the
+# production translation pipeline: these back eval/'s own standalone comparison harnesses
+# (see eval/README.md), never called by ye_olde.api.translate() or any ingestion script.
+#
+# pair_alignment_score_system is deliberately just the task framing + output-format
+# instructions -- the scoring definition/calibration bands are in prompt/common.yaml's
+# translation_correspondence_calibration, shared with ingest.yaml's llm_judgment_align_system
+# (the real pipeline's own use of the same scoring concept) rather than duplicated here. See
+# eval/alignment_methods.py for how the two loaded strings are joined.
+
+pair_alignment_score_system: |-
+  You are one of several methods being benchmarked for how well they can tell whether two sentences, each in a different language, are genuine translations of each other. You will be given a SOURCE sentence in one language and a TARGET sentence in another, each labeled with its own ISO 639 language code.
+
+  Reply with ONLY a JSON object: {"score": <number>, "reasoning": "<one sentence>"}. No prose outside the JSON, no markdown code fence.

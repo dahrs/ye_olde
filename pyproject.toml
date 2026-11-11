@@ -83,6 +83,10 @@ ignore = [
 # before running this harness (see the module docstring) — imports below
 # them is the point, not an oversight.
 "eval/run_local_model_eval.py" = ["E402"]
+# Same reasoning as the run_local_model_eval.py entry above: EMBEDDING_MODELS/
+# INCLUDE_LLM_METHOD are the lines a dev is meant to hand-edit before running
+# this harness.
+"eval/alignment_benchmark_eval.py" = ["E402"]
 
 [tool.ruff.format]
 docstring-code-format = true

@@ -659,6 +659,42 @@ def test_align_pairs_hybrid_combines_embedding_anchors_and_llm_gaps(monkeypatch)
     assert {r["source_text"]: r["sentence_confidence"] for r in records}["a0"] == 0.9
 
 
+def test_align_pairs_llm_judge_combines_llm_anchors_and_llm_gaps(monkeypatch):
+    cf_a = CorpusFile(Path("a.txt"), "grc", -490, "Work", "Author", "Src")
+    cf_b = CorpusFile(Path("b.txt"), "eng", 1914, "Work", "Author", "Src")
+
+    units_a = ["a0", "a1", "a2"]
+    units_b = ["b0", "b1", "b2"]
+
+    # No embedding aligner call at all in this mode -- the whole point.
+    monkeypatch.setattr(
+        align, "mutual_nearest_neighbor_align", lambda *a, **k: pytest.fail("llm_judge must not touch embeddings")
+    )
+    fake_matches = [align.SentenceMatch(i=0, j=0, score=0.9), align.SentenceMatch(i=2, j=2, score=0.85)]
+    monkeypatch.setattr(align, "llm_judgment_align", lambda *a, **k: fake_matches)
+
+    def fake_call_llm_json(prompt, *, system=None, model=None):
+        if system == align._LINKS_SYSTEM_PROMPT:
+            return [[], []]  # no word links for either LLM-judged anchor, for simplicity
+        return [{"source_text": "a1", "target_text": "b1", "citation": None, "confidence": 0.7, "links": []}]
+
+    monkeypatch.setattr(align, "call_llm_json", fake_call_llm_json)
+
+    records = align.align_corpus_pair(cf_a, cf_b, units_a, units_b, mode="llm_judge")
+
+    texts = {(r["source_text"], r["target_text"]) for r in records}
+    assert texts == {("a0", "b0"), ("a1", "b1"), ("a2", "b2")}
+
+    methods = {r["source_text"]: r["sentence_method"] for r in records}
+    # Distinct from "embedding:"/plain "llm:" -- a reader must be able to
+    # tell an llm_judge anchor apart from a gap-discovered pair (see
+    # _finalize_records) and from an embedding-sourced one.
+    assert methods["a0"].startswith("llm_judge:")
+    assert methods["a2"].startswith("llm_judge:")
+    assert methods["a1"].startswith("llm:")
+    assert not methods["a1"].startswith("llm_judge:")
+
+
 def test_align_corpus_folder_writes_one_jsonl_file_per_pair(tmp_path, monkeypatch):
     raw_dir = tmp_path / "eng-1810-Work-Author-Source"
     raw_dir.mkdir()
@@ -844,7 +880,7 @@ def test_align_corpus_pair_invalid_mode_raises():
         align.align_corpus_pair(cf_a, cf_b, ["a"], ["b"], mode="bogus")
 
 
-def test_align_corpus_folder_ensures_wordnet_index_for_hybrid_and_llm(tmp_path, monkeypatch):
+def test_align_corpus_folder_ensures_wordnet_index_for_hybrid_llm_and_llm_judge(tmp_path, monkeypatch):
     raw_dir = tmp_path / "eng-1810-Work-Author-Source"
     raw_dir.mkdir()
     (raw_dir / "eng-1810-Work-Author-Source.txt").write_text("Old content.")
@@ -852,10 +888,14 @@ def test_align_corpus_folder_ensures_wordnet_index_for_hybrid_and_llm(tmp_path, 
 
     monkeypatch.setattr(align, "clean_corpus_file", lambda cf, raw_text, **k: [raw_text])
     monkeypatch.setattr(align, "call_llm_json", lambda *a, **k: [])
+    # llm_judgment_align makes its own real LLM call via sentence_align's own
+    # separate `call_llm_json` binding -- mocking align.call_llm_json above
+    # has no effect on it (a different module's import, not the same name).
+    monkeypatch.setattr(align, "llm_judgment_align", lambda *a, **k: [])
     calls = []
     monkeypatch.setattr(align, "ensure_wordnet_index_ready", lambda **k: calls.append(k))
 
-    for mode in ["hybrid", "llm"]:
+    for mode in ["hybrid", "llm", "llm_judge"]:
         calls.clear()
         align.align_corpus_folder(raw_dir, output_dir=tmp_path / f"processed_{mode}", mode=mode, use_cache=False)
         assert len(calls) == 1, mode

@@ -11,6 +11,23 @@ The real upload call (`huggingface_hub.HfApi(...).upload_folder(...)`) is
 a deferred import inside `main()` itself -- every non-dry-run test injects
 a fake `huggingface_hub` module into `sys.modules` rather than hitting the
 real Hugging Face Hub.
+
+**`_fake_settings` always passes an explicit `hf_token`/`hf_dataset_repo_id`
+default, never relies on both being merely absent.** `_env_file=None` only
+disables reading the `.env` *file* -- it does nothing to stop
+`pydantic-settings` from still reading a same-named real process
+environment variable, and this machine's `HF_TOKEN`/`HF_DATASET_REPO_ID`
+turned out to be real, live, write-scoped credentials once `.env` itself
+was filled in for real use. An earlier version of this helper omitted
+`hf_token` unless a test explicitly overrode it, which worked fine until
+that real env var started being present -- at which point
+`test_main_exits_when_token_missing_and_not_a_dry_run` silently stopped
+testing the missing-token path at all and instead made a real,
+authenticated push to the live `dahrs/ye_olde_data-index` dataset repo
+with this file's own throwaway `_make_index_dir` fixture content
+(confirmed live, 2026-11-10 -- `pairs/shard.parquet` had to be cleaned up
+off the real repo afterward). Never assume an env var this project's own
+`.env` might plausibly set is simply unset; clear it explicitly instead.
 """
 
 from __future__ import annotations
@@ -25,9 +42,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import push_index_to_hf  # noqa: E402
 from ye_olde.config import Settings  # noqa: E402
 
+_SENSITIVE_DEFAULTS: dict[str, str] = {
+    "hf_dataset_repo_id": "",
+    "hf_token": "",
+    "hf_cache_dir": "/tmp/hf-cache",
+}
+
 
 def _fake_settings(**overrides: str) -> Settings:
-    return Settings(_env_file=None, **overrides)
+    values = {**_SENSITIVE_DEFAULTS, **overrides}
+    return Settings(_env_file=None, **values)
 
 
 def _make_index_dir(tmp_path: Path, *, with_files: bool = True) -> Path:

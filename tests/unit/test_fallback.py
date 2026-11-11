@@ -44,6 +44,21 @@ def test_resolve_skips_a_hit_with_no_highlighted_span(monkeypatch):
     assert result.form == "gaeth"
 
 
+def test_resolve_does_not_let_unusable_hits_exhaust_the_top_k_budget(monkeypatch):
+    # Regression test for the bug found live (2026-11-06) querying "bearn"
+    # against real ang/eng data: more no-span hits than fit in top_k=5 sat
+    # ahead of the first usable (spanned) hit in confidence order. Filtering
+    # *after* slicing to top_k would scan five unusable hits, find nothing,
+    # and wrongly fall back to anachronism-passthrough -- the fix filters
+    # for usable hits first, then caps by top_k, so the one real match past
+    # the old cutoff is still found.
+    hits = [_hit(None, 0.99 - i * 0.01) for i in range(5)] + [_hit("gaeth", 0.8)]
+    monkeypatch.setattr(fallback.retrieval, "lookup", lambda *a, **k: hits)
+    result = fallback.resolve("goes", "eng", 2000, "enm", 1400)
+    assert result.status == "attested"
+    assert result.form == "gaeth"
+
+
 def test_resolve_skips_low_confidence_hits(monkeypatch):
     hits = [_hit("weak-match", 0.2), _hit("gaeth", 0.9)]
     monkeypatch.setattr(fallback.retrieval, "lookup", lambda *a, **k: hits)

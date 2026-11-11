@@ -1,0 +1,118 @@
+# Ancient Greek <-> English alignment examples for alignment_benchmark_eval.py.
+# To add a new language pair, copy this file's shape as <lang_a>_<lang_b>.yaml;
+# to grow this one, append more entries to either list below -- nothing else
+# in the harness needs to change.
+#
+# **Positives must come from an independent, non-LLM source that states the
+# correspondence itself** (a Wikipedia article quoting both the Greek and its
+# standard English translation together, a cited scholarly edition, etc.) --
+# never from an LLM (including this one) reading both sides and deciding they
+# match. That would make this benchmark circular: it exists specifically to
+# measure whether an LLM-based scoring method (among others) can tell a real
+# alignment from a fake one, so the ground truth can't itself be an LLM's own
+# judgment call, or every method being tested would be graded against a
+# standard that quietly favors however an LLM happens to read Greek.
+# (2026-11-10: the first version of this file broke this rule -- its two
+# positives were lines from a real 1914 human translation, but *paired* by
+# an LLM's own reading of the Greek, not by an independent source stating the
+# correspondence. Replaced below with Wikipedia-sourced ones instead.)
+#
+# Negatives have a looser bar: constructing a *known-wrong* pairing by cross-
+# matching two independently-sourced, correctly-translated phrases (or by
+# pairing unrelated real works) needs no Greek comprehension at all -- "these
+# two phrases come from different, unrelated sources" is a bibliographic
+# fact, not a translation judgment. That's what makes a negative safe to
+# construct this way where a positive isn't.
+#
+# Every entry's "note" states *why* it's certain, including a URL for every
+# Wikipedia-sourced one, so a reviewer can re-verify the label without
+# re-deriving it from scratch.
+
+source_lang: grc
+target_lang: eng
+
+positives:
+  - source: "Γνῶθι σεαυτόν"
+    target: "Know thyself"
+    note: >-
+      Delphic maxim, one of the three inscribed at the Temple of Apollo at
+      Delphi. Translation as stated directly by the article (not derived).
+    source_url: "https://en.wikipedia.org/wiki/Delphic_maxims"
+  - source: "Μηδὲν ἄγαν"
+    target: "Nothing in excess"
+    note: "Second of the three entrance maxims at Delphi; translation as stated by the article."
+    source_url: "https://en.wikipedia.org/wiki/Delphic_maxims"
+  - source: "μολὼν λαβέ"
+    target: "Come and take them"
+    note: >-
+      Attributed to Leonidas I at Thermopylae (480 BC), per Plutarch,
+      Apophthegmata Laconica, Moralia 225D, as cited by the article. The
+      article gives two English phrasings ("come and take [them]" and
+      "Come and take them") -- a genuine case of real translation looseness
+      (the object is implied, not literally present, in the two-word Greek)
+      that is still fully attested by the source, not invented for this
+      benchmark.
+    source_url: "https://en.wikipedia.org/wiki/Molon_labe"
+  - source: "ὄμνυμι Ἀπόλλωνα ἰητρὸν καὶ Ἀσκληπιὸν καὶ Ὑγείαν καὶ Πανάκειαν"
+    target: "I swear by Apollo Healer, by Asclepius, by Hygieia, by Panacea"
+    note: >-
+      Opening of the Hippocratic Oath, original Greek with the article's own
+      English rendering. Also independently checkable via transliteration:
+      Ἀπόλλωνα/Apollo, Ἀσκληπιὸν/Asclepius, Ὑγείαν/Hygieia, Πανάκειαν/Panacea
+      are all direct name cognates -- but the correspondence itself is stated
+      by the article, not reconstructed from the cognates by this benchmark.
+    source_url: "https://en.wikipedia.org/wiki/Hippocratic_Oath"
+
+negatives:
+  # Same genre (Delphic maxims), no shared vocabulary -- a plain wrong pairing.
+  - source: "Γνῶθι σεαυτόν"
+    target: "Nothing in excess"
+    note: >-
+      Both real Delphic maxims (correctly: Γνῶθι σεαυτόν = "Know thyself",
+      Μηδὲν ἄγαν = "Nothing in excess"), deliberately cross-matched here --
+      certain by construction, not by reading Greek.
+    source_url: "https://en.wikipedia.org/wiki/Delphic_maxims"
+  # Same genre AND shared vocabulary ("gods") but a different specific verb --
+  # the hard, adversarial case: a lexical-overlap method could be fooled here.
+  - source: "Ἕπου θεῷ"
+    target: "Worship the gods"
+    note: >-
+      Ἕπου θεῷ correctly means "Follow the gods" (Stobaeus maxim #1); "Worship
+      the gods" is the article's translation of a *different* maxim, Θεοὺς
+      σέβου (#3). Both mention gods/θεῷ-θεοὺς, making this a much harder
+      negative than the plain cross-work ones below: a method that keys on
+      shared vocabulary alone, not actual meaning, should score this falsely
+      high.
+    source_url: "https://en.wikipedia.org/wiki/Delphic_maxims"
+  - source: "Νόμῳ πείθου"
+    target: "Respect your parents"
+    note: >-
+      Νόμῳ πείθου correctly means "Obey the law" (Stobaeus maxim #2); "Respect
+      your parents" translates a different maxim, Γονεῖς αἰδοῦ (#4). Same
+      genre (both imperative social-duty maxims), no shared vocabulary this
+      time -- a different flavor of hard negative than the "gods" case above.
+    source_url: "https://en.wikipedia.org/wiki/Delphic_maxims"
+  # Shared theme (deities) across two unrelated source texts, not just two
+  # maxims from the same list -- tests the same failure mode at a wider gap.
+  - source: "ὄμνυμι Ἀπόλλωνα ἰητρὸν καὶ Ἀσκληπιὸν καὶ Ὑγείαν καὶ Πανάκειαν"
+    target: "Follow the gods"
+    note: >-
+      The Hippocratic Oath's invocation of named deities (Apollo, Asclepius,
+      Hygieia, Panacea) against the unrelated Delphic maxim "Ἕπου θεῷ"/"Follow
+      the gods" -- both are "about gods" in the loosest sense, nothing more.
+    source_url: "https://en.wikipedia.org/wiki/Hippocratic_Oath + https://en.wikipedia.org/wiki/Delphic_maxims"
+  # Original, easier cross-work negatives (kept -- safe by construction, see
+  # header): a real Perseus-acquired Greek hymn line against a real,
+  # completely unrelated Latin-to-English translation, different author, era,
+  # language family, and subject.
+  - source: "Εἲς Πᾶνα — ἀμφί μοι Ἑρμείαο φίλον γόνον ἔννεπε, Μοῦσα, αἰγιπόδην, δικέρωτα, φιλόκροτον, ὅστ’ ἀνὰ πίση δενδρήεντ’ ἄμυδις φοιτᾷ χορογηθέσι νύμφαις,"
+    target: "Once more, ye fair, attend your master's song, And learn what method will your charms prolong;"
+    note: >-
+      Homeric Hymn 19 (to Pan) against the opening of Ovid's unrelated
+      "Medicamina Faciei Femineae" (a Latin cosmetics poem, in English
+      translation) -- different author, era, language family, and subject.
+    source_work: "data/raw/grc-BC490-Hymn_19_to_Pan-Anonymous-Perseus_Digital_Library + data/raw/lat-2-Medicamina_faciei_femineae-..."
+  - source: "αἵ τε κατ’ αἰγίλιπος πέτρης στείβουσι κάρηνα Πᾶν’ ἀνακεκλόμεναι, νόμιον θεόν, ἀγλαέθειρον, αὐχμήενθ’, ὃς πάντα λόφον νιφόεντα λέλογχε καὶ κορυφὰς ὀρέων καὶ πετρήεντα κάρηνα."
+    target: "What happy heart best recommends a face; What heightens beauty; what preserves a grace."
+    note: "Same cross-work construction as above, second pair."
+    source_work: "data/raw/grc-BC490-Hymn_19_to_Pan-Anonymous-Perseus_Digital_Library + data/raw/lat-2-Medicamina_faciei_femineae-..."
